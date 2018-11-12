@@ -51,6 +51,8 @@ protected:
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud_transformed;
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud_camera_frame;
 
+    tf::Transform s_transform;
+
 public:
     StaticObject (std::string folder_) : 
         folder(folder_), 
@@ -61,6 +63,7 @@ public:
         std::cout << "Initializing static object..." << std::endl;
 
         this->cloud_fname  = this->folder + "/model.ply";
+        this->s_transform.setIdentity();
 
         std::string fname = this->cloud_fname.substr(0, this->cloud_fname.find_last_of("."));
         std::string fext  = this->cloud_fname.substr(this->cloud_fname.find_last_of(".") + 1);
@@ -87,11 +90,15 @@ public:
     bool update_camera_pose(tf::Transform &to_camcenter) {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr target(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-        auto to_cs_inv = to_camcenter.inverse();
+        auto to_cs_inv = to_camcenter.inverse() * this->s_transform;
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud_camera_frame), to_cs_inv);
         //obj_pub.publish(this->obj_cloud_camera_frame->makeShared());
 
         return true;
+    }
+
+    void transform(tf::Transform &s_transform) {
+        this->s_transform = s_transform;
     }
 
     pcl::PointCloud<pcl::PointXYZRGB>* get_cloud() {

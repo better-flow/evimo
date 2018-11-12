@@ -59,6 +59,7 @@ static std::string mode = "CALIBRATION";
 float FPS;
 tf::Transform E;
 static std::string cv_window_name = "Overlay output";
+static std::string cv_window_name_bg = "Background adjustment";
 static cv::Mat vis_img;
 static bool vis_mode_depth = false;
 
@@ -163,7 +164,8 @@ void project_cloud(cv::Mat &img, pcl::PointCloud<pcl::PointXYZRGB> *cl, int oid)
         if (base_rng > rng || base_rng < 0.001) {
             img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[0] = rng;
             img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[1] = 0;
-            img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[2] = oid;
+            if (oid > 0)
+                img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[2] = oid;
         }
     }
 }
@@ -257,7 +259,7 @@ void process_camera() {
         return;
 
     // Room scan transformation
-    //room_scan->update_camera_pose(to_camcenter);
+    room_scan->update_camera_pose(to_camcenter);
 
 
     double et_sec = double(all_events.back().timestamp / 1000) / 1000000.0;
@@ -270,7 +272,7 @@ void process_camera() {
     }
 
     // Room scan projection
-    //project_cloud(projected, room_scan->get_cloud(), 0);
+    project_cloud(projected, room_scan->get_cloud(), 0);
 
     all_depthmaps.push_back(std::make_pair(projected, image_ts));
 
@@ -387,7 +389,7 @@ int main (int argc, char** argv) {
     ros::Subscriber event_sub = nh.subscribe("/dvs/events", 0, event_cb);
     image_pub = it_.advertise("/ev_imo/depth_raw", 1);
 
-    if (!nh.getParam("ev_imo_postprocessing/input_file", input_file)) input_file = "";
+    if (!nh.getParam("event_imo_datagen/input_file", input_file)) input_file = "";
 
     std::string path_to_self = ros::package::getPath("event_imo_datagen");
 
@@ -413,11 +415,18 @@ int main (int argc, char** argv) {
     vis_img = EventFile::color_time_img(&ev_buffer, 1);
 
     float rr0 =  0.00009;
-    float rp0 =  0.00059;
+    float rp0 = -0.00059;
     float ry0 =  0.08449;
     float tx0 =  0.02917;
     float ty0 =  0.00483;
     float tz0 = -0.00106;
+
+    float rr0_bg =  0.007;
+    float rp0_bg =  0.000;
+    float ry0_bg = -0.059;
+    float tx0_bg =  0.007;
+    float ty0_bg = -0.012;
+    float tz0_bg = -0.306;
 
     fx = 256.919339;
     fy = 256.862149;
@@ -451,6 +460,9 @@ int main (int argc, char** argv) {
     int maxval = 1000;
     int value_rr = maxval / 2, value_rp = maxval / 2, value_ry = maxval / 2;
     int value_tx = maxval / 2, value_ty = maxval / 2, value_tz = maxval / 2;
+    int value_rr_bg = maxval / 2, value_rp_bg = maxval / 2, value_ry_bg = maxval / 2;
+    int value_tx_bg = maxval / 2, value_ty_bg = maxval / 2, value_tz_bg = maxval / 2;
+
     cv::namedWindow(cv_window_name, cv::WINDOW_AUTOSIZE);
     cv::createTrackbar("R", cv_window_name, &value_rr, maxval, on_trackbar);
     cv::createTrackbar("P", cv_window_name, &value_rp, maxval, on_trackbar);
@@ -459,11 +471,20 @@ int main (int argc, char** argv) {
     cv::createTrackbar("y", cv_window_name, &value_ty, maxval, on_trackbar);
     cv::createTrackbar("z", cv_window_name, &value_tz, maxval, on_trackbar);
 
+    cv::namedWindow(cv_window_name_bg, cv::WINDOW_AUTOSIZE);
+    cv::createTrackbar("R", cv_window_name_bg, &value_rr_bg, maxval, on_trackbar);
+    cv::createTrackbar("P", cv_window_name_bg, &value_rp_bg, maxval, on_trackbar);
+    cv::createTrackbar("Y", cv_window_name_bg, &value_ry_bg, maxval, on_trackbar);
+    cv::createTrackbar("x", cv_window_name_bg, &value_tx_bg, maxval, on_trackbar);
+    cv::createTrackbar("y", cv_window_name_bg, &value_ty_bg, maxval, on_trackbar);
+    cv::createTrackbar("z", cv_window_name_bg, &value_tz_bg, maxval, on_trackbar);
+
     changed = true;
     int code = 0;
     while (ros::ok() && (code != 27)) {
         // ====== CV GUI ======
         cv::imshow(cv_window_name, undistort(vis_img));
+        cv::imshow(cv_window_name_bg, vis_img);
         code = cv::waitKey(1);
         
         if (code == 99) { // 'c'
@@ -486,11 +507,11 @@ int main (int argc, char** argv) {
             std::cout << "Event pack - event: " << (last_event_msg_ts - ros_start_time).toSec() - et_sec << std::endl;
             std::cout << "Cam pos - event: " << (last_cam_pos.header.stamp - ros_start_time).toSec() - et_sec << std::endl;
             std::cout << "Image timestamp: " << et_sec + (last_cam_pos.header.stamp - last_event_msg_ts).toSec() << std::endl; 
-            std::cout << "Gt frames: " << all_depthmaps.size() << "\t" << "events: " << all_events.size() << std::endl;
+            std::cout << "Gt frames: " << all_depthmaps.size() << "\t" << "events: " << all_events.size() << std::endl << std::endl;
         }
 
         if (code == 115) { // 's'
-            save_data("/home/ncos/Desktop/PROCESSED_DATASETS/dataset");
+            save_data(input_file);
         }
 
         if (code == 32) {
@@ -513,6 +534,22 @@ int main (int argc, char** argv) {
             T.setValue(tx, ty, tz);
             E.setRotation(q);
             E.setOrigin(T);
+
+            float rr_bg = rr0_bg + normval(value_rr_bg, maxval, maxval * 10);
+            float rp_bg = rp0_bg + normval(value_rp_bg, maxval, maxval * 10);
+            float ry_bg = ry0_bg + normval(value_ry_bg, maxval, maxval * 10);
+            float tx_bg = tx0_bg + normval(value_tx_bg, maxval, maxval * 10);
+            float ty_bg = ty0_bg + normval(value_ty_bg, maxval, maxval * 10);
+            float tz_bg = tz0_bg + normval(value_tz_bg, maxval, maxval * 10);
+
+            tf::Transform E_bg;
+            tf::Vector3 T_bg;
+            tf::Quaternion q_bg;
+            q_bg.setRPY(rr_bg, rp_bg, ry_bg);
+            T_bg.setValue(tx_bg, ty_bg, tz_bg);
+            E_bg.setRotation(q_bg);
+            E_bg.setOrigin(T_bg);
+            room_scan->transform(E_bg);
 
             process_camera();
         }
