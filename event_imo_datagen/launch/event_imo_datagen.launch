@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="output_type" default="screen"/>
+  <arg name="input_file"  default=""/>
+
+  <node pkg="event_imo_datagen" name="event_imo_datagen" type="event_imo_datagen" output="$(arg output_type)" respawn="false" required="true">
+    <param name="input_file"    value="$(arg input_file)"/>
+  </node>
+
+  <!-- Start rviz visualization with preset config -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find event_imo_datagen)/launch/event_imo_datagen.rviz" required="true"/>
+</launch>
