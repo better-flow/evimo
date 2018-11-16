@@ -1,11 +1,13 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="output_type" default="screen"/>
-  <arg name="input_file"  default=""/>
+  <arg name="output_type"     default="screen"/>
+  <arg name="input_file"      default=""/>
+  <arg name="active_objects"  default="+++"/>
 
   <node pkg="event_imo_datagen" name="event_imo_datagen" type="event_imo_datagen" output="$(arg output_type)" respawn="false" required="true">
-    <param name="input_file"    value="$(arg input_file)"/>
+    <param name="input_file"        value="$(arg input_file)"/>
+    <param name="active_objects"    value="$(arg active_objects)"/>
   </node>
 
   <!-- Start rviz visualization with preset config -->

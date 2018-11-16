@@ -4,6 +4,7 @@
 #include <cfloat>
 #include <iomanip>
 #include <iostream>
+#include <unordered_map>
 
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -76,6 +77,7 @@ static ull start_timestamp = 0;
 CircularArray<Event, EVENT_WIDTH, FROM_SEC(TIME_WIDTH)> ev_buffer;  
 std::list<Event> all_events;
 std::list<std::pair<cv::Mat, double>> all_depthmaps;
+std::list<std::pair<int, vicon::Subject>> all_poses;
 
 
 void event_cb(const dvs_msgs::EventArray::ConstPtr& msg) {
@@ -275,6 +277,10 @@ void process_camera() {
     project_cloud(projected, room_scan->get_cloud(), 0);
 
     all_depthmaps.push_back(std::make_pair(projected, image_ts));
+    all_poses.push_back(std::make_pair(0, ViObject::tf2subject(to_camcenter)));
+    for (auto &obj : objects) {
+        all_poses.push_back(std::make_pair(obj->get_id(), obj->get_last_pos()));
+    }
 
     // Visualization
     update_vis_img(projected);
@@ -314,11 +320,18 @@ void save_data(std::string dir) {
 
     std::string efname = dir + "/events.txt";
     std::ofstream event_file(efname, std::ofstream::out);
+
+    unsigned long int i = 0;
     for (auto &e : all_events) {
+        if (i % 100000 == 0) {
+            std::cout << "Written " << i << " / " << all_events.size() <<  std::endl;
+        }
+        
         event_file << std::fixed << std::setprecision(9) 
                    << double(e.timestamp / 1000) / 1000000.0 
                    << " " << e.fr_y << " " << e.fr_x 
                    << " " << int(e.polarity) << std::endl;
+        i ++;
     }
     event_file.close();
 
@@ -336,31 +349,56 @@ void save_data(std::string dir) {
     std::string tsfname = dir + "/ts.txt";
     std::ofstream ts_file(tsfname, std::ofstream::out);
 
-    unsigned long int i = 0;
+    std::string obj_fname = dir + "/objects.txt";
+    std::ofstream obj_file(obj_fname, std::ofstream::out);
+
+    std::string cam_fname = dir + "/trajectory.txt";
+    std::ofstream cam_file(cam_fname, std::ofstream::out);
+
+    std::unordered_map<int, int> cnts = {{0, 0}};
+    for (auto &obj : objects) {
+        cnts.insert({obj->get_id(), 0});
+    }
+
+    for (auto &pos : all_poses) {
+        cnts.at(pos.first) ++;
+        auto &loc = pos.second.position;
+        auto &rot = pos.second.orientation;
+
+        if (pos.first == 0) {
+            cam_file << cnts.at(pos.first) << " "
+                     << loc.x << " " << loc.y << " " << loc.z << " "
+                     << rot.w << " " << rot.x << " " << rot.y << " " << rot.z << std::endl;
+            continue;
+        }
+
+        obj_file << cnts.at(pos.first) << " " << pos.first << " "
+                 << loc.x << " " << loc.y << " " << loc.z << " "
+                 << rot.w << " " << rot.x << " " << rot.y << " " << rot.z << std::endl;
+    }
+
+    i = 0;
     for (auto &pair : all_depthmaps) {
+        if (i % 10 == 0) {
+            std::cout << "Written " << i << " / " << all_depthmaps.size() <<  std::endl;
+        }
+
         std::string gtfname = dir + "/gt/frame_" + std::to_string(i) + ".png";
         ts_file << gtfname << " " << pair.second << std::endl;
 
         cv::Mat projected_i16(RES_X, RES_Y, CV_16UC3, cv::Scalar(0, 0, 0));
 
-        //double min, max;
-        //cv::minMaxLoc(pair.first, &min, &max);
-        //std::cout << i << ": " << min << " " << max << " ";
-
         projected_i16 = pair.first * 1000;
 
-        //std::vector<cv::Mat> spl;
-        //cv::split(projected_i16, spl);
-        //cv::Mat depth = spl[0];
         projected_i16.convertTo(projected_i16, CV_16UC3);
 
-        //cv::minMaxLoc(projected_i16, &min, &max);
-        //std::cout << " | " << min << " " << max << "\n";
 
         cv::imwrite(gtfname, projected_i16);        
         i ++;
     }
     ts_file.close();
+    obj_file.close();
+    cam_file.close();
 
     std::cout << "GT written... Done.\n";
 }
@@ -389,7 +427,9 @@ int main (int argc, char** argv) {
     ros::Subscriber event_sub = nh.subscribe("/dvs/events", 0, event_cb);
     image_pub = it_.advertise("/ev_imo/depth_raw", 1);
 
+    std::string active_objects = "";
     if (!nh.getParam("event_imo_datagen/input_file", input_file)) input_file = "";
+    if (!nh.getParam("event_imo_datagen/active_objects", active_objects)) active_objects = "+++";
 
     std::string path_to_self = ros::package::getPath("event_imo_datagen");
 
@@ -398,10 +438,19 @@ int main (int argc, char** argv) {
     room_scan = &room;
 
     ViObject obj1(nh, path_to_self + "/objects/toy_car", 1);
-    objects.push_back(&obj1);
+    if (active_objects[0] == '+') {
+        objects.push_back(&obj1);
+    }
 
     ViObject obj2(nh, path_to_self + "/objects/toy_plane", 2);
-    objects.push_back(&obj2);
+    if (active_objects[1] == '+') {
+        objects.push_back(&obj2);
+    }
+
+    ViObject obj3(nh, path_to_self + "/objects/cup", 3);
+    if (active_objects[2] == '+') {
+        objects.push_back(&obj3);
+    }
     // ==========================
 
     last_cam_pos.header.stamp = ros::Time(0);
@@ -415,7 +464,7 @@ int main (int argc, char** argv) {
     vis_img = EventFile::color_time_img(&ev_buffer, 1);
 
     float rr0 =  0.00009;
-    float rp0 = -0.00059;
+    float rp0 = -0.01479;//-0.00059;
     float ry0 =  0.08449;
     float tx0 =  0.02917;
     float ty0 =  0.00483;

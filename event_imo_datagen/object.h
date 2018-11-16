@@ -193,6 +193,9 @@ public:
         this->last_pos = subject;
         this->poses_received ++;
 
+        if (this->poses_received % 20 != 0)
+            return;
+
         auto &markers = subject.markers;
         visualization_msgs::MarkerArray vis_markers;
 
@@ -283,6 +286,24 @@ public:
 
     int get_id() {
         return this->id;
+    }
+
+    vicon::Subject get_last_pos() {
+        return this->last_pos;
+    }
+
+    static vicon::Subject tf2subject(tf::Transform &transform) {
+        vicon::Subject ret;
+        auto q = transform.getRotation();
+        auto T = transform.getOrigin();
+        ret.orientation.w = q.getW();
+        ret.orientation.x = q.getX();
+        ret.orientation.y = q.getY();
+        ret.orientation.z = q.getZ();
+        ret.position.x = T.getX();
+        ret.position.y = T.getY();
+        ret.position.z = T.getZ();
+        return ret;
     }
 
     static tf::Transform mat2tf(Eigen::Matrix4f &Tm) {

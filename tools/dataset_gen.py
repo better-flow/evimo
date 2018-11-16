@@ -2,8 +2,14 @@
 
 import argparse
 import numpy as np
-import cv2
 import os, sys, signal, glob
+
+try:
+    sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+except:
+    pass
+
+import cv2
 
 
 def undistort_img(img, K, D):
@@ -68,6 +74,7 @@ def get_gt(path, K, D, base_dir):
     print ("Gt type:", gt_img.dtype)
 
     ret = np.zeros((num_lines,) + (gt_img.shape[0], gt_img.shape[1]))
+    masks = np.zeros((num_lines,) + (gt_img.shape[0], gt_img.shape[1]))
 
     ts = []
     for i, line in enumerate(lines):
@@ -79,21 +86,26 @@ def get_gt(path, K, D, base_dir):
         gt_img = undistort_img(gt_img, K, D)
 
         depth = gt_img[:,:,0]
-        print (np.max(depth))
+        print ("Depth max: ", np.max(depth))
+
+        mask = gt_img[:,:,2]
+        print ("\tMask max: ", np.max(mask))
 
         depth[depth <= 10] = np.nan
 
         ts.append(time)
         ret[i,:,:] = depth
+        masks[i,:,:] = mask
 
-    return ret, np.array(ts)
+    return ret, masks, np.array(ts)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--base_dir',
                         type=str,
-                        required=True)
+                        default='.',
+                        required=False)
     parser.add_argument('--discretization',
                         type=float,
                         required=False,
@@ -109,7 +121,7 @@ if __name__ == '__main__':
 
     print ("Reading the depth and flow")
     print ("Depth...")
-    depth_gt, timestamps = get_gt(args.base_dir + '/ts.txt', K, D, args.base_dir + '/gt')
+    depth_gt, mask_gt, timestamps = get_gt(args.base_dir + '/ts.txt', K, D, args.base_dir + '/gt')
 
     print ("Reading the event file")
     cloud = np.loadtxt(args.base_dir + '/events.txt', dtype=np.float32)
@@ -120,6 +132,6 @@ if __name__ == '__main__':
 
     print ("Saving...")
     np.savez_compressed(args.base_dir + "/recording.npz", events=cloud, index=idx, 
-        discretization=args.discretization, K=K, D=D, depth=depth_gt, gt_ts=timestamps)
+        discretization=args.discretization, K=K, D=D, depth=depth_gt, mask=mask_gt, gt_ts=timestamps)
 
     print ("Done.")
