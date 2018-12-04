@@ -51,7 +51,7 @@ protected:
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud_transformed;
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud_camera_frame;
 
-    tf::Transform s_transform;
+    tf::Transform s_transform, last_to_camcenter;
 
 public:
     StaticObject (std::string folder_) : 
@@ -64,6 +64,7 @@ public:
 
         this->cloud_fname  = this->folder + "/model.ply";
         this->s_transform.setIdentity();
+        this->last_to_camcenter.setIdentity();
 
         std::string fname = this->cloud_fname.substr(0, this->cloud_fname.find_last_of("."));
         std::string fext  = this->cloud_fname.substr(this->cloud_fname.find_last_of(".") + 1);
@@ -89,20 +90,28 @@ public:
     // Camera pose update
     bool update_camera_pose(tf::Transform &to_camcenter) {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr target(new pcl::PointCloud<pcl::PointXYZRGB>);
+        this->last_to_camcenter = to_camcenter;
 
-        auto to_cs_inv = to_camcenter.inverse() * this->s_transform;
+        auto to_cs_inv = this->last_to_camcenter.inverse() * this->s_transform;
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud_camera_frame), to_cs_inv);
-        //obj_pub.publish(this->obj_cloud_camera_frame->makeShared());
 
         return true;
     }
 
-    void transform(tf::Transform &s_transform) {
+    void transform(tf::Transform s_transform) {
         this->s_transform = s_transform;
     }
 
     pcl::PointCloud<pcl::PointXYZRGB>* get_cloud() {
         return this->obj_cloud_camera_frame;
+    }
+
+    tf::Transform get_to_camcenter() {
+        return this->last_to_camcenter;
+    }
+
+    tf::Transform get_static() {
+        return this->s_transform;
     }
 };
 
@@ -179,7 +188,7 @@ public:
         }
         
         std::cout << this->name << " initialized with " << this->obj_markerpos->size() << " markers:" << std::endl;
-        std::cout << " ID\t|\t\tcoordiniate" << std::endl;
+        std::cout << " ID\t|\t\tcoordinate" << std::endl;
         id = 0;
         for (auto &p : *(this->obj_markerpos)) {
             std::cout << " " << id << "\t|\t" << p.x << "\t" << p.y << "\t" << p.z << std::endl;

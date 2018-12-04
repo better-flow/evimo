@@ -1,24 +1,13 @@
 #!/usr/bin/env python
 
 import sys, os, shutil
-
-try:
-    sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
-except:
-    pass
-
 import yaml
-import cv2
 import OpenEXR
 import Imath
 import numpy as np
 from math import fabs, sqrt
 import pyquaternion as qt
-
-
-# The dvs-related stuff, implemented in C. 
-sys.path.insert(0, './build/lib.linux-x86_64-3.5') #The pydvs.so should be in PYTHONPATH!
-import pydvs
+import pydvs, cv2
 
 
 class bcolors:
@@ -86,6 +75,7 @@ def mask_to_color(mask):
      
     cmb = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.float32)
     m_ = np.max(mask) + 500
+    m_ = max(m_, 3500)
     i = 0
     while (m_ > 0):
         cmb[mask < m_] = np.array(colors[i % len(colors)])
@@ -95,6 +85,25 @@ def mask_to_color(mask):
     cmb[mask < 500] = np.array([0,0,0])
     return cmb
 
+
+import matplotlib.colors as colors
+def colorize_image(flow_x, flow_y):
+    hsv_buffer = np.empty((flow_x.shape[0], flow_x.shape[1], 3))
+    hsv_buffer[:,:,1] = 1.0
+    hsv_buffer[:,:,0] = (np.arctan2(flow_y, flow_x) + np.pi)/(2.0*np.pi)
+    hsv_buffer[:,:,2] = np.linalg.norm( np.stack((flow_x,flow_y), axis=0), axis=0 )
+    hsv_buffer[:,:,2] = np.log(1. + hsv_buffer[:,:,2])
+
+    flat = hsv_buffer[:,:,2].reshape((-1))
+    m = 1
+    try:
+        m = np.nanmax(flat[np.isfinite(flat)])
+    except:
+        m = 1
+    if not np.isclose(m, 0.0):
+        hsv_buffer[:,:,2] /= m
+
+    return colors.hsv_to_rgb(hsv_buffer)
 
 
 
@@ -121,12 +130,29 @@ def vel_to_color_splitmask(obj_masks, obj_vel, bg_pos=None):
     if (bg_pos):
         cmb[:] = (lo + np.array([bg_pos[0][0], bg_pos[0][1], bg_pos[0][2]])) * rng
 
+    lo = 0
+    rng = 200
     for id_ in oids:
         vel = obj_vel[id_]
         obj_mask = obj_masks[id_]
-        cmb[obj_mask == 1] = (lo + np.array([vel[0][0], vel[0][1], vel[0][2]])) * rng
+        cmb[obj_mask == 1] = (lo + np.abs(np.array([vel[0][0], vel[0][1], vel[0][2]]))) * rng
+        #cmb[obj_mask == 1] = (lo + np.array([0, vel[0][1], vel[0][2]])) * rng
 
     return cmb
+
+
+def IOU(mask1, mask2):
+    O = mask1 * mask2
+    U = mask1 + mask2
+    U[U > 0.5] = 1
+    U[U < 0.6] = 0
+    O[O > 0.5] = 1
+    O[O < 0.6] = 0
+    AoO = O.sum()
+    AoU = U.sum()
+    if (AoU < 1):
+        return np.nan
+    return AoO / AoU
 
 
 def ppos_sqnorm(ppose):
@@ -137,8 +163,33 @@ def ppos_sqnorm(ppose):
 
 
 def get_EE(v1, v2):
-    d = v2 - v1
-    return np.linalg.norm(d)
+    trs = [[0, 1, 2],
+          [1, 0, 2],
+          [1, 2, 0],
+          [0, 2, 1],
+          [2, 0, 1],
+          [2, 1, 0]]
+    negs = [[1, 1, 1],
+           [-1, 1, 1],
+           [1, -1, 1],
+           [1, 1, -1],
+           [-1, -1, -1],
+           [1, -1, -1],
+           [-1, 1, -1],
+           [-1, -1, 1]]
+
+    solutions = {}
+
+    for tr in trs:
+        for neg in negs:
+            v1_ = np.copy(v1)
+            for i in range(3):
+                v1_[i] = v1[tr[i]] * neg[i]
+            d = v2 - v1_
+            solutions[np.linalg.norm(d)] = [tr, neg]
+    
+    best = sorted(solutions.keys())[0]
+    return best, solutions[best]
 
 
 def mask_to_masks(mask, obj_vel):
@@ -167,18 +218,7 @@ def undistort_img(img, K, D):
 
 
 def dvs_img(cloud, shape, K, D, slice_width=0.05):
-    fcloud = cloud.astype(np.float32) # Important!
-
-    cmb = np.zeros((shape[0], shape[1], 3), dtype=np.float32)
-    pydvs.dvs_img(fcloud, cmb)
- 
-    cmb = undistort_img(cmb, K, D)
- 
-    cnt_img = cmb[:,:,0] + cmb[:,:,2] + 1e-8
-    timg = cmb[:,:,1]
-    
-    timg[cnt_img < 0.99] = 0
-    timg /= cnt_img
+    cmb = pydvs.dvs_img(cloud, shape, K=K, D=D)
 
     cmb[:,:,0] *= global_scale_pp
     cmb[:,:,1] *= 255.0 / slice_width
@@ -186,43 +226,6 @@ def dvs_img(cloud, shape, K, D, slice_width=0.05):
 
     return cmb
     return cmb.astype(np.uint8)
-
-
-def get_slice(cloud, idx, ts, width, mode=0, idx_step=0.01):
-    ts_lo = ts
-    ts_hi = ts + width
-    if (mode == 1):
-        ts_lo = ts - width / 2.0
-        ts_hi = ts + width / 2.0
-    if (mode == 2):
-        ts_lo = ts - width
-        ts_hi = ts
-    if (mode > 2 or mode < 0):
-        print ("Wrong mode! Reverting to default...")
-    if (ts_lo < 0): ts_lo = 0
-
-    t0 = cloud[0][0]
-
-    idx_lo = int((ts_lo - t0) / idx_step)
-    idx_hi = int((ts_hi - t0) / idx_step)
-    if (idx_lo >= len(idx)): idx_lo = -1
-    if (idx_hi >= len(idx)): idx_hi = -1
-
-    sl = np.copy(cloud[idx[idx_lo]:idx[idx_hi]].astype(np.float32))
-    idx_ = np.copy(idx[idx_lo:idx_hi])
-
-    if (idx_lo == idx_hi):
-        return sl, np.array([0])
-
-    if (len(idx_) > 0):
-        idx_0 = idx_[0]
-        idx_ -= idx_0
-
-    if (sl.shape[0] > 0):
-        t0 = sl[0][0]
-        sl[:,0] -= t0
-
-    return sl, idx_
 
 
 def read_camera_traj(folder_path):
@@ -375,6 +378,31 @@ def cam_poses_to_vels(cam_traj, gt_ts):
         last_t = gt_ts[i]
     return ret
 
+
+def smooth_obj_vels(vels, wsize):
+    ret = {}
+    nums = sorted(vels.keys())
+    oids = sorted(vels[nums[0]].keys())
+
+    for num in nums:
+        ret[num] = {}
+
+    for id_ in oids:
+        for i, num in enumerate(nums):
+            vel = vels[num][id_]
+            n = 1.0
+            for k in range(i - wsize//2, i + wsize//2 + 1):
+                if (k < 0): continue
+                if (k >= len(nums)): continue
+                if (k == i): continue
+                vel[0] += vels[nums[k]][id_][0]
+                n += 1.0
+
+            vel[0] /= n
+            ret[num][id_] = vel
+    return ret
+
+
 # ======================================================
 # depth stuff
 def depth_rcp(depth):
@@ -382,6 +410,7 @@ def depth_rcp(depth):
     img = np.reciprocal((depth + 0.01) / 300) * 1.5
     #img = np.clip(img, 0.001, 200)
     img[np.isnan(depth)] = 0
+    img[depth < 0.01] = 0
     return img
 
 def to3ch(img):

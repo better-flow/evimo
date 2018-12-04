@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /TF1
         - /TF1/Frames1
         - /PointCloud21/Autocompute Value Bounds1
       Splitter Ratio: 0.5
@@ -104,10 +105,18 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        DVS346/base_link:
+          Value: false
         Object_1/base_link:
           Value: true
-        dvs_camera/base_link:
+        Object_2/base_link:
           Value: true
+        Object_3/base_link:
+          Value: true
+        camera_center:
+          Value: true
+        camera_markers:
+          Value: false
         vicon:
           Value: true
       Marker Scale: 1
@@ -117,17 +126,25 @@ Visualization Manager:
       Show Names: true
       Tree:
         vicon:
+          DVS346/base_link:
+            {}
           Object_1/base_link:
             {}
-          dvs_camera/base_link:
+          Object_2/base_link:
+            {}
+          Object_3/base_link:
+            {}
+          camera_center:
+            {}
+          camera_markers:
             {}
       Update Interval: 0
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: 1.1152339
-        Min Value: 0.982215703
+        Max Value: 0.583542883
+        Min Value: 0.402968585
         Value: true
       Axis: Z
       Channel Name: y
@@ -158,11 +175,7 @@ Visualization Manager:
       Marker Topic: /ev_imo/markers
       Name: MarkerArray
       Namespaces:
-        Object_11: true
-        Object_12: true
-        Object_13: true
-        Object_14: true
-        Object_15: true
+        dvs_camera: true
       Queue Size: 100
       Value: true
     - Alpha: 0.5
@@ -199,6 +212,66 @@ Visualization Manager:
       Transport Hint: raw
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 0.418534219
+        Min Value: 0.168926284
+        Value: true
+      Axis: Z
+      Channel Name: y
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: AxisColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0.894999981
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.00499999989
+      Style: Flat Squares
+      Topic: /ev_imo/Object_2
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 0.818539083
+        Min Value: 0.68965137
+        Value: true
+      Axis: Z
+      Channel Name: y
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: AxisColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 0.894999981
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.00499999989
+      Style: Flat Squares
+      Topic: /ev_imo/Object_3
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -224,25 +297,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 12.3433876
+      Distance: 5.88508224
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.384567142
-        Y: 1.34450758
-        Z: -0.631939948
+        X: -0.781861067
+        Y: 2.11609507
+        Z: -0.692213237
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.55479598
+      Pitch: 0.759795845
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.03704977
+      Yaw: 4.53705835
     Saved: ~
 Window Geometry:
   Displays:

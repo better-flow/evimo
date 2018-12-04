@@ -1,1 +1,2 @@
-Run: roslaunch ev_imo_postprocessing ev_imo_postproc.launch input_file:="~/Desktop/object.pcd"
+
+roslaunch event_imo_datagen event_imo_datagen.launch active_objects:=--- folder:=/home/ncos/Desktop/PROCESSED_DATASETS/SET2/TABLETOP_CALIB_CLOSE/

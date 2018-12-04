@@ -55,6 +55,9 @@ ros::Time first_cam_pos_ts;
 // Calibration matrix
 float fx, fy, cx, cy, k1, k2, k3, k4;
 
+// Camera center to vicon
+float rr0, rp0, ry0, tx0, ty0, tz0;
+
 
 static std::string mode = "CALIBRATION";
 float FPS;
@@ -67,7 +70,7 @@ static bool vis_mode_depth = false;
 ros::Publisher vis_pub, vis_pub_range;
 image_transport::Publisher image_pub;
 
-std::string input_file;
+std::string dataset_folder;
 
 
 // Event buffer
@@ -80,6 +83,7 @@ std::list<std::pair<cv::Mat, double>> all_depthmaps;
 std::list<std::pair<int, vicon::Subject>> all_poses;
 
 
+void process_camera();
 void event_cb(const dvs_msgs::EventArray::ConstPtr& msg) {
     if ((epacks_received == 0) && (msg->events.size() > 0)) {
         first_event_msg_ts = msg->header.stamp;
@@ -97,6 +101,10 @@ void event_cb(const dvs_msgs::EventArray::ConstPtr& msg) {
     if (msg->events.size() > 0) {
         epacks_received ++;
         last_event_msg_ts = msg->header.stamp;
+    }
+
+    if (mode == "CALIBRATION") {
+        process_camera();
     }
 }
 
@@ -182,8 +190,6 @@ void update_vis_img(cv::Mat &projected) {
     cv::Mat mask  = spl[2];
 
     cv::normalize(depth, depth, 0, 255, cv::NORM_MINMAX);
-    //EventFile::nonzero_norm(depth);
-    //depth *= 255;
 
     cv::Mat img_pr = EventFile::projection_img(&ev_buffer, 1);
     cv::Mat img_color = EventFile::color_time_img(&ev_buffer, 1);
@@ -263,7 +269,6 @@ void process_camera() {
     // Room scan transformation
     room_scan->update_camera_pose(to_camcenter);
 
-
     double et_sec = double(all_events.back().timestamp / 1000) / 1000000.0;
     double image_ts = et_sec + (last_cam_pos.header.stamp - last_event_msg_ts).toSec();
 
@@ -291,14 +296,24 @@ void process_camera() {
 
 
 void camera_pos_cb(const vicon::Subject& subject) {
-    if (subject.occluded || (subject.header.stamp - last_cam_pos.header.stamp).toSec() < 1.0 / FPS)
+    if (subject.occluded) 
         return;
 
     if (numreceived == 0)
         first_cam_pos_ts = subject.header.stamp;
 
+    if (mode == "CALIBRATION") {
+        last_cam_pos = subject;
+        numreceived ++;
+        return;
+    }
+
+    if ((subject.header.stamp - last_cam_pos.header.stamp).toSec() < 1.0 / FPS)
+        return;
+
     last_cam_pos = subject;
     numreceived ++;
+
     process_camera();
 }
 
@@ -318,22 +333,7 @@ void save_data(std::string dir) {
     std::cout << "Gt frames: " << all_depthmaps.size() << "\t" << "events: " << all_events.size() << std::endl;
     std::cout << "Writing to " << dir << std::endl;
 
-    std::string efname = dir + "/events.txt";
-    std::ofstream event_file(efname, std::ofstream::out);
-
     unsigned long int i = 0;
-    for (auto &e : all_events) {
-        if (i % 100000 == 0) {
-            std::cout << "Written " << i << " / " << all_events.size() <<  std::endl;
-        }
-        
-        event_file << std::fixed << std::setprecision(9) 
-                   << double(e.timestamp / 1000) / 1000000.0 
-                   << " " << e.fr_y << " " << e.fr_x 
-                   << " " << int(e.polarity) << std::endl;
-        i ++;
-    }
-    event_file.close();
 
     std::string calibfname = dir + "/calib.txt";
     std::ofstream calib_file(calibfname, std::ofstream::out);
@@ -343,8 +343,6 @@ void save_data(std::string dir) {
     calib_file << std::endl;
     calib_file << k1 / 10 << " " << k2 / 10 << " " << k3 / 10 << " " << k4 / 10 << std::endl;
     calib_file.close();
-
-    std::cout << "Events written...\n";
 
     std::string tsfname = dir + "/ts.txt";
     std::ofstream ts_file(tsfname, std::ofstream::out);
@@ -399,8 +397,24 @@ void save_data(std::string dir) {
     ts_file.close();
     obj_file.close();
     cam_file.close();
+    std::cout << "GT written....\n";
 
-    std::cout << "GT written... Done.\n";
+    std::string efname = dir + "/events.txt";
+    std::ofstream event_file(efname, std::ofstream::out);
+    i = 0;
+    for (auto &e : all_events) {
+        if (i % 100000 == 0) {
+            std::cout << "Written " << i << " / " << all_events.size() <<  std::endl;
+        }
+        
+        event_file << std::fixed << std::setprecision(9) 
+                   << double(e.timestamp / 1000) / 1000000.0 
+                   << " " << e.fr_y << " " << e.fr_x 
+                   << " " << int(e.polarity) << std::endl;
+        i ++;
+    }
+    event_file.close();
+    std::cout << "Events written... Done\n";
 }
 
 
@@ -410,6 +424,96 @@ cv::Mat undistort(cv::Mat &img) {
     cv::Mat D = (cv::Mat1d(1, 4) << k1, k2, k3, k4);
     cv::undistort(img, ret, K, D, 0.87 * K);
     return ret;
+}
+
+
+bool parse_config(std::string path, std::string &conf) {
+    std::ifstream ifs;
+    ifs.open(path, std::ifstream::in);
+    if (!ifs.is_open()) {
+        std::cout << "Could not open configuration file at " 
+                  << path << "!" << std::endl;
+        return false;
+    }
+    conf = "---";
+    for (int i = 0; i < 3; ++i) {
+        std::string line;
+        std::getline(ifs, line);
+        if (line.find("true") != std::string::npos) {
+            std::cout << "\tEnabling object " << i << std::endl;
+            conf[i] = '+';
+        }
+    }
+
+    ifs.close();
+    return true;
+}
+
+
+bool read_cam_intr(std::string path) {
+    std::ifstream ifs;
+    ifs.open(path, std::ifstream::in);
+    if (!ifs.is_open()) {
+        std::cout << "Could not open camera intrinsic calibration file at " 
+                  << path << "!" << std::endl;
+        return false;
+    }
+
+    ifs >> fx >> fy >> cx >> cy;
+    if (!ifs.good()) {
+        std::cout << "Camera calibration read error: Expected a file with a single line, containing "
+                  << "fx fy cx cy {k1 k2 k3 k4} ({} are optional)" << std::endl;
+        return false;
+    }
+    
+    k1 = k2 = k3 = k4 = 0;
+    ifs >> k1 >> k2 >> k3 >> k4;
+    
+    std::cout << "Read camera calibration: (fx fy cx cy {k1 k2 k3 k4}): "
+              << fx << " " << fy << " " << cx << " " << cy << " "
+              << k1 << " " << k2 << " " << k3 << " " << k4 << std::endl;
+          
+    ifs.close();
+    return true;
+}
+
+
+bool read_extr(std::string path) {
+    std::ifstream ifs;
+    ifs.open(path, std::ifstream::in);
+    if (!ifs.is_open()) {
+        std::cout << "Could not open extrinsic calibration file at " 
+                  << path << "!" << std::endl;
+        return false;
+    }
+
+    ifs >> tx0 >> ty0 >> tz0 >> rr0 >> rp0 >> ry0;
+    if (!ifs.good()) {
+        std::cout << "Camera -> Vicon is suppposed to be in <x y z R P Y> format!" << std::endl;
+        return false;
+    }
+
+    float bg_tx, bg_ty, bg_tz, bg_qw, bg_qx, bg_qy, bg_qz;
+    ifs >> bg_tx >> bg_ty >> bg_tz >> bg_qw >> bg_qx >> bg_qy >> bg_qz;
+    if (!ifs.good()) {
+        std::cout << "Background -> Vicon is suppposed to be in <x y z Qw Qx Qy Qz> format!" << std::endl;
+        return false;
+    }
+
+    ifs.close();
+
+
+    tf::Vector3 T;
+    tf::Quaternion Q(bg_qx, bg_qy, bg_qz, bg_qw);
+    T.setValue(bg_tx, bg_ty, bg_tz);
+    
+    tf::Transform E_bg;
+    E_bg.setRotation(Q);
+    E_bg.setOrigin(T);
+
+    room_scan->transform(E_bg);
+
+    return true;
 }
 
 
@@ -427,15 +531,28 @@ int main (int argc, char** argv) {
     ros::Subscriber event_sub = nh.subscribe("/dvs/events", 0, event_cb);
     image_pub = it_.advertise("/ev_imo/depth_raw", 1);
 
-    std::string active_objects = "";
-    if (!nh.getParam("event_imo_datagen/input_file", input_file)) input_file = "";
-    if (!nh.getParam("event_imo_datagen/active_objects", active_objects)) active_objects = "+++";
+    if (!nh.getParam("event_imo_datagen/folder", dataset_folder)) dataset_folder = "";
+    if (!nh.getParam("event_imo_datagen/fps", FPS)) FPS = 40;
 
     std::string path_to_self = ros::package::getPath("event_imo_datagen");
+
+    last_cam_pos.header.stamp = ros::Time(0);
+    last_event_msg_ts         = ros::Time(0);
+    first_event_msg_ts        = ros::Time(0);
+    first_cam_pos_ts          = ros::Time(0);
+
+    if (dataset_folder == "") {
+        std::cout << "Need to specify the dataset directory containing configuration files!" << std::endl;
+        return -1;
+    }
 
     // ==== Register objects ====
     StaticObject room(path_to_self + "/objects/room");
     room_scan = &room;
+
+    std::string active_objects;
+    if (!parse_config(dataset_folder + "/config.txt", active_objects))
+        return -1;
 
     ViObject obj1(nh, path_to_self + "/objects/toy_car", 1);
     if (active_objects[0] == '+') {
@@ -453,38 +570,14 @@ int main (int argc, char** argv) {
     }
     // ==========================
 
-    last_cam_pos.header.stamp = ros::Time(0);
-    last_event_msg_ts         = ros::Time(0);
-    first_event_msg_ts        = ros::Time(0);
-    first_cam_pos_ts          = ros::Time(0);
 
-    FPS = 40;
+    // Camera intrinsic calibration
+    if (!read_cam_intr(dataset_folder + "/calib.txt"))
+        return -1;
 
-    E.setIdentity();
-    vis_img = EventFile::color_time_img(&ev_buffer, 1);
-
-    float rr0 =  0.00009;
-    float rp0 = -0.01479;//-0.00059;
-    float ry0 =  0.08449;
-    float tx0 =  0.02917;
-    float ty0 =  0.00483;
-    float tz0 = -0.00106;
-
-    float rr0_bg =  0.007;
-    float rp0_bg =  0.000;
-    float ry0_bg = -0.059;
-    float tx0_bg =  0.007;
-    float ty0_bg = -0.012;
-    float tz0_bg = -0.306;
-
-    fx = 256.919339;
-    fy = 256.862149;
-    cx = 131.651262;
-    cy = 188.575868;
-    k1 =  -0.366475;
-    k2 =  0.130235;
-    k3 =  0.000262;
-    k4 =  0.000191;
+    // Camera center -> Vicon and Background -> Vicon
+    if (!read_extr(dataset_folder + "/extrinsics.txt"))
+        return -1;
 
     tf::Vector3 T;
     tf::Quaternion q;
@@ -493,14 +586,16 @@ int main (int argc, char** argv) {
     E.setRotation(q);
     E.setOrigin(T);
 
+    vis_img = EventFile::color_time_img(&ev_buffer, 1);
+
     // Spin
-    if (mode == "DEMO" || mode == "DATASET") {
+    if (mode == "DEMO") {
         ros::spin();
         ros::shutdown();
         return 0;
     }
 
-    if (mode != "CALIBRATION") {
+    if (mode != "CALIBRATION" && mode != "GENERATION") {
         std::cout << "Unsupported mode of operation: " << mode << std::endl;
         ros::shutdown();
         return 0;
@@ -511,6 +606,7 @@ int main (int argc, char** argv) {
     int value_tx = maxval / 2, value_ty = maxval / 2, value_tz = maxval / 2;
     int value_rr_bg = maxval / 2, value_rp_bg = maxval / 2, value_ry_bg = maxval / 2;
     int value_tx_bg = maxval / 2, value_ty_bg = maxval / 2, value_tz_bg = maxval / 2;
+    int value_br = 250;
 
     cv::namedWindow(cv_window_name, cv::WINDOW_AUTOSIZE);
     cv::createTrackbar("R", cv_window_name, &value_rr, maxval, on_trackbar);
@@ -527,13 +623,15 @@ int main (int argc, char** argv) {
     cv::createTrackbar("x", cv_window_name_bg, &value_tx_bg, maxval, on_trackbar);
     cv::createTrackbar("y", cv_window_name_bg, &value_ty_bg, maxval, on_trackbar);
     cv::createTrackbar("z", cv_window_name_bg, &value_tz_bg, maxval, on_trackbar);
+    cv::createTrackbar("+", cv_window_name_bg, &value_br,    maxval, on_trackbar);
 
     changed = true;
     int code = 0;
     while (ros::ok() && (code != 27)) {
         // ====== CV GUI ======
-        cv::imshow(cv_window_name, undistort(vis_img));
-        cv::imshow(cv_window_name_bg, vis_img);
+        float scale = (float(value_br) / float(maxval) * 2 + 0.5);
+        cv::imshow(cv_window_name, vis_img * scale);
+        cv::imshow(cv_window_name_bg, undistort(vis_img) * scale);
         code = cv::waitKey(1);
         
         if (code == 99) { // 'c'
@@ -543,6 +641,59 @@ int main (int argc, char** argv) {
             cv::setTrackbarPos("x", cv_window_name, maxval / 2);
             cv::setTrackbarPos("y", cv_window_name, maxval / 2);
             cv::setTrackbarPos("z", cv_window_name, maxval / 2);
+            cv::setTrackbarPos("R", cv_window_name_bg, maxval / 2);
+            cv::setTrackbarPos("P", cv_window_name_bg, maxval / 2);
+            cv::setTrackbarPos("Y", cv_window_name_bg, maxval / 2);
+            cv::setTrackbarPos("x", cv_window_name_bg, maxval / 2);
+            cv::setTrackbarPos("y", cv_window_name_bg, maxval / 2);
+            cv::setTrackbarPos("z", cv_window_name_bg, maxval / 2);
+        }
+
+        if (code == 115) { // 's'
+            save_data(dataset_folder);
+        }
+
+        if (code == 32) {
+            vis_mode_depth = !vis_mode_depth;
+            changed = true;
+        }
+
+        float rr = rr0 + normval(value_rr, maxval, maxval * 10);
+        float rp = rp0 + normval(value_rp, maxval, maxval * 10);
+        float ry = ry0 + normval(value_ry, maxval, maxval * 10);
+        float tx = tx0 + normval(value_tx, maxval, maxval * 50);
+        float ty = ty0 + normval(value_ty, maxval, maxval * 50);
+        float tz = tz0 + normval(value_tz, maxval, maxval * 50);
+
+        float rr_bg = normval(value_rr_bg, maxval, maxval * 10);
+        float rp_bg = normval(value_rp_bg, maxval, maxval * 10);
+        float ry_bg = normval(value_ry_bg, maxval, maxval * 10);
+        float tx_bg = normval(value_tx_bg, maxval, maxval * 10);
+        float ty_bg = normval(value_ty_bg, maxval, maxval * 10);
+        float tz_bg = normval(value_tz_bg, maxval, maxval * 10);
+
+        if (changed) {
+            changed = false;
+
+            tf::Vector3 T;
+            tf::Quaternion q;
+            q.setRPY(rr, rp, ry);
+            T.setValue(tx, ty, tz);
+            E.setRotation(q);
+            E.setOrigin(T);
+
+            tf::Transform E_bg;
+            tf::Vector3 T_bg;
+            tf::Quaternion q_bg;
+            q_bg.setRPY(rr_bg, rp_bg, ry_bg);
+            T_bg.setValue(tx_bg, ty_bg, tz_bg);
+            E_bg.setRotation(q_bg);
+            E_bg.setOrigin(T_bg);
+
+            auto to_cam = room_scan->get_to_camcenter();
+            room_scan->transform(room_scan->get_static() * to_cam * E_bg * to_cam.inverse());
+ 
+            process_camera();
         }
 
         if (code == 105) { // 'i'
@@ -557,51 +708,16 @@ int main (int argc, char** argv) {
             std::cout << "Cam pos - event: " << (last_cam_pos.header.stamp - ros_start_time).toSec() - et_sec << std::endl;
             std::cout << "Image timestamp: " << et_sec + (last_cam_pos.header.stamp - last_event_msg_ts).toSec() << std::endl; 
             std::cout << "Gt frames: " << all_depthmaps.size() << "\t" << "events: " << all_events.size() << std::endl << std::endl;
+            std::cout << "Transforms:" << std::endl;
+            std::cout << "Vicon -> Camcenter (X Y Z R P Y):" << std::endl;
+            std::cout << "\t" << tx << "\t" << ty << "\t" << tz << "\t" << rr << "\t" << rp << "\t" << ry << std::endl;
+            std::cout << "Vicon -> Background (X Y Z Qw Qx Qy Qz):" << std::endl;
+            auto T = room_scan->get_static().getOrigin();
+            auto Q = room_scan->get_static().getRotation();
+            std::cout << "\t" << T.getX() << "\t" << T.getY() << "\t" << T.getZ()
+                      << "\t" << Q.getW() <<"\t" << Q.getX() << "\t" << Q.getY() << "\t" << Q.getZ() << std::endl << std::endl;
         }
 
-        if (code == 115) { // 's'
-            save_data(input_file);
-        }
-
-        if (code == 32) {
-            vis_mode_depth = !vis_mode_depth;
-            changed = true;
-        }
-
-        if (changed) {
-            changed = false;
-            float rr = rr0 + normval(value_rr, maxval, maxval * 10);
-            float rp = rp0 + normval(value_rp, maxval, maxval * 10);
-            float ry = ry0 + normval(value_ry, maxval, maxval * 10);
-            float tx = tx0 + normval(value_tx, maxval, maxval * 50);
-            float ty = ty0 + normval(value_ty, maxval, maxval * 50);
-            float tz = tz0 + normval(value_tz, maxval, maxval * 50);
-
-            tf::Vector3 T;
-            tf::Quaternion q;
-            q.setRPY(rr, rp, ry);
-            T.setValue(tx, ty, tz);
-            E.setRotation(q);
-            E.setOrigin(T);
-
-            float rr_bg = rr0_bg + normval(value_rr_bg, maxval, maxval * 10);
-            float rp_bg = rp0_bg + normval(value_rp_bg, maxval, maxval * 10);
-            float ry_bg = ry0_bg + normval(value_ry_bg, maxval, maxval * 10);
-            float tx_bg = tx0_bg + normval(value_tx_bg, maxval, maxval * 10);
-            float ty_bg = ty0_bg + normval(value_ty_bg, maxval, maxval * 10);
-            float tz_bg = tz0_bg + normval(value_tz_bg, maxval, maxval * 10);
-
-            tf::Transform E_bg;
-            tf::Vector3 T_bg;
-            tf::Quaternion q_bg;
-            q_bg.setRPY(rr_bg, rp_bg, ry_bg);
-            T_bg.setValue(tx_bg, ty_bg, tz_bg);
-            E_bg.setRotation(q_bg);
-            E_bg.setOrigin(T_bg);
-            room_scan->transform(E_bg);
-
-            process_camera();
-        }
         // ====================
 
         ros::spinOnce();

@@ -1,0 +1,1 @@
+model.ply filter=lfs diff=lfs merge=lfs -text

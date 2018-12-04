@@ -142,8 +142,7 @@ def get_object_pos(bmask, ppos, gt_pos):
     if (inf_norm > 0.0000001):
         alpha = gt_norm / inf_norm
 
-    inf_T *= alpha
-    return inf_T
+    return inf_T, alpha
 
 
 
@@ -182,7 +181,7 @@ DEPTH_MSE = 0.0
 
 def do_depth(gt, inf):
     shape = gt.shape
-    gt[gt < 500] = np.nan
+    gt[gt < 50] = np.nan
     gt /= 1000
 
     mask_nan = np.ones(shape)
@@ -224,7 +223,7 @@ def do_depth(gt, inf):
     DEPTH_L2_depth += L2_depth
     DEPTH_MSE += MSE
 
-    depth_gt_rcp *= mask
+    #depth_gt_rcp *= mask
     #depth_inf_rcp *= mask
 
     depth_gt3  = to3ch(depth_gt_rcp) / 4
@@ -235,17 +234,42 @@ def do_depth(gt, inf):
 
     return np.hstack((depth_gt3, depth_inf3))
 
-
-
-def cluster_pposes(inf_ppose, inf_mask):
-    pass
-
-
 OBJ_AOU = 0.0
 OBJ_AOU_CNT = 0.0
 
 OBJ_AEE = 0.0
 OBJ_AEE_CNT = 0.0
+
+
+
+def change_gt(obj_poses, imask, inf_ppose, inf_mask):
+    oids = sorted(obj_poses.keys())
+    masks = mask_to_masks(imask, obj_poses)
+    inf_ppose = fixup_pposvel(inf_ppose) * (-1)
+
+    inf_T = inf_ppose[:,:,0:3]
+
+    AEE_local = 0
+    cnt = 0
+    inf_obj_poses = {}
+   
+    for oid in oids:
+        gt_obj_0_p = obj_poses[oid]
+        obj_0_p, alpha = get_object_pos(masks[oid], inf_T, gt_obj_0_p)
+        inf_obj_poses[oid] = [obj_0_p, alpha]
+
+    average_scale = 0
+    for oid in oids:
+        average_scale += inf_obj_poses[oid][1]
+    average_scale /= float(len(oids))
+    average_scale *= 0.3
+
+    for oid in oids:
+        obj_poses[oid][0] = inf_obj_poses[oid][0] * average_scale
+
+
+
+
 def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
     oids = sorted(obj_poses.keys())
     masks = mask_to_masks(imask, obj_poses)
@@ -255,76 +279,60 @@ def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
 
     AEE_local = 0
     cnt = 0
+    inf_obj_poses = {}
+   
     for oid in oids:
         gt_obj_0_p = obj_poses[oid]
-        obj_0_p = get_object_pos(masks[oid], inf_T, gt_obj_0_p)
-        EE, tf = get_EE(gt_obj_0_p[0], obj_0_p)
-        print ("\t", tf, obj_0_p, gt_obj_0_p[0], obj_0_p - gt_obj_0_p[0])
-        if (not np.isnan(EE)):
-            cnt += 1
-            AEE_local += EE
+        obj_0_p, alpha = get_object_pos(masks[oid], inf_T, gt_obj_0_p)
+        inf_obj_poses[oid] = [obj_0_p, alpha]
 
-        new_op = np.copy(gt_obj_0_p[0])
-        for i in range(3):
-            new_op[i] = gt_obj_0_p[0][tf[0][i]] * tf[1][i]
+        EE, tf = get_EE(gt_obj_0_p[0], obj_0_p * alpha)
+        print ("\t", tf, obj_0_p * alpha, gt_obj_0_p[0], obj_0_p * alpha - gt_obj_0_p[0])
+        
 
-        obj_poses[oid][0] = new_op
-
-
-    global OBJ_AEE, OBJ_AEE_CNT, OBJ_AOU, OBJ_AOU_CNT
-    if (cnt > 0):
-        OBJ_AEE_CNT += 1
-        OBJ_AEE += AEE_local / cnt
-
-        AEE_local /= cnt
-        print("\t", AEE_local)
+    average_scale = 0
+    for oid in oids:
+        average_scale += inf_obj_poses[oid][1]
+    average_scale /= float(len(oids))
+    #average_scale *= 0.3
 
 
+    # =======================================================
     inf_bmask = np.zeros((inf_T.shape[0], inf_T.shape[1]), dtype=np.float32)
     if (len(inf_mask.shape) >= 3):
         inf_bmask = 1 - inf_mask[:,:,0]
-        #for i in range(1, inf_mask.shape[2]):
-        #    inf_bmask = np.hstack((inf_bmask, inf_mask[:,:,i]))
     else:
         inf_bmask = inf_mask
-
 
     obj_0_img = np.zeros(inf_T.shape, dtype=np.float32)
     gt_bin_mask = np.zeros(inf_T.shape, dtype=np.float32)
     for oid in oids:
-        #th_pp = th_ppos_mask(inf_T, masks[oid])
-        #th_pp[np.isnan(th_pp)] = 0
-        #obj_0_img += th_pp
-        #obj_0_img += inf_T * 
         gt_bin_mask +=  np.dstack((masks[oid], masks[oid], masks[oid]))
 
     obj_0_img = inf_T * np.dstack((inf_bmask, inf_bmask, inf_bmask))    
     inf_th_mask = get_th_mask(inf_T, inf_bmask, 0.3)
-
-    iou_score = IOU(gt_bin_mask[:,:,0], inf_th_mask)
-    if (not np.isnan(iou_score)):
-        OBJ_AOU += iou_score
-        OBJ_AOU_CNT += 1
-        print("\tIOU:", iou_score)
+    # ===========================================================
 
 
     inf_bmask = np.dstack((inf_bmask, inf_bmask, inf_bmask)) * 255
     inf_th_mask = np.dstack((inf_th_mask, inf_th_mask, inf_th_mask)) * 255
-    #obj_0_img = inf_T
-    #inf_masks = cluster_pposes(inf_T, inf_mask)
 
     inf_T = obj_0_img
     lo = np.nanmin(inf_T)
     hi = np.nanmax(inf_T)
 
-    img_inf = 255.0 * (inf_T - lo) / float(hi - lo)
+    #img_inf = 255.0 * (inf_T - lo) / float(hi - lo)
+    img_inf = 200.0 * np.abs(inf_T) * average_scale
     img_inf *= inf_bmask / 255
+
+    #img_inf = colorize_image(img_inf[:,:,0] / 200, img_inf[:,:,2] / 200) * 255
 
     #print (lo, hi, np.nanmax(img_inf))
 
     img_gt = vel_to_color(imask, obj_poses)
     #return np.hstack((img_gt, img_inf, gt_bin_mask * 255, inf_bmask, inf_th_mask))
-    return np.hstack((img_gt, img_inf, inf_bmask))
+
+    return np.hstack((img_gt * 10, img_inf * 10, inf_bmask))
 
 
 
@@ -333,7 +341,6 @@ def get_scores(inf_depth, inf_ego, inf_ppose, inf_mask,
     ego_img = do_camera_ego(cam_vel, inf_ego)
     depth_img = do_depth(gt_depth, inf_depth)
     ppose_img = do_ppose(obj_poses, instance_mask, inf_ppose, inf_mask)
-
 
 
     return np.hstack((depth_img, ppose_img))
@@ -395,7 +402,8 @@ if __name__ == '__main__':
         sys.exit()
 
     print ("Compute velocities")
-    obj_vels = obj_poses_to_vels(obj_traj, gt_ts)
+    obj_vels_ = obj_poses_to_vels(obj_traj, gt_ts)
+    obj_vels = smooth_obj_vels(obj_vels_, 5)
     cam_vels = cam_poses_to_vels(cam_traj_global, gt_ts)
 
     slice_width = args.width
@@ -422,6 +430,19 @@ if __name__ == '__main__':
     print ("The gt range:", gt_ts[0], "-", gt_ts[-1])
     print ("Discretization resolution:", discretization)
  
+
+
+    for i, time in enumerate(gt_ts):
+        num = nums[i]
+        if (i not in inf_depths.keys()):
+            continue
+
+        change_gt(obj_vels[num], mask_gt[i], inf_pposes[i], inf_masks[i])
+
+    
+    obj_vels_ = smooth_obj_vels(obj_vels, 3)
+    obj_vels = obj_vels_
+
     for i, time in enumerate(gt_ts):
         #if (time > last_ts or time < first_ts):
         #    continue
@@ -429,63 +450,15 @@ if __name__ == '__main__':
         if (i not in inf_depths.keys()):
             continue
 
-        s = 0
         print ("\nComputing scores for frame", num, "index", i)
-        #ev_img = get_scores(inf_depths[num], inf_ego[num], inf_pposes[num], inf_masks[num],
-        #                    depth_gt[i], cam_vels[num], obj_vels[num], mask_gt[i])
         ev_img = get_scores(inf_depths[i], inf_ego[i], inf_pposes[i], inf_masks[i],
-                            depth_gt[i - s], cam_vels[num - s], obj_vels[num - s], mask_gt[i - s])
+                            depth_gt[i], cam_vels[num], obj_vels[num], mask_gt[i])
 
 
         col_mask = mask_to_color(mask_gt[i])
-        sl, _ = get_slice(cloud, idx, time, args.width, args.mode, discretization)
+        sl, _ = pydvs.get_slice(cloud, idx, time, args.width, args.mode, discretization)
         eimg = dvs_img(sl, global_shape, K, D)
         #baseline_img = np.vstack((eimg, col_mask))
         ev_img = np.hstack((eimg, col_mask, ev_img))
 
         cv2.imwrite(os.path.join(vis_dir, 'frame_' + str(i).rjust(10, '0') + '.png'), ev_img)
-        continue
-
-        depth = depth_gt[i]
-        mask  = mask_gt[i]
-
- 
-        cv2.imwrite(os.path.join(slice_dir, 'frame_' + str(i).rjust(10, '0') + '.png'), eimg)
-        cv2.imwrite(os.path.join(slice_dir, 'depth_' + str(i).rjust(10, '0') + '.png'), depth.astype(np.uint16))
-        cv2.imwrite(os.path.join(slice_dir, 'mask_'  + str(i).rjust(10, '0') + '.png'), mask.astype(np.uint16))
-
-        nmin = np.nanmin(depth)
-        nmax = np.nanmax(depth)
-
-        #print (np.nanmin(depth), np.nanmax(depth))
-        eimg[:,:,1] = (depth - nmin) / (nmax - nmin) * 255
-
-        col_mask = mask_to_color(mask)
-        col_vel = vel_to_color(mask, obj_vels[nums[i]])
-        eimg = np.hstack((eimg, col_mask, col_vel))
-
-        footer = gen_text_stub(eimg.shape[1], cam_vels[nums[i]], obj_traj[nums[i]], obj_vels[nums[i]])
-        eimg = np.vstack((eimg, footer))
-
-        cv2.imwrite(os.path.join(vis_dir, 'frame_' + str(i).rjust(10, '0') + '.png'), eimg)
-
-
-    CAM_AEE_ang_CNT += 1
-
-    print ("\n\n-----------------------")
-    print ("Object AEE:", OBJ_AEE / OBJ_AEE_CNT)
-    print ("Camera AEE:", CAM_AEE / CAM_AEE_CNT)
-    print ("Camera AEE_ang:", CAM_AEE_ang / CAM_AEE_ang_CNT)
-    print ("")
-    print ("Object IOU:", OBJ_AOU / OBJ_AOU_CNT)
-    print ("")
-    print ("Depth inverse RMSE", DEPTH_iRMSE / DEPTH_CNT)
-    print ("Depth linear  RMSE", DEPTH_linRMSE / DEPTH_CNT)
-    print ("Depth log RMSE    ", DEPTH_logRMSE / DEPTH_CNT)
-    print ("Depth MSE         ", DEPTH_MSE / DEPTH_CNT)
-    print ("Depth SILog       ", DEPTH_SILog / DEPTH_CNT)
-    print ("Depth Th1/2/3     ", DEPTH_Th1 / DEPTH_CNT, DEPTH_Th2 / DEPTH_CNT, DEPTH_Th3 / DEPTH_CNT)
-    print ("Depth Abs Rel Diff", DEPTH_ARelDiff / DEPTH_CNT)
-    print ("Depth Sq  Rel Diff", DEPTH_SqRelDiff / DEPTH_CNT)
-    #print ("Depth L2 norm     ", DEPTH_L2_depth / DEPTH_CNT)
-    print ("")
