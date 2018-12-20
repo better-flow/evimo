@@ -2,7 +2,8 @@
 #define DATASTRUCTURES_H
 
 
-// Circular Array
+
+// Circular Array for Events
 template <class DType, size_t SZ, long long SPAN> class CircularArray final {
 protected:
     DType *data;
@@ -116,7 +117,7 @@ protected:
 
 
 
-// Circular Pointer Array
+// Circular Pointer Array for Events
 template <class DType, size_t SZ, long long SPAN> class CircularPointerArray final {
 protected:
     DType **data;

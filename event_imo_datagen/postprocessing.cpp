@@ -41,11 +41,14 @@
 
 #include "object.h"
 #include "event_vis.h"
+#include "running_average.h"
 
 std::vector<ViObject*> objects;
 StaticObject *room_scan;
 
+RunningAverage cam_pos_filter;
 vicon::Subject last_cam_pos;
+static float cam_visibility = 0.0;
 static unsigned long int numreceived = 0;
 static unsigned long int epacks_received = 0;
 ros::Time first_event_msg_ts;
@@ -174,8 +177,8 @@ void project_cloud(cv::Mat &img, pcl::PointCloud<pcl::PointXYZRGB> *cl, int oid)
         if (base_rng > rng || base_rng < 0.001) {
             img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[0] = rng;
             img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[1] = 0;
-            if (oid > 0)
-                img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[2] = oid;
+            //if (oid > 0)
+            img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[2] = oid;
         }
     }
 }
@@ -209,6 +212,10 @@ void update_vis_img(cv::Mat &projected) {
             }
         }
     }
+
+    cv::putText(vis_img, "Cam:" + std::to_string(int(cam_visibility)), 
+                cv::Point(10, 30), cv::FONT_HERSHEY_DUPLEX, 0.5, 
+                cv::Scalar(255,255,255), 1, cv::LINE_AA, false);
 }
 
 
@@ -290,20 +297,38 @@ void process_camera() {
     // Visualization
     update_vis_img(projected);
 
+
+    for (auto &obj : objects) {
+        int id = obj->get_id();
+        float visibility = obj->get_visibility();
+        cv::putText(vis_img, "O" + std::to_string(id) + ": " + std::to_string(int(visibility)), 
+                    cv::Point(10, 36 + 12 * id), cv::FONT_HERSHEY_DUPLEX, 0.5, 
+                    cv::Scalar(255,255,255), 1, cv::LINE_AA, false);
+    }
+
+
     sensor_msgs::ImagePtr img_depth_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", vis_img).toImageMsg();                
     image_pub.publish(img_depth_msg);
 }
 
 
 void camera_pos_cb(const vicon::Subject& subject) {
+    cam_pos_filter.push_back(subject);
+
     if (subject.occluded) 
         return;
 
     if (numreceived == 0)
         first_cam_pos_ts = subject.header.stamp;
 
+    cam_visibility = 0;
+    for (auto &m : subject.markers)
+        if (!m.occluded) cam_visibility += 1.0;
+    cam_visibility /= last_cam_pos.markers.size();
+    cam_visibility *= 100.0;
+
     if (mode == "CALIBRATION") {
-        last_cam_pos = subject;
+        last_cam_pos = cam_pos_filter.average();
         numreceived ++;
         return;
     }
@@ -311,7 +336,7 @@ void camera_pos_cb(const vicon::Subject& subject) {
     if ((subject.header.stamp - last_cam_pos.header.stamp).toSec() < 1.0 / FPS)
         return;
 
-    last_cam_pos = subject;
+    last_cam_pos = cam_pos_filter.average();
     numreceived ++;
 
     process_camera();
@@ -531,8 +556,11 @@ int main (int argc, char** argv) {
     ros::Subscriber event_sub = nh.subscribe("/dvs/events", 0, event_cb);
     image_pub = it_.advertise("/ev_imo/depth_raw", 1);
 
+    int traj_smoothing = 1;
     if (!nh.getParam("event_imo_datagen/folder", dataset_folder)) dataset_folder = "";
     if (!nh.getParam("event_imo_datagen/fps", FPS)) FPS = 40;
+    if (!nh.getParam("event_imo_datagen/smoothing", traj_smoothing)) traj_smoothing = 1;
+    cam_pos_filter.resize(traj_smoothing);
 
     std::string path_to_self = ros::package::getPath("event_imo_datagen");
 

@@ -261,6 +261,16 @@ public:
         return true;
     }
 
+    float get_visibility() {
+        float visibility = 0;
+        for (auto &m : this->last_pos.markers)
+            if (!m.occluded) visibility += 1.0;
+        visibility /= this->last_pos.markers.size();
+        visibility *= 100.0;
+        return visibility;
+    }
+
+
     // Helpers
     visualization_msgs::Marker get_generic_marker(int id = 0) {
         visualization_msgs::Marker marker;
