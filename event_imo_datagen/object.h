@@ -38,6 +38,9 @@
 #include <dvs_msgs/EventArray.h>
 
 
+#include "running_average.h"
+
+
 #ifndef OBJECT_H
 #define OBJECT_H
 
@@ -116,7 +119,6 @@ public:
 };
 
 
-
 class ViObject {
 protected:
     ros::NodeHandle n_;
@@ -136,6 +138,8 @@ protected:
     Eigen::Matrix4f LAST_SVD;
     vicon::Subject last_pos;
     long int poses_received;
+
+    PoseManager pose_manager;
 
 public:
     ViObject (ros::NodeHandle n_, std::string folder_, int id_) : 
@@ -201,6 +205,7 @@ public:
     void vicon_pos_cb(const vicon::Subject& subject) {
         this->last_pos = subject;
         this->poses_received ++;
+        this->pose_manager.push_back(subject, subject);
 
         if (this->poses_received % 20 != 0)
             return;
@@ -223,7 +228,7 @@ public:
     // Camera pose update
     bool update_camera_pose(tf::Transform &to_camcenter) {
         if (this->poses_received == 0)
-            return true;
+            return false;
 
         if (this->last_pos.occluded)
             return false;
@@ -257,7 +262,7 @@ public:
         //this->obj_cloud_camera_frame->clear();
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud_camera_frame), full_tf);
         //obj_pub.publish(this->obj_cloud_camera_frame->makeShared());
-    
+
         return true;
     }
 
@@ -269,7 +274,6 @@ public:
         visibility *= 100.0;
         return visibility;
     }
-
 
     // Helpers
     visualization_msgs::Marker get_generic_marker(int id = 0) {
@@ -309,6 +313,10 @@ public:
 
     vicon::Subject get_last_pos() {
         return this->last_pos;
+    }
+
+    auto &get_pm() {
+        return this->pose_manager;
     }
 
     static vicon::Subject tf2subject(tf::Transform &transform) {

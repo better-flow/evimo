@@ -70,19 +70,21 @@ global_shape = (260, 346)
 
 
 def mask_to_color(mask):
-    colors = [[255,255,0], [0,255,255], [255,0,255], 
+    colors = [[56,62,43], [26,50,63], [36,55,56], 
               [0,255,0],   [0,0,255],   [255,0,0]]
      
     cmb = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.float32)
+    cmb[:,:] = np.array([95, 96, 93])
     m_ = np.max(mask) + 500
     m_ = max(m_, 3500)
-    i = 0
-    while (m_ > 0):
-        cmb[mask < m_] = np.array(colors[i % len(colors)])
-        i += 1
-        m_ -= 1000
+ 
+    maxoid = int(m_ / 1000)
+    for i in range(maxoid):
+        cutoff_lo = 1000.0 * (i + 1.0) - 200
+        cutoff_hi = 1000.0 * (i + 1.0) + 200
+        cmb[np.where(np.logical_and(mask>=cutoff_lo, mask<=cutoff_hi))] = np.array(colors[i % len(colors)])
+    cmb *= 2.5
 
-    cmb[mask < 500] = np.array([0,0,0])
     return cmb
 
 
@@ -249,6 +251,9 @@ def read_camera_traj(folder_path):
         ret[num] = [v, q]
     f.close()
 
+    if (len(ret) == 0):
+        return {}
+
     minnum = min(ret.keys())
     maxnum = max(ret.keys())
 
@@ -290,6 +295,9 @@ def read_object_traj(folder_path):
         ret[num][id_] = [v, q]
         keys.add(id_)
 
+    if (len(ret) == 0):
+        return {}
+
     minnum = min(ret.keys())
     maxnum = max(ret.keys())
 
@@ -321,6 +329,10 @@ def transform_pose(obj, cam):
 def to_cam_frame(obj_traj_global, cam_traj_global):
     ret = {}
     nums = sorted(obj_traj_global.keys())
+
+    if (len(nums) == 0):
+        return {}
+    
     oids = sorted(obj_traj_global[nums[0]].keys())
 
     for num in nums:
@@ -346,6 +358,10 @@ def compute_vel_local(p1, p2, dt):
 def obj_poses_to_vels(obj_traj, gt_ts):
     ret = {}
     nums = sorted(obj_traj.keys())
+
+    if (len(nums) == 0):
+        return {}
+
     oids = sorted(obj_traj[nums[0]].keys())
 
     for num in nums:
@@ -368,6 +384,9 @@ def cam_poses_to_vels(cam_traj, gt_ts):
     ret = {}
     nums = sorted(cam_traj.keys())
     
+    if (len(nums) == 0):
+        return {}
+    
     last_pos = cam_traj[nums[0]]
     last_t = gt_ts[0]
     for i, num in enumerate(nums):
@@ -382,6 +401,10 @@ def cam_poses_to_vels(cam_traj, gt_ts):
 def smooth_obj_vels(vels, wsize):
     ret = {}
     nums = sorted(vels.keys())
+
+    if (len(nums) == 0):
+        return {}
+
     oids = sorted(vels[nums[0]].keys())
 
     for num in nums:

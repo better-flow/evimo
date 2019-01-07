@@ -56,7 +56,7 @@ public:
             cnt += 1.0;
         }
 
-        if (cnt == 0) return ret;
+        if (cnt <= 0.1) return ret;
 
         x /= cnt; y /= cnt; z /= cnt;
         qx /= cnt; qy /= cnt; qz /= cnt; qw /= cnt;
@@ -76,8 +76,114 @@ public:
 };
 
 
+class PoseManager {
+protected:
+    std::list<vicon::Subject> cam_poses;
+    std::list<vicon::Subject> obj_poses;
+    std::list<uint32_t> cam_checkpoints;
+    std::list<uint32_t> obj_checkpoints;
+
+    std::vector<vicon::Subject> cam_poses_smooth;
+    std::vector<vicon::Subject> obj_poses_smooth;
+
+    vicon::Subject last_cam_pos;
+    vicon::Subject last_obj_pos;
+
+    uint32_t counter;
 
 
+public:
+    PoseManager () : counter(0) {
+        this->last_cam_pos.header.stamp = ros::Time(0);
+        this->last_obj_pos.header.stamp = ros::Time(0);
+    }
+
+    void push_back(vicon::Subject cam, vicon::Subject obj) {
+        this->cam_poses.push_back(cam);
+        this->obj_poses.push_back(obj);
+        this->counter ++;
+    }
+
+    void save_checkpoint () {
+        if (this->counter == 0) {
+            std::cout << "Saving checkpoint with no data!" << std::endl;
+            return;
+        }
+
+        this->cam_checkpoints.push_back(this->counter - 1);
+        this->obj_checkpoints.push_back(this->counter - 1);
+        this->last_cam_pos = this->cam_poses.back();
+        this->last_obj_pos = this->obj_poses.back();
+    }
+
+    uint32_t size() {return this->counter; }
+
+    void smooth (uint32_t kernel) {
+        this->smooth(kernel, this->cam_poses, this->cam_checkpoints, this->cam_poses_smooth);
+        this->smooth(kernel, this->obj_poses, this->obj_checkpoints, this->obj_poses_smooth);
+    }
+
+    std::vector<vicon::Subject> &get_cam_poses() {
+        return this->cam_poses_smooth;
+    }
+
+    std::vector<vicon::Subject> &get_obj_poses() {
+        return this->obj_poses_smooth;
+    }
+
+    vicon::Subject get_last_cam_pos() {
+        return this->last_cam_pos;
+    }
+
+    vicon::Subject get_last_obj_pos() {
+        return this->last_obj_pos;
+    }
+
+private:
+    void smooth (uint32_t kernel, std::list<vicon::Subject> &src, 
+                 std::list<uint32_t> &idx, 
+                 std::vector<vicon::Subject> &dst) {
+        RunningAverage ra(kernel);
+        dst.resize(idx.size());
+
+        int32_t cnt = - (kernel / 2 + 1);
+        uint32_t dst_id = 0;
+        auto idx_it = idx.begin();
+        for (auto &p : src) {
+            ra.push_back(p);
+            cnt ++;
+
+            if (cnt < 0)
+                continue;
+
+            std::cout << dst_id << " " << cnt << " " << *idx_it << "\n";
+
+            if (dst_id < idx.size() && cnt == *idx_it) {
+                dst[dst_id] = ra.average();
+
+                std::cout << "\t" << dst_id << " " << p.position.x << " -> " << dst[dst_id].position.x << "\n";
+                                
+                auto old_idx = *idx_it;
+                ++ idx_it;
+                dst_id ++;
+                while(old_idx == *idx_it) {
+                    dst[dst_id] = ra.average();
+                    ++ idx_it;
+                    dst_id ++;
+                    
+                    std::cout << "checkpoint index stalled!" << std::endl;
+                }
+            }
+        }
+
+        while (idx_it != idx.end()) {
+            dst[dst_id] = ra.average();
+            ++ idx_it;
+            dst_id ++;
+        }
+    }
+
+};
 
 
 #endif // RUNNING_AVERAGE_H

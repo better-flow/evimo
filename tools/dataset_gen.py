@@ -30,15 +30,15 @@ def read_calib(fname):
     with open(fname) as calib:
         lines = calib.readlines()
 
-    K_txt = lines[0:3]
-    D_txt = lines[4]
-
-    for i, line in enumerate(K_txt):
-        for j, num_txt in enumerate(line.split(' ')[0:3]):
-            K[i][j] = float(num_txt)
-
-    for j, num_txt in enumerate(D_txt.split(' ')[0:4]):
-        D[j] = float(num_txt)
+    calib = lines[0].split(' ')
+    K[0][0] = calib[0]
+    K[1][1] = calib[1]
+    K[0][2] = calib[2]
+    K[1][2] = calib[3]
+    D[0] = calib[4]        
+    D[1] = calib[5]
+    D[2] = calib[6]        
+    D[3] = calib[7]
 
     return K, D
 
@@ -66,9 +66,8 @@ def get_gt(path, K, D, base_dir):
     print ("Number of ground truth samples:", num_lines)
 
     inm = lines[0].split(' ')[0]
-    inm = os.path.join(base_dir, inm.split('/')[-1])
+    inm = os.path.join(base_dir, inm)
 
-    print (inm)
     gt_img = cv2.imread(inm, cv2.IMREAD_UNCHANGED)
     print ("Gt shape:", gt_img.shape)
     print ("Gt type:", gt_img.dtype)
@@ -79,7 +78,7 @@ def get_gt(path, K, D, base_dir):
     ts = []
     for i, line in enumerate(lines):
         inm = line.split(' ')[0]
-        inm = os.path.join(base_dir, inm.split('/')[-1])
+        inm = os.path.join(base_dir, inm)
         time = float(line.split(' ')[1]) 
         #gt_img = np.load(inm).astype(dtype=np.float32)
         gt_img = cv2.imread(inm, cv2.IMREAD_UNCHANGED).astype(dtype=np.float32)
@@ -116,12 +115,14 @@ if __name__ == '__main__':
     print ("Opening", args.base_dir)    
 
     K, D = read_calib(args.base_dir + '/calib.txt')
+    D /= 10.0
+
     print (K)
     print (D)
 
     print ("Reading the depth and flow")
     print ("Depth...")
-    depth_gt, mask_gt, timestamps = get_gt(args.base_dir + '/ts.txt', K, D, args.base_dir + '/gt')
+    depth_gt, mask_gt, timestamps = get_gt(args.base_dir + '/ts.txt', K, D, args.base_dir)
 
     print ("Reading the event file")
     cloud = np.loadtxt(args.base_dir + '/events.txt', dtype=np.float32)

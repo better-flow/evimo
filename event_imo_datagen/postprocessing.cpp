@@ -46,7 +46,7 @@
 std::vector<ViObject*> objects;
 StaticObject *room_scan;
 
-RunningAverage cam_pos_filter;
+PoseManager cam_pos_manager;
 vicon::Subject last_cam_pos;
 static float cam_visibility = 0.0;
 static unsigned long int numreceived = 0;
@@ -62,13 +62,14 @@ float fx, fy, cx, cy, k1, k2, k3, k4;
 float rr0, rp0, ry0, tx0, ty0, tz0;
 
 
-static std::string mode = "CALIBRATION";
+static std::string mode = "GENERATION";
 float FPS;
 tf::Transform E;
 static std::string cv_window_name = "Overlay output";
 static std::string cv_window_name_bg = "Background adjustment";
 static cv::Mat vis_img;
 static bool vis_mode_depth = false;
+static int traj_smoothing = 1;
 
 ros::Publisher vis_pub, vis_pub_range;
 image_transport::Publisher image_pub;
@@ -78,15 +79,39 @@ std::string dataset_folder;
 
 // Event buffer
 #define EVENT_WIDTH 30000
-#define TIME_WIDTH 0.05
+#define TIME_WIDTH 0.02
 static ull start_timestamp = 0;
 CircularArray<Event, EVENT_WIDTH, FROM_SEC(TIME_WIDTH)> ev_buffer;  
 std::list<Event> all_events;
 std::list<std::pair<cv::Mat, double>> all_depthmaps;
-std::list<std::pair<int, vicon::Subject>> all_poses;
 
 
-void process_camera();
+void process_camera(tf::Transform to_camcenter);
+tf::Transform world2camcenter(const vicon::Subject& p) {
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(p.position.x, p.position.y, p.position.z));
+    tf::Quaternion q(p.orientation.x,
+                     p.orientation.y,
+                     p.orientation.z,
+                     p.orientation.w); 
+    transform.setRotation(q);
+    static tf::TransformBroadcaster tf_br;
+    tf_br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/vicon", "/camera_markers"));
+
+    Eigen::Matrix4f Tm;
+    Tm <<  0.0,    1.0,   0.0,  0.00,
+          -1.0,    0.0,   0.0,  0.00,
+           0.0,    0.0,   1.0,  0.00,
+             0,      0,     0,     1;
+    Tm = Tm.inverse().eval();   
+
+    tf::Transform to_camcenter = transform * ViObject::mat2tf(Tm) * E;
+    tf_br.sendTransform(tf::StampedTransform(to_camcenter, ros::Time::now(), "/vicon", "/camera_center"));
+
+    return to_camcenter;
+}
+
+
 void event_cb(const dvs_msgs::EventArray::ConstPtr& msg) {
     if ((epacks_received == 0) && (msg->events.size() > 0)) {
         first_event_msg_ts = msg->header.stamp;
@@ -107,7 +132,8 @@ void event_cb(const dvs_msgs::EventArray::ConstPtr& msg) {
     }
 
     if (mode == "CALIBRATION") {
-        process_camera();
+        auto tf_to_camcenter = world2camcenter(last_cam_pos);
+        process_camera(tf_to_camcenter);
     }
 }
 
@@ -219,7 +245,7 @@ void update_vis_img(cv::Mat &projected) {
 }
 
 
-void process_camera() {
+void process_camera(tf::Transform to_camcenter) {
     if (numreceived == 0)
         return;
 
@@ -235,16 +261,6 @@ void process_camera() {
     vis_markers.markers.push_back(vis_marker);
     vis_pub.publish(vis_markers);
 
-    tf::Transform transform;
-    transform.setOrigin(tf::Vector3(last_cam_pos.position.x, last_cam_pos.position.y, last_cam_pos.position.z));
-    tf::Quaternion q(last_cam_pos.orientation.x,
-                     last_cam_pos.orientation.y,
-                     last_cam_pos.orientation.z,
-                     last_cam_pos.orientation.w); 
-    transform.setRotation(q);
-    static tf::TransformBroadcaster tf_br;
-    tf_br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/vicon", "/camera_markers"));
-
     sensor_msgs::Range cone;
     cone.field_of_view = 1;
     cone.min_range = 0;
@@ -252,17 +268,6 @@ void process_camera() {
     cone.range = 3;
     cone.header.frame_id = "/camera_center";
     vis_pub_range.publish(cone);
-
-    // =====================
-    Eigen::Matrix4f Tm;
-    Tm <<  0.0,    1.0,   0.0,  0.00,
-          -1.0,    0.0,   0.0,  0.00,
-           0.0,    0.0,   1.0,  0.00,
-             0,      0,     0,     1;
-    Tm = Tm.inverse().eval();   
-
-    auto to_camcenter = transform * ViObject::mat2tf(Tm) * E;
-    tf_br.sendTransform(tf::StampedTransform(to_camcenter, ros::Time::now(), "/vicon", "/camera_center"));
 
     for (auto &obj : objects) {
         if (!obj->update_camera_pose(to_camcenter)) {
@@ -288,15 +293,15 @@ void process_camera() {
     // Room scan projection
     project_cloud(projected, room_scan->get_cloud(), 0);
 
+    // Save camera trajectory / depthmaps
     all_depthmaps.push_back(std::make_pair(projected, image_ts));
-    all_poses.push_back(std::make_pair(0, ViObject::tf2subject(to_camcenter)));
+    cam_pos_manager.save_checkpoint();
     for (auto &obj : objects) {
-        all_poses.push_back(std::make_pair(obj->get_id(), obj->get_last_pos()));
+        obj->get_pm().save_checkpoint();
     }
 
     // Visualization
     update_vis_img(projected);
-
 
     for (auto &obj : objects) {
         int id = obj->get_id();
@@ -306,14 +311,14 @@ void process_camera() {
                     cv::Scalar(255,255,255), 1, cv::LINE_AA, false);
     }
 
-
     sensor_msgs::ImagePtr img_depth_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", vis_img).toImageMsg();                
     image_pub.publish(img_depth_msg);
 }
 
 
 void camera_pos_cb(const vicon::Subject& subject) {
-    cam_pos_filter.push_back(subject);
+    auto tf_to_camcenter = world2camcenter(subject);
+    cam_pos_manager.push_back(ViObject::tf2subject(tf_to_camcenter), ViObject::tf2subject(tf_to_camcenter));
 
     if (subject.occluded) 
         return;
@@ -328,7 +333,7 @@ void camera_pos_cb(const vicon::Subject& subject) {
     cam_visibility *= 100.0;
 
     if (mode == "CALIBRATION") {
-        last_cam_pos = cam_pos_filter.average();
+        last_cam_pos = subject;
         numreceived ++;
         return;
     }
@@ -336,10 +341,10 @@ void camera_pos_cb(const vicon::Subject& subject) {
     if ((subject.header.stamp - last_cam_pos.header.stamp).toSec() < 1.0 / FPS)
         return;
 
-    last_cam_pos = cam_pos_filter.average();
+    last_cam_pos = subject;
     numreceived ++;
 
-    process_camera();
+    process_camera(tf_to_camcenter);
 }
 
 
@@ -360,15 +365,6 @@ void save_data(std::string dir) {
 
     unsigned long int i = 0;
 
-    std::string calibfname = dir + "/calib.txt";
-    std::ofstream calib_file(calibfname, std::ofstream::out);
-    calib_file << fy << " " << 0  << " " << cy << std::endl;
-    calib_file << 0  << " " << fx << " " << cx << std::endl;
-    calib_file << 0  << " " << 0  << " " << 1  << std::endl;
-    calib_file << std::endl;
-    calib_file << k1 / 10 << " " << k2 / 10 << " " << k3 / 10 << " " << k4 / 10 << std::endl;
-    calib_file.close();
-
     std::string tsfname = dir + "/ts.txt";
     std::ofstream ts_file(tsfname, std::ofstream::out);
 
@@ -378,27 +374,45 @@ void save_data(std::string dir) {
     std::string cam_fname = dir + "/trajectory.txt";
     std::ofstream cam_file(cam_fname, std::ofstream::out);
 
-    std::unordered_map<int, int> cnts = {{0, 0}};
+    std::unordered_map<int, PoseManager> pose_managers = {{0, cam_pos_manager}};
+    std::vector<int> oids = {0};
     for (auto &obj : objects) {
-        cnts.insert({obj->get_id(), 0});
+        oids.push_back(obj->get_id());
+        pose_managers.insert({obj->get_id(), obj->get_pm()});
     }
 
-    for (auto &pos : all_poses) {
-        cnts.at(pos.first) ++;
-        auto &loc = pos.second.position;
-        auto &rot = pos.second.orientation;
+    for (auto &oid : oids)
+        pose_managers.at(oid).smooth(traj_smoothing);
 
-        if (pos.first == 0) {
-            cam_file << cnts.at(pos.first) << " "
+    uint32_t nframes = all_depthmaps.size();
+    for (auto &oid : oids) {
+        uint32_t local_size = pose_managers.at(oid).get_obj_poses().size();
+        if (local_size != nframes) {
+            std::cout << "ERROR!!! : object id " << oid << " has " 
+                      << local_size << " pose data points (vs " 
+                      << nframes << " frames)" << std::endl;
+        }
+    }
+
+    for (uint32_t i = 0; i < nframes; ++i) {
+        for (auto &oid : oids) {
+            auto &pm  = pose_managers.at(oid);
+            auto &loc = pm.get_obj_poses().at(i).position;
+            auto &rot = pm.get_obj_poses().at(i).orientation;
+
+            if (oid == 0) {
+                cam_file << i << " "
+                         << loc.x << " " << loc.y << " " << loc.z << " "
+                         << rot.w << " " << rot.x << " " << rot.y << " " << rot.z << std::endl;
+                continue;
+            }
+
+            obj_file << i << " " << oid << " "
                      << loc.x << " " << loc.y << " " << loc.z << " "
                      << rot.w << " " << rot.x << " " << rot.y << " " << rot.z << std::endl;
-            continue;
         }
-
-        obj_file << cnts.at(pos.first) << " " << pos.first << " "
-                 << loc.x << " " << loc.y << " " << loc.z << " "
-                 << rot.w << " " << rot.x << " " << rot.y << " " << rot.z << std::endl;
     }
+
 
     i = 0;
     for (auto &pair : all_depthmaps) {
@@ -406,7 +420,7 @@ void save_data(std::string dir) {
             std::cout << "Written " << i << " / " << all_depthmaps.size() <<  std::endl;
         }
 
-        std::string gtfname = dir + "/gt/frame_" + std::to_string(i) + ".png";
+        std::string gtfname = "gt/frame_" + std::to_string(i) + ".png";
         ts_file << gtfname << " " << pair.second << std::endl;
 
         cv::Mat projected_i16(RES_X, RES_Y, CV_16UC3, cv::Scalar(0, 0, 0));
@@ -416,7 +430,7 @@ void save_data(std::string dir) {
         projected_i16.convertTo(projected_i16, CV_16UC3);
 
 
-        cv::imwrite(gtfname, projected_i16);        
+        cv::imwrite(dir + '/' + gtfname, projected_i16);        
         i ++;
     }
     ts_file.close();
@@ -427,17 +441,21 @@ void save_data(std::string dir) {
     std::string efname = dir + "/events.txt";
     std::ofstream event_file(efname, std::ofstream::out);
     i = 0;
+    std::stringstream ss;
     for (auto &e : all_events) {
         if (i % 100000 == 0) {
-            std::cout << "Written " << i << " / " << all_events.size() <<  std::endl;
+            std::cout << "Formatting " << i << " / " << all_events.size() <<  std::endl;
         }
         
-        event_file << std::fixed << std::setprecision(9) 
-                   << double(e.timestamp / 1000) / 1000000.0 
-                   << " " << e.fr_y << " " << e.fr_x 
-                   << " " << int(e.polarity) << std::endl;
+        ss << std::fixed << std::setprecision(9) 
+           << double(e.timestamp / 1000) / 1000000.0 
+           << " " << e.fr_y << " " << e.fr_x 
+           << " " << int(e.polarity) << std::endl;
         i ++;
     }
+
+    std::cout << "Saving on disk" <<  std::endl;
+    event_file << ss.str();
     event_file.close();
     std::cout << "Events written... Done\n";
 }
@@ -556,11 +574,9 @@ int main (int argc, char** argv) {
     ros::Subscriber event_sub = nh.subscribe("/dvs/events", 0, event_cb);
     image_pub = it_.advertise("/ev_imo/depth_raw", 1);
 
-    int traj_smoothing = 1;
     if (!nh.getParam("event_imo_datagen/folder", dataset_folder)) dataset_folder = "";
     if (!nh.getParam("event_imo_datagen/fps", FPS)) FPS = 40;
     if (!nh.getParam("event_imo_datagen/smoothing", traj_smoothing)) traj_smoothing = 1;
-    cam_pos_filter.resize(traj_smoothing);
 
     std::string path_to_self = ros::package::getPath("event_imo_datagen");
 
@@ -720,12 +736,13 @@ int main (int argc, char** argv) {
 
             auto to_cam = room_scan->get_to_camcenter();
             room_scan->transform(room_scan->get_static() * to_cam * E_bg * to_cam.inverse());
- 
-            process_camera();
+            
+            auto tf_to_camcenter = world2camcenter(last_cam_pos);
+            process_camera(tf_to_camcenter);
         }
 
         if (code == 105) { // 'i'
-            ros::Time ros_start_time = first_cam_pos_ts;
+            ros::Time ros_start_time = (first_cam_pos_ts < first_event_msg_ts) ? first_cam_pos_ts : first_event_msg_ts;
             std::cout << "ROS first message time (offset): " << ros_start_time << std::endl;
             std::cout << "Last camera pos ts: " << last_cam_pos.header.stamp - ros_start_time << std::endl;
             std::cout << "Last event pack ts: " << last_event_msg_ts - ros_start_time << std::endl;
