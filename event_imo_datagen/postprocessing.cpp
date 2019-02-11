@@ -198,13 +198,28 @@ void project_cloud(cv::Mat &img, pcl::PointCloud<pcl::PointXYZRGB> *cl, int oid)
             continue;
 
         float rng = p.x;
-        float base_rng = img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[0];
+        if (rng < 0.001)
+            continue;
+        int patch_size = int(1.0 / rng);
+        
+        if (oid == 0)
+            patch_size = int(5.0 / rng);
 
-        if (base_rng > rng || base_rng < 0.001) {
-            img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[0] = rng;
-            img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[1] = 0;
-            //if (oid > 0)
-            img.at<cv::Vec3f>(img.rows - u - 1, img.cols - v - 1)[2] = oid;
+        int u_lo = std::max(u - patch_size / 2, 0);
+        int u_hi = std::min(u + patch_size / 2, img.rows - 1);
+        int v_lo = std::max(v - patch_size / 2, 0);
+        int v_hi = std::min(v + patch_size / 2, img.cols - 1);
+
+
+        for (int ii = u_lo; ii <= u_hi; ++ii) {
+            for (int jj = v_lo; jj <= v_hi; ++jj) {
+                float base_rng = img.at<cv::Vec3f>(img.rows - ii - 1, img.cols - jj - 1)[0];
+                if (base_rng > rng || base_rng < 0.001) {
+                    img.at<cv::Vec3f>(img.rows - ii - 1, img.cols - jj - 1)[0] = rng;
+                    img.at<cv::Vec3f>(img.rows - ii - 1, img.cols - jj - 1)[1] = rng;
+                    img.at<cv::Vec3f>(img.rows - ii - 1, img.cols - jj - 1)[2] = oid;
+                }
+            }
         }
     }
 }
@@ -215,8 +230,9 @@ void update_vis_img(cv::Mat &projected) {
 
     std::vector<cv::Mat> spl;
     cv::split(projected, spl);
-    cv::Mat depth = spl[0];
-    cv::Mat mask  = spl[2];
+    cv::Mat depth  = spl[0];
+    cv::Mat depth2 = spl[1];
+    cv::Mat mask   = spl[2];
 
     cv::normalize(depth, depth, 0, 255, cv::NORM_MINMAX);
 
@@ -230,7 +246,13 @@ void update_vis_img(cv::Mat &projected) {
             vis_img.at<cv::Vec3b>(i, j)[2] = img_pr.at<uchar>(i, j);
 
             if (vis_mode_depth) {
-                vis_img.at<cv::Vec3b>(i, j)[0] = depth.at<float>(i, j);
+                float rcp_depth = 8000.0 / (depth.at<float>(i, j) + 0.01);
+                //if (depth.at<float>(i, j) < 63)
+                //    rcp_depth = 4000.0 / (depth.at<float>(i, j) + 0.01);
+
+                vis_img.at<cv::Vec3b>(i, j)[0] = std::min(rcp_depth, 255.0f);
+                if (depth2.at<float>(i, j) < 0.01)
+                    vis_img.at<cv::Vec3b>(i, j)[0] = 0;
             } else {
                 int id = std::round(mask.at<float>(i, j));
                 auto color = EventFile::id2rgb(id);
@@ -285,7 +307,7 @@ void process_camera(tf::Transform to_camcenter) {
     double image_ts = et_sec + (last_cam_pos.header.stamp - last_event_msg_ts).toSec();
 
     cv::Mat projected(RES_X, RES_Y, CV_32FC3, cv::Scalar(0, 0, 0));
-    
+
     for (auto &obj : objects) {
         project_cloud(projected, obj->get_cloud(), obj->get_id());
     }
@@ -570,7 +592,10 @@ int main (int argc, char** argv) {
     vis_pub = nh.advertise<visualization_msgs::MarkerArray>("/ev_imo/markers", 0);
     vis_pub_range = nh.advertise<sensor_msgs::Range>("/ev_imo/markers_range",  0);
 
-    ros::Subscriber cam_sub = nh.subscribe("/vicon/DVS346", 0, camera_pos_cb);
+    // One of the cameras
+    ros::Subscriber cam_sub_1 = nh.subscribe("/vicon/DVS346", 0, camera_pos_cb);
+    ros::Subscriber cam_sub_2 = nh.subscribe("/vicon/DAVIS240C", 0, camera_pos_cb);
+    
     ros::Subscriber event_sub = nh.subscribe("/dvs/events", 0, event_cb);
     image_pub = it_.advertise("/ev_imo/depth_raw", 1);
 
@@ -650,7 +675,7 @@ int main (int argc, char** argv) {
     int value_tx = maxval / 2, value_ty = maxval / 2, value_tz = maxval / 2;
     int value_rr_bg = maxval / 2, value_rp_bg = maxval / 2, value_ry_bg = maxval / 2;
     int value_tx_bg = maxval / 2, value_ty_bg = maxval / 2, value_tz_bg = maxval / 2;
-    int value_br = 250;
+    int value_br = 400;
 
     cv::namedWindow(cv_window_name, cv::WINDOW_AUTOSIZE);
     cv::createTrackbar("R", cv_window_name, &value_rr, maxval, on_trackbar);
@@ -702,12 +727,12 @@ int main (int argc, char** argv) {
             changed = true;
         }
 
-        float rr = rr0 + normval(value_rr, maxval, maxval * 10);
-        float rp = rp0 + normval(value_rp, maxval, maxval * 10);
-        float ry = ry0 + normval(value_ry, maxval, maxval * 10);
-        float tx = tx0 + normval(value_tx, maxval, maxval * 50);
-        float ty = ty0 + normval(value_ty, maxval, maxval * 50);
-        float tz = tz0 + normval(value_tz, maxval, maxval * 50);
+        float rr = rr0 + normval(value_rr, maxval, maxval * 1);
+        float rp = rp0 + normval(value_rp, maxval, maxval * 1);
+        float ry = ry0 + normval(value_ry, maxval, maxval * 1);
+        float tx = tx0 + normval(value_tx, maxval, maxval * 1);
+        float ty = ty0 + normval(value_ty, maxval, maxval * 1);
+        float tz = tz0 + normval(value_tz, maxval, maxval * 1);
 
         float rr_bg = normval(value_rr_bg, maxval, maxval * 10);
         float rp_bg = normval(value_rp_bg, maxval, maxval * 10);

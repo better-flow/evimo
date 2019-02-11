@@ -14,6 +14,28 @@ import cv2
 from utils import *
 
 
+def dvs_img(cloud, shape, K, D, slice_width):
+    cmb = pydvs.dvs_img(cloud, shape, K=K, D=D)
+
+    time = cmb[:,:,1]
+    pcnt = cmb[:,:,2]
+    ncnt = cmb[:,:,0]
+    cnt = pcnt + ncnt
+    
+    #ncnt[cnt < 1.5] = 0
+    #pcnt[cnt < 1.5] = 0
+    #time[cnt < 1.5] = 0
+
+    cmb[:,:,0] *= 50
+    cmb[:,:,1] *= 255.0 / slice_width
+    cmb[:,:,2] *= 50
+
+    #tmp = np.copy(cmb)
+    #tmp[:,:,0] = cmb[:,:,1]
+    #tmp[:,:,1] = cmb[:,:,0]
+    return cmb
+
+
 def gen_text_stub(shape_y, cam_vel, objs_pos, objs_vel):
     oids = objs_pos.keys()
     step = 20
@@ -339,6 +361,63 @@ def get_scores(inf_depth, inf_ego, inf_ppose, inf_mask,
     return np.hstack((depth_img, ppose_img))
 
 
+
+
+def getIROS(fin):
+    f = open(fin, 'r')
+    lines = f.readlines()
+    f.close()
+
+    irosT_x = []
+    irosT_y = []
+    irosT_z = []
+    irosQ_z = []
+
+    for line in lines:
+        spl = line.split(' ')
+        try:
+            irosT_y.append(-float(spl[0]))
+            irosT_x.append(-float(spl[1]))
+            irosT_z.append(-float(spl[2]))
+            irosQ_z.append(float(spl[3]))
+        except:
+            continue
+
+    fnums = np.array([i for i in range(0, len(irosT_x))])
+    return np.array(irosT_x), np.array(irosT_y), np.array(irosT_z), np.array(irosQ_z), fnums
+
+
+def clean_outliers(array, th):
+    for i in range(1, array.shape[0]):
+        if (abs(array[i] - array[i - 1]) > th):
+            array[i] = array[i - 1]
+
+
+def scale_factor(a1, a2, th):
+    a1_abs = np.abs(a1)
+    a2_abs = np.abs(a2)
+
+    avg = 0.0
+    cnt = 0.0
+    for i in range(0, min(a2_abs.shape[0], a1_abs.shape[0])):
+        if (a2_abs[i] < th):
+            continue
+        avg += a1_abs[i] / a2_abs[i]
+        cnt += 1.0
+    return avg, cnt
+
+
+def AEE_score(gX, gY, gZ, iX, iY, iZ):
+    EE = 0.0
+
+    cnt = min(len(gX), len(iX))
+    for i in range(cnt):
+        v1 = np.array([gX[i], gY[i], gZ[i]])
+        v2 = np.array([iX[i], iY[i], iZ[i]])
+        EE += trueEE(v1, v2)
+    return EE / float(cnt), float(cnt)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--base_dir',
@@ -348,6 +427,10 @@ if __name__ == '__main__':
     parser.add_argument('--inference_dir',
                         type=str,
                         default='.',
+                        required=False)
+    parser.add_argument('--iros',
+                        type=str,
+                        default='',
                         required=False)
     parser.add_argument('--width',
                         type=float,
@@ -369,9 +452,12 @@ if __name__ == '__main__':
     obj_traj_global = read_object_traj(os.path.join(args.base_dir, 'objects.txt'))
     
     nums = sorted(obj_traj_global.keys())
-    oids = sorted(obj_traj_global[nums[0]].keys())
+    oids = []
+    if (len(nums) > 0):
+        oids = sorted(obj_traj_global[nums[0]].keys())
     
-    if (len(cam_traj_global.keys()) != len(obj_traj_global.keys())):
+    nums = sorted(cam_traj_global.keys())
+    if (len(oids) > 0 and len(cam_traj_global.keys()) != len(obj_traj_global.keys())):
         print("Camera vs Obj pose numbers differ!")
         print("\t", len(cam_traj_global.keys()), len(obj_traj_global.keys()))
         sys.exit()
@@ -395,13 +481,143 @@ if __name__ == '__main__':
         sys.exit()
 
     print ("Compute velocities")
-    obj_vels = obj_poses_to_vels(obj_traj, gt_ts)
-    cam_vels = cam_poses_to_vels(cam_traj_global, gt_ts)
+    fake_ts = [i for i in range(len(obj_traj.keys()))]
+    obj_vels = obj_poses_to_vels(obj_traj, fake_ts)
+    fake_ts = [i for i in range(len(cam_traj_global.keys()))]
+    cam_vels = cam_poses_to_vels(cam_traj_global, fake_ts)
 
     slice_width = args.width
 
-    #first_ts = cloud[0][0]
-    #last_ts = cloud[-1][0]
+
+    # ======================================
+    import matplotlib.pyplot as plt
+
+    gT_x = np.array([cam_vels[i][0][0] for i in sorted(cam_vels.keys())])
+    gT_y = np.array([cam_vels[i][0][1] for i in sorted(cam_vels.keys())])
+    gT_z = np.array([cam_vels[i][0][2] for i in sorted(cam_vels.keys())])
+    gT_2 = np.array([cam_vels[i][0][0] * cam_vels[i][0][0] + cam_vels[i][0][1] * cam_vels[i][0][1] + cam_vels[i][0][2] * cam_vels[i][0][2] for i in sorted(cam_vels.keys())])
+    gEuler = [quaternion_to_euler(cam_vels[i][1]) for i in sorted(cam_vels.keys())]
+    gQ_x = np.array([q[0] for q in gEuler])
+    gQ_y = np.array([q[1] for q in gEuler])
+    gQ_z = np.array([q[2] for q in gEuler])
+
+    iT_x = np.array([inf_ego[i][0] for i in sorted(inf_ego.keys())])
+    iT_y = np.array([inf_ego[i][1] for i in sorted(inf_ego.keys())])
+    iT_z = np.array([inf_ego[i][2] for i in sorted(inf_ego.keys())])
+    iT_2 = np.array([inf_ego[i][0] * inf_ego[i][0] + inf_ego[i][1] * inf_ego[i][1] + inf_ego[i][2] * inf_ego[i][2] for i in sorted(inf_ego.keys())])
+    iQ_x = np.array([math.degrees(inf_ego[i][3]) for i in sorted(inf_ego.keys())])
+    iQ_y = np.array([math.degrees(inf_ego[i][4]) for i in sorted(inf_ego.keys())])
+    iQ_z = np.array([math.degrees(inf_ego[i][5]) for i in sorted(inf_ego.keys())])
+
+    Thi = np.max(np.sqrt(gT_2)) * 1.1
+    Qhi = max(np.max(np.abs(gQ_x)), np.max(np.abs(gQ_y)), np.max(np.abs(gQ_z)), np.max(np.abs(iQ_x)), np.max(np.abs(iQ_y)), np.max(np.abs(iQ_z))) * 1.1
+
+    #clean_outliers(gQ_x, 40)
+    #clean_outliers(gQ_y, 40)
+    #clean_outliers(gQ_z, 40)
+
+    th = 0.01
+    s1, c1 = scale_factor(np.sqrt(iT_2), np.sqrt(gT_2), th)
+    iScaling = (c1) / (s1)
+
+    iT_x *= -iScaling
+    iT_y *=  iScaling
+    iT_z *=  iScaling
+    iQ_x *= -1.0
+    iQ_y *= -1.0
+    iQ_z *= -1.0
+
+    fig, axs = plt.subplots(10, 1)
+    axs[2].plot(sorted(cam_vels.keys()), gT_x)
+    axs[2].plot(sorted(inf_ego.keys()),  iT_z)
+    axs[2].set_ylabel('Z axis (front-back) m')
+    axs[2].set_ylim([-Thi, Thi])
+
+    axs[1].plot(sorted(cam_vels.keys()), gT_z)
+    axs[1].plot(sorted(inf_ego.keys()),  iT_y)
+    axs[1].set_ylabel('Y axis (up-down) m')
+    axs[1].set_ylim([-Thi, Thi])
+
+    axs[0].plot(sorted(cam_vels.keys()), gT_y)
+    axs[0].plot(sorted(inf_ego.keys()),  iT_x)
+    axs[0].set_ylabel('X axis (left-right) m')
+    axs[0].set_ylim([-Thi, Thi])
+
+    axs[3].plot(sorted(cam_vels.keys()), gQ_x)
+    axs[3].plot(sorted(inf_ego.keys()),  iQ_x)
+    axs[3].set_ylabel('X rotation, deg')
+    axs[3].set_ylim([-Qhi, Qhi])
+
+    axs[5].plot(sorted(cam_vels.keys()), gQ_y)
+    axs[5].plot(sorted(inf_ego.keys()),  iQ_z)
+    axs[5].set_ylabel('Z rotation, deg')
+    axs[5].set_ylim([-Qhi, Qhi])
+
+    axs[4].plot(sorted(cam_vels.keys()), gQ_z)
+    axs[4].plot(sorted(inf_ego.keys()),  iQ_y)
+    axs[4].set_ylabel('Y rotation, deg')
+    axs[4].set_ylim([-Qhi, Qhi])
+    axs[5].set_xlabel('frame')
+
+
+    # scores on inference
+    infT_aee, infT_cnt = AEE_score(gT_y, gT_z, gT_x, iT_x, iT_y, iT_z)
+    infQ_aee, infQ_cnt = AEE_score(gQ_x, gQ_z, gQ_y, iQ_x, iQ_y, iQ_z)
+
+    print ("\ninference:")
+    print ("T AEE / cnt:", infT_aee, infT_cnt)
+    print ("Q AEE / cnt:", infQ_aee, infQ_cnt)
+
+
+    # iROS paper / better flow
+    if (args.iros != ""):
+        irosT_x, irosT_y, irosT_z, irosQ_z, fnums = getIROS(args.iros)
+        irosT_2 = irosT_x * irosT_x + irosT_y * irosT_y + irosT_z * irosT_z
+
+        th = np.max(np.sqrt(gT_x * gT_x)) * 0.9
+        s1, c1 = scale_factor(np.sqrt(irosT_x * irosT_x), np.sqrt(gT_x * gT_x), th)
+        xScaling = (c1) / (s1)
+
+        th = np.max(np.sqrt(gT_y * gT_y)) * 0.9
+        s1, c1 = scale_factor(np.sqrt(irosT_y * irosT_y), np.sqrt(gT_y * gT_y), th)
+        yScaling = (c1) / (s1)
+
+        th = np.max(np.sqrt(gT_z * gT_z)) * 0.9
+        s1, c1 = scale_factor(np.sqrt(irosT_z * irosT_z), np.sqrt(gT_z * gT_z), th)
+        zScaling = (c1) / (s1) * 5
+
+        irosQ_x = np.zeros(irosQ_z.shape)
+        irosQ_y = np.zeros(irosQ_z.shape)
+
+        irosT_x *= xScaling
+        irosT_y *= yScaling
+        irosT_z *= zScaling
+
+        axs[0].plot(fnums, irosT_x)
+        axs[1].plot(fnums, irosT_y)
+        axs[2].plot(fnums, irosT_z)
+        axs[5].plot(fnums, irosQ_z)
+
+        axs[6].plot(fnums, irosT_x)
+        axs[7].plot(fnums, irosT_y)
+        axs[8].plot(fnums, irosT_z)
+        axs[9].plot(fnums, irosQ_z)
+
+        # scores on iROS
+        bfT_aee, bfT_cnt = AEE_score(gT_y, gT_z, gT_x, irosT_x, irosT_y, irosT_z)
+        bfQ_aee, bfQ_cnt = AEE_score(gQ_x, gQ_z, gQ_y, irosQ_x, irosQ_y, irosQ_z)
+        print ("\niROS:")
+        print ("T AEE / cnt:", bfT_aee, bfT_cnt)
+        print ("Q AEE / cnt:", bfQ_aee, bfQ_cnt)
+
+
+    plt.savefig(os.path.join(args.inference_dir, 'velocity_plots.png'), dpi=600, bbox_inches='tight')
+
+    plt.show()
+    exit(0)
+
+  
+    # ======================================
 
     fx = K[0,0]
     fy = K[1,1]
@@ -438,8 +654,8 @@ if __name__ == '__main__':
 
 
         col_mask = mask_to_color(mask_gt[i])
-        sl, _ = get_slice(cloud, idx, time, args.width, args.mode, discretization)
-        eimg = dvs_img(sl, global_shape, K, D)
+        sl, _ = pydvs.get_slice(cloud, idx, time, args.width, args.mode, discretization)
+        eimg = dvs_img(sl, global_shape, K, D, args.width)
         #baseline_img = np.vstack((eimg, col_mask))
         ev_img = np.hstack((eimg, col_mask, ev_img))
 
