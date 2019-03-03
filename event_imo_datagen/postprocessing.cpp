@@ -243,21 +243,28 @@ void update_vis_img(cv::Mat &projected) {
     int nCols = vis_img.cols;
     for(int i = 0; i < nRows; ++i) {
         for (int j = 0; j < nCols; ++j) {
-            vis_img.at<cv::Vec3b>(i, j)[2] = img_pr.at<uchar>(i, j);
-
             if (vis_mode_depth) {
                 float rcp_depth = 8000.0 / (depth.at<float>(i, j) + 0.01);
                 //if (depth.at<float>(i, j) < 63)
                 //    rcp_depth = 4000.0 / (depth.at<float>(i, j) + 0.01);
 
                 vis_img.at<cv::Vec3b>(i, j)[0] = std::min(rcp_depth, 255.0f);
-                if (depth2.at<float>(i, j) < 0.01)
+                vis_img.at<cv::Vec3b>(i, j)[1] = std::min(rcp_depth, 255.0f);
+                vis_img.at<cv::Vec3b>(i, j)[2] = std::min(rcp_depth, 255.0f);
+
+                if (depth2.at<float>(i, j) < 0.01) {
                     vis_img.at<cv::Vec3b>(i, j)[0] = 0;
+                    vis_img.at<cv::Vec3b>(i, j)[1] = 0;
+                    vis_img.at<cv::Vec3b>(i, j)[2] = 0;
+                }
+
+                vis_img.at<cv::Vec3b>(i, j)[2] = img_pr.at<uchar>(i, j);
             } else {
                 int id = std::round(mask.at<float>(i, j));
                 auto color = EventFile::id2rgb(id);
                 vis_img.at<cv::Vec3b>(i, j) = color;
             }
+
         }
     }
 
