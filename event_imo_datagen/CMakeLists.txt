@@ -5,17 +5,7 @@ project(event_imo_datagen)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_BUILD_TYPE Release)
 
-#set(CMAKE_BUILD_TYPE Debug)
 add_definitions(-std=c++14)
-
-
-find_package(catkin REQUIRED COMPONENTS
-  pcl_conversions
-  pcl_ros
-  roscpp
-  sensor_msgs
-  vicon
-)
 
 
 
@@ -36,16 +26,17 @@ find_package(catkin REQUIRED COMPONENTS
              vicon
 )
 
+
+find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(OpenCV REQUIRED)
 
 
 catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs vicon)
 
 
-
-
 include_directories(${catkin_INCLUDE_DIRS}
-	                ${PCL_INCLUDE_DIRS})
+	                ${PCL_INCLUDE_DIRS}
+                    ${Boost_INCLUDE_DIRS})
 
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -56,10 +47,20 @@ add_definitions(${PCL_DEFINITIONS})
 ###########
 ## Build ##
 ###########
-add_executable(event_imo_datagen postprocessing.cpp)
+add_executable(event_imo_online online.cpp)
 
-target_link_libraries(event_imo_datagen
+target_link_libraries(event_imo_online
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
     ${PCL_LIBRARIES}
+)
+
+
+add_executable(event_imo_offline offline.cpp)
+
+target_link_libraries(event_imo_offline
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${PCL_LIBRARIES}
+    ${Boost_LIBRARIES}
 )

@@ -68,14 +68,14 @@ typedef EventCloudTemplate<CircularArray<Event, MAX_EVENT_PER_PX, FROM_MS(MAX_TI
 
 // Pretty print
 
-#define _header(str) std::string("\033[95m" + std::to_string(str) + "\033[0m")
-#define _plain(str) std::string("\033[37m" + std::to_string(str) + "\033[0m")
-#define _blue(str) std::string("\033[94m" + std::to_string(str) + "\033[0m")
-#define _green(str) std::string("\033[92m" + std::to_string(str) + "\033[0m")
-#define _yellow(str) std::string("\033[93m" + std::to_string(str) + "\033[0m")
-#define _red(str) std::string("\033[91m" + std::to_string(str) + "\033[0m")
-#define _bold(str) std::string("\033[1m" + std::to_string(str) + "\033[0m")
-#define _underline(str) std::string("\033[4m" + std::to_string(str) + "\033[0m")
+#define _header(str) std::string("\033[95m" + std::string(str) + "\033[0m")
+#define _plain(str) std::string("\033[37m" + std::string(str) + "\033[0m")
+#define _blue(str) std::string("\033[94m" + std::string(str) + "\033[0m")
+#define _green(str) std::string("\033[92m" + std::string(str) + "\033[0m")
+#define _yellow(str) std::string("\033[93m" + std::string(str) + "\033[0m")
+#define _red(str) std::string("\033[91m" + std::string(str) + "\033[0m")
+#define _bold(str) std::string("\033[1m" + std::string(str) + "\033[0m")
+#define _underline(str) std::string("\033[4m" + std::string(str) + "\033[0m")
 
 template <typename T>
 std::string to_string_p(const T a_value, const int n = 6)

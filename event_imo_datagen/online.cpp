@@ -116,7 +116,7 @@ void event_cb(const dvs_msgs::EventArray::ConstPtr& msg) {
     if ((epacks_received == 0) && (msg->events.size() > 0)) {
         first_event_msg_ts = msg->header.stamp;
         start_timestamp = msg->events[0].ts.toNSec();
-        std::cout << "The first event timestamp: " << _green(start_timestamp) << std::endl;
+        std::cout << "The first event timestamp: " << _green(std::to_string(start_timestamp)) << std::endl;
     }
 
     for (uint i = 0; i < msg->events.size(); ++i) {
@@ -591,7 +591,7 @@ bool read_extr(std::string path) {
 
 int main (int argc, char** argv) {
     // Initialize ROS
-    ros::init (argc, argv, "event_imo_datagen");
+    ros::init (argc, argv, "event_imo_online");
     ros::NodeHandle nh;
     image_transport::ImageTransport it_(nh);
   
