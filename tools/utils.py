@@ -71,18 +71,20 @@ global_shape = (260, 346)
 
 
 def mask_to_color(mask):
-    colors = [[56,62,43], [26,50,63], [36,55,56], 
-              [0,255,0],   [0,0,255],   [255,0,0]]
-     
+    #colors = [[56,62,43], [26,50,63], [36,55,56], 
+    #          [0,255,0],   [0,0,255],   [255,0,0]]
+
+    colors = [[0,255,0],   [0,0,255],   [255,0,0]]
+
     cmb = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.float32)
-    cmb[:,:] = np.array([95, 96, 93])
+    #cmb[:,:] = np.array([95, 96, 93])
     m_ = np.max(mask) + 500
     m_ = max(m_, 3500)
  
     maxoid = int(m_ / 1000)
     for i in range(maxoid):
-        cutoff_lo = 1000.0 * (i + 1.0) - 200
-        cutoff_hi = 1000.0 * (i + 1.0) + 200
+        cutoff_lo = 1000.0 * (i + 1.0) - 5
+        cutoff_hi = 1000.0 * (i + 1.0) + 5
         cmb[np.where(np.logical_and(mask>=cutoff_lo, mask<=cutoff_hi))] = np.array(colors[i % len(colors)])
     cmb *= 2.5
 
@@ -144,6 +146,27 @@ def vel_to_color_splitmask(obj_masks, obj_vel, bg_pos=None):
     return cmb
 
 
+
+def vel_to_color_splitmask_(obj_masks, obj_vel, bg_pos=None):
+    oids = sorted(obj_vel.keys())
+    shape = global_shape
+    if (len(oids) > 0):
+        shape = obj_masks[oids[0]].shape
+    cmb = np.zeros((shape[0], shape[1], 3), dtype=np.float32)
+
+
+    for id_ in oids:
+        vel = obj_vel[id_]
+        obj_mask = obj_masks[id_]
+        cmb[obj_mask == 1] = np.array([vel[0][0], vel[0][1], vel[0][2]])
+
+    cmb = colorize_image(cmb[:,0], cmb[:,2])
+
+
+    return cmb
+
+
+
 def IOU(mask1, mask2):
     O = mask1 * mask2
     U = mask1 + mask2
@@ -193,6 +216,7 @@ def get_EE(v1, v2):
     
     best = sorted(solutions.keys())[0]
     return best, solutions[best]
+
 
 def trueEE(v1, v2):
     return np.linalg.norm(v2 - v1)
@@ -323,14 +347,21 @@ def read_object_traj(folder_path):
 
 
 def transform_pose(obj, cam):
-    pos = obj[0] - cam[0]
-    inv_rot = cam[1].inverse
-    #inv_rot = cam[1]
+    pos = cam[0] - obj[0]
+    #inv_rot = cam[1].inverse
+    inv_rot = cam[1]
     rotated_pos = inv_rot.rotate(pos)
+
+    #print ("\tCam = ", cam)
+    #print ("\tObj = ", obj)
+    #print ("\tres = ", [rotated_pos, obj[1] * cam[1].inverse])
+
     return [rotated_pos, obj[1] * cam[1].inverse]
 
 
 def to_cam_frame(obj_traj_global, cam_traj_global):
+    print ("\n\nTo cam frame...")
+
     ret = {}
     nums = sorted(obj_traj_global.keys())
 
@@ -341,7 +372,10 @@ def to_cam_frame(obj_traj_global, cam_traj_global):
 
     for num in nums:
         ret[num] = {}
+
+        #print ("\n\n", num, ":")
         for id_ in oids:
+            #print ("\n", id_, " -----")
             curr_loc = transform_pose(obj_traj_global[num][id_], cam_traj_global[num])
             ret[num][id_] = curr_loc
     return ret
@@ -422,6 +456,9 @@ def smooth_obj_vels(vels, wsize):
                 if (k < 0): continue
                 if (k >= len(nums)): continue
                 if (k == i): continue
+                if (not np.all(np.isfinite(vels[nums[k]][id_][0]))):
+                    print (i, k, vels[nums[k]][id_][0])
+
                 vel[0] += vels[nums[k]][id_][0]
                 n += 1.0
 

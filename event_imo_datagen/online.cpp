@@ -606,9 +606,9 @@ int main (int argc, char** argv) {
     ros::Subscriber event_sub = nh.subscribe("/dvs/events", 0, event_cb);
     image_pub = it_.advertise("/ev_imo/depth_raw", 1);
 
-    if (!nh.getParam("event_imo_datagen/folder", dataset_folder)) dataset_folder = "";
-    if (!nh.getParam("event_imo_datagen/fps", FPS)) FPS = 40;
-    if (!nh.getParam("event_imo_datagen/smoothing", traj_smoothing)) traj_smoothing = 1;
+    if (!nh.getParam("event_imo_online/folder", dataset_folder)) dataset_folder = "";
+    if (!nh.getParam("event_imo_online/fps", FPS)) FPS = 40;
+    if (!nh.getParam("event_imo_online/smoothing", traj_smoothing)) traj_smoothing = 1;
 
     std::string path_to_self = ros::package::getPath("event_imo_datagen");
 

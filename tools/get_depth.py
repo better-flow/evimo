@@ -143,6 +143,29 @@ if __name__ == '__main__':
     mask_gt        = sl_npz['mask']
     gt_ts          = sl_npz['gt_ts']
 
+
+    rgb_dir = os.path.join(args.base_dir, 'rgb')
+    add_rgb = True
+    if not os.path.exists(rgb_dir):
+        add_rgb = False
+
+    rgb_name_list = []
+    if (add_rgb):
+        flist = sorted(os.listdir(rgb_dir))
+        rgb_ts = np.loadtxt(os.path.join(args.base_dir, 'rgb_ts.txt'), usecols=0)
+        print ("Image files:", len(flist), "Image timestamps:", rgb_ts.shape, "Gt ts:", len(gt_ts))
+
+        for i, ts in enumerate(gt_ts):
+            nearest_delta = 1000.0
+            nearest_idx = -1
+            for j, ts_ in enumerate(rgb_ts):
+                if (abs(ts - ts_) < nearest_delta):
+                    nearest_delta = abs(ts - ts_)
+                    nearest_idx = j
+            
+            rgb_name_list.append(flist[nearest_idx])
+
+
     if (len(cam_traj_global.keys()) != len(gt_ts)):
         print("Camera vs Timestamp counts differ!")
         print("\t", len(cam_traj_global.keys()), len(gt_ts))
@@ -150,6 +173,8 @@ if __name__ == '__main__':
 
     obj_vels = obj_poses_to_vels(obj_traj, gt_ts)
     cam_vels = cam_poses_to_vels(cam_traj_global, gt_ts)
+    
+    #sys.exit()
 
     # plot stuff
     import matplotlib.pyplot as plt
@@ -268,8 +293,17 @@ if __name__ == '__main__':
         col_mask = mask_to_color(mask)
         col_mask += np.dstack((cimg, cimg * 0, cimg * 0)) * 1.0
 
-        eimg = np.hstack((eimg, col_mask))
-        
+
+        if (add_rgb):
+            rgb_img = cv2.imread(os.path.join(rgb_dir, rgb_name_list[i]), cv2.IMREAD_COLOR)
+            rgb_img = undistort_img(rgb_img,  K, D)
+
+            rgb_img[mask > 10] = rgb_img[mask > 10] * 0.5 + col_mask[mask > 10] * 0.5
+            eimg = np.hstack((rgb_img, eimg))
+        else:
+            eimg = np.hstack((eimg, col_mask))
+
+
         if (len(oids) > 0):
             col_vel = vel_to_color(mask, obj_vels[nums[i]])
             eimg = np.hstack((eimg, col_vel))

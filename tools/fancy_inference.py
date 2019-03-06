@@ -145,6 +145,10 @@ def get_object_pos(bmask, ppos, gt_pos):
     return inf_T, alpha
 
 
+def apply_object_pos(bmask, ppos, gt_pos):
+    ppos_th = th_ppos_mask(ppos, bmask) 
+    ppos[ppos_th[:,:,0] != np.nan] += gt_pos
+
 
 CAM_AEE = 0.0
 CAM_AEE_CNT = 0.0
@@ -268,9 +272,34 @@ def change_gt(obj_poses, imask, inf_ppose, inf_mask):
         obj_poses[oid][0] = inf_obj_poses[oid][0] * average_scale
 
 
+def change_gt_(obj_poses, imask, inf_ppose, inf_mask):
+    oids = sorted(obj_poses.keys())
+    masks = mask_to_masks(imask, obj_poses)
+    inf_ppose = fixup_pposvel(inf_ppose) * (-1)
+
+    inf_T = inf_ppose[:,:,0:3]
+
+    inf_obj_poses = {}
+    for oid in oids:
+        gt_obj_0_p = obj_poses[oid]
+        obj_0_p, alpha = get_object_pos(masks[oid], inf_T, gt_obj_0_p)
+        inf_obj_poses[oid] = [obj_0_p, alpha]
+
+    average_scale = 0
+    for oid in oids:
+        average_scale += inf_obj_poses[oid][1]
+    average_scale /= float(len(oids))
+    average_scale *= 0.3
+
+    for oid in oids:
+        inf_obj_poses[oid][0] = obj_poses[oid][0] - inf_obj_poses[oid][0] * average_scale
+
+    for oid in oids:
+        apply_object_pos(masks[oid], inf_T, inf_obj_poses[oid][0])
 
 
 def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
+
     oids = sorted(obj_poses.keys())
     masks = mask_to_masks(imask, obj_poses)
     inf_ppose = fixup_pposvel(inf_ppose) * (-1)
@@ -280,15 +309,16 @@ def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
     AEE_local = 0
     cnt = 0
     inf_obj_poses = {}
-   
+
     for oid in oids:
         gt_obj_0_p = obj_poses[oid]
+        #print ("\n", gt_obj_0_p)
+
         obj_0_p, alpha = get_object_pos(masks[oid], inf_T, gt_obj_0_p)
         inf_obj_poses[oid] = [obj_0_p, alpha]
 
         EE, tf = get_EE(gt_obj_0_p[0], obj_0_p * alpha)
         print ("\t", tf, obj_0_p * alpha, gt_obj_0_p[0], obj_0_p * alpha - gt_obj_0_p[0])
-        
 
     average_scale = 0
     for oid in oids:
@@ -332,7 +362,7 @@ def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
     img_gt = vel_to_color(imask, obj_poses)
     #return np.hstack((img_gt, img_inf, gt_bin_mask * 255, inf_bmask, inf_th_mask))
 
-    return np.hstack((img_gt * 10, img_inf * 10, inf_bmask))
+    return np.hstack((img_gt * 7, img_inf * 7, inf_bmask))
 
 
 
@@ -369,21 +399,11 @@ if __name__ == '__main__':
 
     print ("Opening", args.base_dir)
 
-    inf_depths, inf_ego, inf_pposes, inf_masks = read_inference(args.inference_dir)
+    #print(
+    #transform_pose([(np.array([1.133, -0.45, 0.567]) - np.array([0.604, -0.45, 0.31])), qt.Quaternion(1, 0, 0, 0)],
+    #               [np.array([0.0, -0.0, 0.0]), qt.Quaternion(0.226, 0, 0, 0.974)]))
+    #sys.exit()
 
-    # Trajectories
-    cam_traj_global = read_camera_traj(os.path.join(args.base_dir, 'trajectory.txt'))
-    obj_traj_global = read_object_traj(os.path.join(args.base_dir, 'objects.txt'))
-    
-    nums = sorted(obj_traj_global.keys())
-    oids = sorted(obj_traj_global[nums[0]].keys())
-    
-    if (len(cam_traj_global.keys()) != len(obj_traj_global.keys())):
-        print("Camera vs Obj pose numbers differ!")
-        print("\t", len(cam_traj_global.keys()), len(obj_traj_global.keys()))
-        sys.exit()
-
-    obj_traj = to_cam_frame(obj_traj_global, cam_traj_global);
 
     print("Reading npz file...")
     sl_npz = np.load(args.base_dir + '/recording.npz')
@@ -396,14 +416,69 @@ if __name__ == '__main__':
     mask_gt        = sl_npz['mask']
     gt_ts          = sl_npz['gt_ts']
 
+
+    rgb_dir = os.path.join(args.base_dir, 'rgb')
+    add_rgb = True
+    if not os.path.exists(rgb_dir):
+        add_rgb = False
+
+    rgb_name_list = []
+    if (add_rgb):
+        flist = sorted(os.listdir(rgb_dir))
+        rgb_ts = np.loadtxt(os.path.join(args.base_dir, 'rgb_ts.txt'), usecols=0)
+        print ("Image files:", len(flist), "Image timestamps:", rgb_ts.shape, "Gt ts:", len(gt_ts))
+
+        for i, ts in enumerate(gt_ts):
+            nearest_delta = 1000.0
+            nearest_idx = -1
+            for j, ts_ in enumerate(rgb_ts):
+                if (abs(ts - ts_) < nearest_delta):
+                    nearest_delta = abs(ts - ts_)
+                    nearest_idx = j
+            
+            rgb_name_list.append(flist[nearest_idx])
+            #print (i, nearest_idx, ts, rgb_ts[nearest_idx])
+
+    #sys.exit()
+
+    # Inference
+    inf_depths, inf_ego, inf_pposes, inf_masks = read_inference(args.inference_dir)
+
+    # Trajectories
+    cam_traj_global = read_camera_traj(os.path.join(args.base_dir, 'trajectory.txt'))
+    obj_traj_global = read_object_traj(os.path.join(args.base_dir, 'objects.txt'))
+
+    nums = sorted(obj_traj_global.keys())
+    oids = sorted(obj_traj_global[nums[0]].keys())
+    
+    if (len(cam_traj_global.keys()) != len(obj_traj_global.keys())):
+        print("Camera vs Obj pose numbers differ!")
+        print("\t", len(cam_traj_global.keys()), len(obj_traj_global.keys()))
+        sys.exit()
+
+    obj_traj = to_cam_frame(obj_traj_global, cam_traj_global);
+
+    #sys.exit()
+
+
     if (len(cam_traj_global.keys()) != len(gt_ts)):
         print("Camera vs Timestamp counts differ!")
         print("\t", len(cam_traj_global.keys()), len(gt_ts))
         sys.exit()
 
     print ("Compute velocities")
-    obj_vels_ = obj_poses_to_vels(obj_traj, gt_ts)
-    obj_vels = smooth_obj_vels(obj_vels_, 5)
+    obj_vels = obj_poses_to_vels(obj_traj, gt_ts)
+
+
+    #for i in range(180, 200):
+    #    img_gt = vel_to_color(mask_gt[i], obj_vels[nums[i]])
+    #    cv2.imwrite("/home/ncos/Desktop/test/frame_" + str(i) + ".png", img_gt)
+    #sys.exit()
+
+
+
+
+    #obj_vels = smooth_obj_vels(obj_vels_, 5)
     cam_vels = cam_poses_to_vels(cam_traj_global, gt_ts)
 
     slice_width = args.width
@@ -440,9 +515,12 @@ if __name__ == '__main__':
         change_gt(obj_vels[num], mask_gt[i], inf_pposes[i], inf_masks[i])
 
     
-    obj_vels_ = smooth_obj_vels(obj_vels, 3)
-    obj_vels = obj_vels_
+    #obj_vels_ = smooth_obj_vels(obj_vels, 3)
+    #obj_vels = obj_vels_
 
+
+
+    print ("Processing...")
     for i, time in enumerate(gt_ts):
         #if (time > last_ts or time < first_ts):
         #    continue
@@ -458,7 +536,21 @@ if __name__ == '__main__':
         col_mask = mask_to_color(mask_gt[i])
         sl, _ = pydvs.get_slice(cloud, idx, time, args.width, args.mode, discretization)
         eimg = dvs_img(sl, global_shape, K, D)
-        #baseline_img = np.vstack((eimg, col_mask))
-        ev_img = np.hstack((eimg, col_mask, ev_img))
+        
+        if (add_rgb):
+            ev_img = np.hstack((eimg, ev_img))
+        else:
+            ev_img = np.hstack((eimg, col_mask, ev_img))
+
+        if (add_rgb):
+            rgb_img = cv2.imread(os.path.join(rgb_dir, rgb_name_list[i]), cv2.IMREAD_COLOR)
+            rgb_img = undistort_img(rgb_img,  K, D)
+            
+            rgb_img[mask_gt[i] > 10] = rgb_img[mask_gt[i] > 10] * 0.5 + col_mask[mask_gt[i] > 10] * 0.5
+            ev_img = np.hstack((rgb_img, ev_img))
+
+
+        footer = gen_text_stub(ev_img.shape[1], cam_vels[num], obj_traj[num], obj_vels[num])
+        ev_img = np.vstack((ev_img, footer))
 
         cv2.imwrite(os.path.join(vis_dir, 'frame_' + str(i).rjust(10, '0') + '.png'), ev_img)
