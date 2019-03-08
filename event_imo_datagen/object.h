@@ -135,8 +135,9 @@ protected:
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud_camera_frame;
     pcl::PointCloud<pcl::PointXYZRGB> *obj_markerpos;
 
-    Eigen::Matrix4f LAST_SVD;
+    //Eigen::Matrix4f LAST_SVD;
     vicon::Subject last_pos;
+    tf::Transform s_transform;
     long int poses_received;
 
     PoseManager pose_manager;
@@ -175,9 +176,11 @@ public:
         }
         std::cout << "Read " << obj_cloud->size() << " points\n";
 
-        obj_cloud_camera_frame->header.frame_id = "/camera_center";
-        obj_cloud->header.frame_id = "/vicon";
-        this->LAST_SVD = Eigen::MatrixXf::Identity(4, 4);
+        this->obj_cloud_camera_frame->header.frame_id = "/camera_center";
+        this->obj_cloud_transformed->header.frame_id = "/camera_center";
+        this->obj_cloud->header.frame_id = "/vicon";
+        this->s_transform.setIdentity();
+        //this->LAST_SVD = Eigen::MatrixXf::Identity(4, 4);
 
         std::ifstream cfg(this->config_fname, std::ifstream::in);
         int id = -1; 
@@ -204,6 +207,10 @@ public:
     // Callbacks
     void vicon_pos_cb(const vicon::Subject& subject) {
         this->last_pos = subject;
+        
+        if (this->poses_received == 0)
+            this->init_cloud_to_vicon_tf(subject);
+
         this->poses_received ++;
         this->pose_manager.push_back(subject, subject);
 
@@ -225,17 +232,12 @@ public:
         this->vis_pub.publish(vis_markers);
     }
 
-    // Camera pose update
-    bool update_camera_pose(tf::Transform &to_camcenter) {
-        if (this->poses_received == 0)
-            return false;
-
-        if (this->last_pos.occluded)
-            return false;
+    void init_cloud_to_vicon_tf(const vicon::Subject& subject) {
+        if (subject.occluded)
+            std::cout << "Computing cloud_to_vicon_tf on occluded vicon track!" << std::endl;
 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr target(new pcl::PointCloud<pcl::PointXYZRGB>);
-
-        auto &markers = this->last_pos.markers;
+        auto &markers = subject.markers;
         for (auto &marker : markers) {
             pcl::PointXYZRGB p;
             p.x = marker.position.x;
@@ -250,18 +252,31 @@ public:
                       << " vs. in db: " << this->obj_markerpos->size() << std::endl;
         }
 
+        Eigen::Matrix4f SVD;
         const pcl::registration::TransformationEstimationSVD<pcl::PointXYZRGB, pcl::PointXYZRGB> trans_est_svd;
-        trans_est_svd.estimateRigidTransformation(*(this->obj_markerpos), *target, this->LAST_SVD);
+        trans_est_svd.estimateRigidTransformation(*(this->obj_markerpos), *target, SVD);
+        auto svd_tf = ViObject::mat2tf(SVD);
+        auto p = ViObject::subject2tf(subject);
+        auto inv_p = p.inverse();
 
-        auto svd_tf = ViObject::mat2tf(this->LAST_SVD);
+        this->s_transform = inv_p * svd_tf;
+    }
+
+    // Camera pose update
+    bool update_camera_pose(tf::Transform &to_camcenter) {
+        if (this->poses_received == 0)
+            return false;
+
+        if (this->last_pos.occluded)
+            return false;
+
         auto to_cs_inv = to_camcenter.inverse();
-        auto full_tf = to_cs_inv * svd_tf;
+        auto full_tf = to_cs_inv * subject2tf(last_pos) * this->s_transform;
 
-        //pcl::transformPointCloud (*(this->obj_cloud), *(this->obj_cloud_transformed), this->LAST_SVD);
+        pcl_ros::transformPointCloud (*(this->obj_cloud), *(this->obj_cloud_transformed), subject2tf(last_pos) * this->s_transform);
+        obj_pub.publish(this->obj_cloud_transformed->makeShared());
 
-        //this->obj_cloud_camera_frame->clear();
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud_camera_frame), full_tf);
-        //obj_pub.publish(this->obj_cloud_camera_frame->makeShared());
 
         return true;
     }
@@ -341,6 +356,17 @@ public:
                       static_cast<double>(Tm(1,0)), static_cast<double>(Tm(1,1)), static_cast<double>(Tm(1,2)), 
                       static_cast<double>(Tm(2,0)), static_cast<double>(Tm(2,1)), static_cast<double>(Tm(2,2)));
         return tf::Transform (tf3d, origin);
+    }
+
+    static tf::Transform subject2tf(const vicon::Subject& p) {
+        tf::Transform transform;
+        transform.setOrigin(tf::Vector3(p.position.x, p.position.y, p.position.z));
+        tf::Quaternion q(p.orientation.x,
+                         p.orientation.y,
+                         p.orientation.z,
+                         p.orientation.w); 
+        transform.setRotation(q);
+        return transform;
     }
 };
 

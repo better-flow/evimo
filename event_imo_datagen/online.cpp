@@ -191,15 +191,15 @@ void project_cloud(cv::Mat &img, pcl::PointCloud<pcl::PointXYZRGB> *cl, int oid)
         return;
 
     for (auto &p: *cl) {
-        int u = 0, v = 0;
-        project_point(p, u, v);
-
-        if (u < 0 || v < 0 || v >= img.cols || u >= img.rows)
-            continue;
-
         float rng = p.x;
         if (rng < 0.001)
             continue;
+
+        int u = 0, v = 0;
+        project_point(p, u, v);
+        if (u < 0 || v < 0 || v >= img.cols || u >= img.rows)
+            continue;
+ 
         int patch_size = int(1.0 / rng);
         
         if (oid == 0)
