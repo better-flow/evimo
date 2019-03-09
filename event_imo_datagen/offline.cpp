@@ -188,9 +188,9 @@ public:
                  0,      0,     0,     1;
         Tm = Tm.inverse().eval();   
 
-        float rr = rr0 + normval(value_rr, MAXVAL, MAXVAL * 50);
-        float rp = rp0 + normval(value_rp, MAXVAL, MAXVAL * 50);
-        float ry = ry0 + normval(value_ry, MAXVAL, MAXVAL * 50);
+        float rr = rr0 + normval(value_rr, MAXVAL, MAXVAL * 10);
+        float rp = rp0 + normval(value_rp, MAXVAL, MAXVAL * 10);
+        float ry = ry0 + normval(value_ry, MAXVAL, MAXVAL * 10);
         float tx = tx0 + normval(value_tx, MAXVAL, MAXVAL * 10);
         float ty = ty0 + normval(value_ty, MAXVAL, MAXVAL * 10);
         float tz = tz0 + normval(value_tz, MAXVAL, MAXVAL * 10);
@@ -289,6 +289,7 @@ public:
     unsigned long int frame_id;
     std::pair<uint64_t, uint64_t> event_slice_ids;
 
+    cv::Mat img;
     cv::Mat depth;
     cv::Mat mask;
 
@@ -358,12 +359,20 @@ public:
                     }
                 } else {
                     auto mask_img = window.first->mask;
+                    auto rgb_img  = window.first->img;
                     img = cv::Mat(mask_img.rows, mask_img.cols, CV_8UC3, cv::Scalar(0, 0, 0));
                     for(int i = 0; i < mask_img.rows; ++i) {
                         for (int j = 0; j < mask_img.cols; ++j) {
                             int id = std::round(mask_img.at<uint8_t>(i, j));
                             auto color = EventFile::id2rgb(id);
-                            img.at<cv::Vec3b>(i, j) = color;
+                            if (rgb_img.rows == mask_img.rows && rgb_img.cols == mask_img.cols) {
+                                img.at<cv::Vec3b>(i, j) = rgb_img.at<cv::Vec3b>(i, j);
+                                if (id > 0) {
+                                    img.at<cv::Vec3b>(i, j) = rgb_img.at<cv::Vec3b>(i, j) * 0.5 + color * 0.5;
+                                }
+                            } else {
+                                img.at<cv::Vec3b>(i, j) = color;
+                            }
                         }
                     }
                 }
@@ -389,6 +398,10 @@ public:
 
     void add_event_slice_ids(uint64_t event_low, uint64_t event_high) {
         this->event_slice_ids = std::make_pair(event_low, event_high);
+    }
+
+    void add_img(cv::Mat &img_) {
+        this->img = img_;
     }
 
     void show() {
@@ -515,15 +528,20 @@ int main (int argc, char** argv) {
     bool no_background = false;
     if (!nh.getParam(node_name + "/no_bg", no_background)) no_background = false;
     
+    bool with_images = false;
+    if (!nh.getParam(node_name + "/with_images", with_images)) with_images = false;
+    else std::cout << _yellow("With 'with_images' option, the datased will be generated at image framerate.") << std::endl;
+
     int res_x = 260, res_y = 346;
     if (!nh.getParam(node_name + "/res_x", res_x)) res_x = 260;
     if (!nh.getParam(node_name + "/res_y", res_y)) res_y = 346;
 
     // -- camera topics
-    std::string cam_pose_topic = "", event_topic = "";
+    std::string cam_pose_topic = "", event_topic = "", img_topic = "";
     std::map<int, std::string> obj_pose_topics;
     if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/DVS346";
     if (!nh.getParam(node_name + "/event_topic", event_topic)) event_topic = "/dvs/events";
+    if (!nh.getParam(node_name + "/img_topic", img_topic)) img_topic = "/dvs/image_raw";
 
     // -- parse the dataset folder
     std::string bag_name = boost::filesystem::path(dataset_folder).stem().string();
@@ -572,6 +590,8 @@ int main (int argc, char** argv) {
     Trajectory cam_tj;
     std::map<int, Trajectory> obj_tjs;
     std::map<int, vicon::Subject> obj_cloud_to_vicon_tf;
+    std::vector<cv::Mat> images;
+    std::vector<ros::Time> image_ts;
     uint64_t n_events = 0;
     for (auto &m : view) {
         if (m.getTopic() == cam_pose_topic) {
@@ -596,6 +616,17 @@ int main (int argc, char** argv) {
             if (msg == NULL) continue;
             n_events += msg->events.size();
         }
+
+        if (with_images && (m.getTopic() == img_topic)) {
+            auto msg = m.instantiate<sensor_msgs::Image>();  
+            images.push_back(cv_bridge::toCvShare(msg, "bgr8")->image);
+            image_ts.push_back(msg->header.stamp);
+        }
+    }
+
+    if (with_images && images.size() == 0) {
+        std::cout << _red("No images found! Reverting 'with_images' to 'false'") << std::endl;
+        with_images = false;
     }
 
     std::vector<Event> event_array(n_events);
@@ -649,6 +680,8 @@ int main (int argc, char** argv) {
     cam_tj.subtract_time(time_offset + ros::Duration(time_bias));
     for (auto &obj_tj : obj_tjs)
         obj_tj.second.subtract_time(time_offset + ros::Duration(time_bias));
+    for (uint64_t i = 0; i < image_ts.size(); ++i)
+        image_ts[i] = ros::Time((image_ts[i] - time_offset - ros::Duration(time_bias)).toSec());
     std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec()))
               << std::endl << std::endl;    
 
@@ -661,6 +694,11 @@ int main (int argc, char** argv) {
     std::vector<DatasetFrame> frames;
     uint64_t event_low = 0, event_high = 0;
     while (true) {
+        if (with_images) {
+            if (frame_id_real >= image_ts.size()) break;
+            start_ts = image_ts[frame_id_real].toSec();
+        }
+
         while (cam_tj_id < cam_tj.size() && cam_tj[cam_tj_id].ts.toSec() < start_ts) cam_tj_id ++;
         for (auto &obj_tj : obj_tjs)
             while (obj_tj_ids[obj_tj.first] < obj_tj.second.size()
@@ -674,7 +712,7 @@ int main (int argc, char** argv) {
             if (obj_tj.second.size() > 0 && obj_tj_ids[obj_tj.first] >= obj_tj.second.size()) done = true;
         if (done) break;
 
-        auto ref_ts = cam_tj[cam_tj_id].ts.toSec();
+        auto ref_ts = (with_images ? image_ts[frame_id_real].toSec() : cam_tj[cam_tj_id].ts.toSec());
         uint64_t ts_low  = (ref_ts < slice_width) ? 0 : (ref_ts - slice_width / 2.0) * 1000000000;
         uint64_t ts_high = (ref_ts + slice_width / 2.0) * 1000000000;
         while (event_low  < event_array.size() && event_array[event_low].timestamp  < ts_low)  event_low ++;
@@ -683,7 +721,7 @@ int main (int argc, char** argv) {
         double max_ts_err = 0.0;
         for (auto &obj_tj : obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
-            double ts_err = std::fabs(cam_tj[cam_tj_id].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
+            double ts_err = std::fabs(ref_ts - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
             if (ts_err > max_ts_err) max_ts_err = ts_err;
         }
 
@@ -696,6 +734,7 @@ int main (int argc, char** argv) {
 
         DatasetFrame frame(cam_tj[cam_tj_id], through_mode ? frame_id_through : frame_id_real);
         frame.add_event_slice_ids(event_low, event_high);
+        if (with_images) frame.add_img(images[frame_id_real]);
         std::cout << (through_mode ? frame_id_through : frame_id_real) << ": " << cam_tj[cam_tj_id].ts << " (" << cam_tj_id << ")";
         for (auto &obj_tj : obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
