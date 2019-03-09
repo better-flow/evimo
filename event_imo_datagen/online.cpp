@@ -245,8 +245,6 @@ void update_vis_img(cv::Mat &projected) {
         for (int j = 0; j < nCols; ++j) {
             if (vis_mode_depth) {
                 float rcp_depth = 8000.0 / (depth.at<float>(i, j) + 0.01);
-                //if (depth.at<float>(i, j) < 63)
-                //    rcp_depth = 4000.0 / (depth.at<float>(i, j) + 0.01);
 
                 vis_img.at<cv::Vec3b>(i, j)[0] = std::min(rcp_depth, 255.0f);
                 vis_img.at<cv::Vec3b>(i, j)[1] = std::min(rcp_depth, 255.0f);
@@ -768,7 +766,7 @@ int main (int argc, char** argv) {
 
             auto to_cam = room_scan->get_to_camcenter();
             room_scan->transform(room_scan->get_static() * to_cam * E_bg * to_cam.inverse());
-            
+
             auto tf_to_camcenter = world2camcenter(last_cam_pos);
             process_camera(tf_to_camcenter);
         }

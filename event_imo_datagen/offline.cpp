@@ -45,21 +45,44 @@ public:
 
     // Calibration matrix
     static float fx, fy, cx, cy, k1, k2, k3, k4;
+    
+    // Camera resolution
+    static unsigned int res_x, res_y;
 
     // Camera center to vicon
     static float rr0, rp0, ry0, tx0, ty0, tz0;
+    static tf::Transform cam_E;
 
     // Background to vicon
-    static tf::Transform bg_init_E;
+    static tf::Transform bg_E;
 
     // Other parameters
     static std::map<int, bool> enabled_objects;
+    static std::string window_name;
+    static bool modified;
 
-    static bool init(std::string dataset_folder) {
+    #define MAXVAL 1000
+    static int value_rr, value_rp, value_ry;
+    static int value_tx, value_ty, value_tz;
+
+    static bool init(std::string dataset_folder, unsigned int rx, unsigned int ry) {
+        DatasetConfig::res_x = rx;
+        DatasetConfig::res_y = ry;
         bool ret = DatasetConfig::parse_config(dataset_folder + "/config.txt");
         ret &= DatasetConfig::read_cam_intr(dataset_folder + "/calib.txt");
         ret &= DatasetConfig::read_extr(dataset_folder + "/extrinsics.txt");
         return ret;
+    }
+
+    static void init_GUI() {
+        DatasetConfig::window_name = "Calibration Control";
+        cv::namedWindow(DatasetConfig::window_name, cv::WINDOW_AUTOSIZE);
+        cv::createTrackbar("R", DatasetConfig::window_name, &value_rr, MAXVAL, on_trackbar);
+        cv::createTrackbar("P", DatasetConfig::window_name, &value_rp, MAXVAL, on_trackbar);
+        cv::createTrackbar("Y", DatasetConfig::window_name, &value_ry, MAXVAL, on_trackbar);
+        cv::createTrackbar("x", DatasetConfig::window_name, &value_tx, MAXVAL, on_trackbar);
+        cv::createTrackbar("y", DatasetConfig::window_name, &value_ty, MAXVAL, on_trackbar);
+        cv::createTrackbar("z", DatasetConfig::window_name, &value_tz, MAXVAL, on_trackbar);
     }
 
 private:
@@ -109,9 +132,18 @@ private:
         std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 k3 k4}): ")
                   << fx << " " << fy << " " << cx << " " << cy << " "
                   << k1 << " " << k2 << " " << k3 << " " << k4 << std::endl;
-              
         ifs.close();
+        DatasetConfig::update_cam_calib();
         return true;
+    }
+
+    static void on_trackbar(int, void*) {
+        DatasetConfig::modified = true;
+        DatasetConfig::update_cam_calib();
+    }
+
+    static float normval(int val, int maxval, int normval) {
+        return float(val - maxval / 2) / float(normval);
     }
 
     static bool read_extr(std::string path) {
@@ -142,22 +174,50 @@ private:
         tf::Quaternion Q(bg_qx, bg_qy, bg_qz, bg_qw);
         T.setValue(bg_tx, bg_ty, bg_tz);
 
-        bg_init_E.setRotation(Q);
-        bg_init_E.setOrigin(T);
-
-        //if (room_scan != NULL)
-        //    room_scan->transform(E_bg);
-
+        bg_E.setRotation(Q);
+        bg_E.setOrigin(T);
         return true;
+    }
+
+public:
+    static void update_cam_calib() {
+        Eigen::Matrix4f Tm;
+        Tm <<  0.0,    1.0,   0.0,  0.00,
+              -1.0,    0.0,   0.0,  0.00,
+               0.0,    0.0,   1.0,  0.00,
+                 0,      0,     0,     1;
+        Tm = Tm.inverse().eval();   
+
+        float rr = rr0 + normval(value_rr, MAXVAL, MAXVAL * 50);
+        float rp = rp0 + normval(value_rp, MAXVAL, MAXVAL * 50);
+        float ry = ry0 + normval(value_ry, MAXVAL, MAXVAL * 50);
+        float tx = tx0 + normval(value_tx, MAXVAL, MAXVAL * 10);
+        float ty = ty0 + normval(value_ty, MAXVAL, MAXVAL * 10);
+        float tz = tz0 + normval(value_tz, MAXVAL, MAXVAL * 10);
+
+        tf::Transform E;
+        tf::Vector3 T;
+        tf::Quaternion q;
+        q.setRPY(rr, rp, ry);
+        T.setValue(tx, ty, tz);
+        E.setRotation(q);
+        E.setOrigin(T);
+        cam_E = ViObject::mat2tf(Tm) * E;
     }
 };
 
 float DatasetConfig::fx, DatasetConfig::fy, DatasetConfig::cx, DatasetConfig::cy;
+unsigned int DatasetConfig::res_x, DatasetConfig::res_y;
 float DatasetConfig::k1, DatasetConfig::k2, DatasetConfig::k3, DatasetConfig::k4;
 float DatasetConfig::rr0, DatasetConfig::rp0, DatasetConfig::ry0;
 float DatasetConfig::tx0, DatasetConfig::ty0, DatasetConfig::tz0;
-tf::Transform DatasetConfig::bg_init_E;
+tf::Transform DatasetConfig::bg_E;
+tf::Transform DatasetConfig::cam_E;
 std::map<int, bool> DatasetConfig::enabled_objects;
+std::string DatasetConfig::window_name;
+int DatasetConfig::value_rr = MAXVAL / 2, DatasetConfig::value_rp = MAXVAL / 2, DatasetConfig::value_ry = MAXVAL / 2;
+int DatasetConfig::value_tx = MAXVAL / 2, DatasetConfig::value_ty = MAXVAL / 2, DatasetConfig::value_tz = MAXVAL / 2;
+bool DatasetConfig::modified = true;
 
 
 // Service functions
@@ -198,14 +258,36 @@ public:
 };
 
 
+template <class T> class Slice {
+protected:
+    T *data;
+    std::pair<uint64_t, uint64_t> pair;
+    size_t current_size;
+
+public:
+    typedef T value_type;
+
+    Slice(T &vec, std::pair<uint64_t, uint64_t> p)
+        : data(&vec), pair(p), current_size(p.second - p.first) {}
+
+    size_t size() {return this->size; }
+    auto begin() {return this->data->begin() + this->pair.first; }
+    auto end()   {return this->data->begin() + this->pair.second; }
+};
+
+
 class DatasetFrame {
 protected:
     static std::shared_ptr<StaticObject> background;
     static std::map<int, std::shared_ptr<ViObject>> clouds;
+    static std::list<DatasetFrame*> visualization_list;
+    static std::vector<Event>* event_array;
 
 public:
     Pose cam_pose;
     std::map<int, Pose> obj_poses;
+    unsigned long int frame_id;
+    std::pair<uint64_t, uint64_t> event_slice_ids;
 
     cv::Mat depth;
     cv::Mat mask;
@@ -216,31 +298,192 @@ public:
     }
     static void add_background(std::shared_ptr<StaticObject> bg) {
         DatasetFrame::background = bg;
+        DatasetFrame::background->transform(DatasetConfig::bg_E);
+    }
+    static void set_event_array(std::vector<Event>* ea) {
+        DatasetFrame::event_array = ea;
     }
     static void init_cloud(int id, const vicon::Subject& subject) {
         if (DatasetFrame::clouds.find(id) == DatasetFrame::clouds.end())
             return;
         clouds[id]->init_cloud_to_vicon_tf(subject);
     }
+    static void visualization_spin() {
+        std::map<DatasetFrame*, std::string> window_names;
+        for (auto &frame_ptr : DatasetFrame::visualization_list) {
+            window_names[frame_ptr] = "Frame " + std::to_string(frame_ptr->frame_id);
+            cv::namedWindow(window_names[frame_ptr], cv::WINDOW_NORMAL);
+        }
+
+        DatasetConfig::modified = true;
+        DatasetConfig::init_GUI();
+        bool show_mask = false;
+
+        int code = 0; // Key code
+        while (code != 27) {
+            code = cv::waitKey(1);
+            if (code == 32) {
+                show_mask = !show_mask;
+                DatasetConfig::modified = true;
+            }
+
+            if (!DatasetConfig::modified) continue;
+            DatasetConfig::modified = false;
+
+            for (auto &window : window_names) {
+                window.first->generate();
+                cv::Mat img;
+                
+                cv::Mat img_pr;
+                if (DatasetFrame::event_array != nullptr) {
+                    auto ev_slice = Slice<std::vector<Event>>(*DatasetFrame::event_array, 
+                                                              window.first->event_slice_ids);
+                    img_pr = EventFile::projection_img(&ev_slice, 1);
+                }
+
+                if (!show_mask) {
+                    auto depth_img = window.first->depth;
+                    img = cv::Mat(depth_img.rows, depth_img.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+                    cv::normalize(depth_img, depth_img, 0, 255, cv::NORM_MINMAX);
+                    cv::divide(8000.0, depth_img, depth_img);
+                    for(int i = 0; i < depth_img.rows; ++i) {
+                        for (int j = 0; j < depth_img.cols; ++j) {
+                            img.at<cv::Vec3b>(i, j)[0] = depth_img.at<float>(i, j);
+                            img.at<cv::Vec3b>(i, j)[1] = depth_img.at<float>(i, j);
+                            img.at<cv::Vec3b>(i, j)[2] = depth_img.at<float>(i, j);
+
+                            if (DatasetFrame::event_array != nullptr)
+                                img.at<cv::Vec3b>(i, j)[2] = img_pr.at<uint8_t>(i, j);
+                        }
+                    }
+                } else {
+                    auto mask_img = window.first->mask;
+                    img = cv::Mat(mask_img.rows, mask_img.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+                    for(int i = 0; i < mask_img.rows; ++i) {
+                        for (int j = 0; j < mask_img.cols; ++j) {
+                            int id = std::round(mask_img.at<uint8_t>(i, j));
+                            auto color = EventFile::id2rgb(id);
+                            img.at<cv::Vec3b>(i, j) = color;
+                        }
+                    }
+                }
+
+                cv::imshow(window.second, img);
+            }
+        }
+
+        cv::destroyAllWindows();
+        DatasetFrame::visualization_list.clear();
+    }
 
     // ---------
-    DatasetFrame(Pose cam_p) 
-        : cam_pose(cam_p) {}
+    DatasetFrame(Pose cam_p, unsigned long int fid) 
+        : cam_pose(cam_p), frame_id(fid), event_slice_ids(0, 0),
+          depth(DatasetConfig::res_x, DatasetConfig::res_y, CV_32F, cv::Scalar(0)),
+          mask(DatasetConfig::res_x, DatasetConfig::res_y, CV_8U, cv::Scalar(0))
+        {}
 
     void add_object_pos(int id, Pose obj_p) {
         this->obj_poses.insert(std::make_pair(id, obj_p));
     }
 
+    void add_event_slice_ids(uint64_t event_low, uint64_t event_high) {
+        this->event_slice_ids = std::make_pair(event_low, event_high);
+    }
+
+    void show() {
+        DatasetFrame::visualization_list.push_back(this);
+    }
+
     // Generate frame
     void generate() {
+        this->depth = cv::Scalar(0);
+        this->mask  = cv::Scalar(0);
+        
+        DatasetConfig::update_cam_calib();
 
+        auto cam_tf = this->cam_pose.pq * DatasetConfig::cam_E;
+        if (DatasetFrame::background != nullptr) {
+            auto cl = DatasetFrame::background->transform_to_camframe(cam_tf);
+            this->project_cloud(cl, 0);
+        }
 
+        for (auto &obj : DatasetFrame::clouds) {
+            if (this->obj_poses.find(obj.first) == this->obj_poses.end()) {
+                std::cout << _yellow("Warning! ") << "No pose for object "
+                          << obj.first << " frame id " << this->frame_id << std::endl;
+                continue;
+            }
+            auto cl = obj.second->transform_to_camframe(cam_tf,
+                                     this->obj_poses.at(obj.first).pq);
+            this->project_cloud(cl, obj.first);
+        }
+    }
+
+protected:
+    void project_point(pcl::PointXYZRGB p, int &u, int &v) {
+        u = 0; v = 0;
+        if (p.x < 0.00001)
+            return;
+
+        float x_ = p.z / p.x;
+        float y_ = p.y / p.x;
+        float r2 = x_ * x_ + y_ * y_;
+        float r4 = r2 * r2;
+        float r6 = r2 * r2 * r2;
+        float dist = (1.0 + DatasetConfig::k1 * r2 + DatasetConfig::k2 * r4 +
+                            DatasetConfig::k3 * r6) / (1 + DatasetConfig::k4 * r2);
+        float x__ = x_ * dist;
+        float y__ = y_ * dist;
+
+        u = DatasetConfig::fx * x__ + DatasetConfig::cx;
+        v = DatasetConfig::fy * y__ + DatasetConfig::cy;
+    }
+
+    void project_cloud(auto cl, int oid) {
+        if (cl->size() == 0)
+            return;
+
+        for (auto &p: *cl) {
+            float rng = p.x;
+            if (rng < 0.001)
+                continue;
+            
+            auto cols = this->depth.cols;
+            auto rows = this->depth.rows;
+
+            int u = 0, v = 0;
+            this->project_point(p, u, v);
+            if (u < 0 || v < 0 || v >= cols || u >= rows)
+                continue;
+     
+            int patch_size = int(1.0 / rng);
+            
+            if (oid == 0)
+                patch_size = int(5.0 / rng);
+
+            int u_lo = std::max(u - patch_size / 2, 0);
+            int u_hi = std::min(u + patch_size / 2, rows - 1);
+            int v_lo = std::max(v - patch_size / 2, 0);
+            int v_hi = std::min(v + patch_size / 2, cols - 1);
+
+            for (int ii = u_lo; ii <= u_hi; ++ii) {
+                for (int jj = v_lo; jj <= v_hi; ++jj) {
+                    float base_rng = this->depth.at<float>(rows - ii - 1, cols - jj - 1);
+                    if (base_rng > rng || base_rng < 0.001) {
+                        this->depth.at<float>(rows - ii - 1, cols - jj - 1) = rng;
+                        this->mask.at<uint8_t>(rows - ii - 1, cols - jj - 1) = oid;
+                    }
+                }
+            }
+        }
     }
 };
 
 std::shared_ptr<StaticObject> DatasetFrame::background;
 std::map<int, std::shared_ptr<ViObject>> DatasetFrame::clouds;
-
+std::list<DatasetFrame*> DatasetFrame::visualization_list;
+std::vector<Event>* DatasetFrame::event_array = nullptr;
 
 
 int main (int argc, char** argv) {
@@ -258,13 +501,29 @@ int main (int argc, char** argv) {
 
     float FPS = 40.0;
     int traj_smoothing = 1;
+    bool through_mode = false;
     if (!nh.getParam(node_name + "/fps", FPS)) FPS = 40;
     if (!nh.getParam(node_name + "/smoothing", traj_smoothing)) traj_smoothing = 1;
+    if (!nh.getParam(node_name + "/numbering", through_mode)) through_mode = false;
 
-    // -- camera topic
-    std::string cam_pose_topic = "";
+    float slice_width = 0.1;
+    if (!nh.getParam(node_name + "/slice_width", slice_width)) slice_width = 0.03;
+
+    float time_bias = 0.0;
+    if (!nh.getParam(node_name + "/time_bias", time_bias)) time_bias = 0.0;
+
+    bool no_background = false;
+    if (!nh.getParam(node_name + "/no_bg", no_background)) no_background = false;
+    
+    int res_x = 260, res_y = 346;
+    if (!nh.getParam(node_name + "/res_x", res_x)) res_x = 260;
+    if (!nh.getParam(node_name + "/res_y", res_y)) res_y = 346;
+
+    // -- camera topics
+    std::string cam_pose_topic = "", event_topic = "";
     std::map<int, std::string> obj_pose_topics;
     if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/DVS346";
+    if (!nh.getParam(node_name + "/event_topic", event_topic)) event_topic = "/dvs/events";
 
     // -- parse the dataset folder
     std::string bag_name = boost::filesystem::path(dataset_folder).stem().string();
@@ -286,13 +545,14 @@ int main (int argc, char** argv) {
     }
 
     // Read datasset configuration files
-    if (!DatasetConfig::init(dataset_folder))
+    if (!DatasetConfig::init(dataset_folder, (unsigned int)res_x, (unsigned int)res_y))
         return -1;
 
     // Load 3D models
     std::string path_to_self = ros::package::getPath("event_imo_datagen");
     
-    //DatasetFrame::add_background(std::make_shared<StaticObject>(path_to_self + "/objects/room"));
+    if (!no_background)
+        DatasetFrame::add_background(std::make_shared<StaticObject>(path_to_self + "/objects/room"));
     if (DatasetConfig::enabled_objects.find(1) != DatasetConfig::enabled_objects.end()) {
         DatasetFrame::add_cloud(1, std::make_shared<ViObject>(nh, path_to_self + "/objects/toy_car", 1));
         if (!nh.getParam(node_name + "/obj_pose_topic_0", obj_pose_topics[1])) obj_pose_topics[1] = "/vicon/Object_1";
@@ -312,6 +572,7 @@ int main (int argc, char** argv) {
     Trajectory cam_tj;
     std::map<int, Trajectory> obj_tjs;
     std::map<int, vicon::Subject> obj_cloud_to_vicon_tf;
+    uint64_t n_events = 0;
     for (auto &m : view) {
         if (m.getTopic() == cam_pose_topic) {
             auto msg = m.instantiate<vicon::Subject>();  
@@ -329,8 +590,43 @@ int main (int argc, char** argv) {
             obj_cloud_to_vicon_tf[p.first] = *msg;
             break;
         }
+
+        if (m.getTopic() == event_topic) {
+            auto msg = m.instantiate<dvs_msgs::EventArray>();  
+            if (msg == NULL) continue;
+            n_events += msg->events.size();
+        }
     }
 
+    std::vector<Event> event_array(n_events);
+    uint64_t id = 0;
+    ros::Time first_event_ts;
+    ros::Time last_event_ts;
+    for (auto &m : view) {
+        if (m.getTopic() == event_topic) {
+            auto msg = m.instantiate<dvs_msgs::EventArray>();  
+            if (msg == NULL) continue;
+            for (auto &e : msg->events) {
+                if (id == 0) {
+                    first_event_ts = e.ts;
+                    last_event_ts = e.ts;
+                } else {
+                    if (e.ts < last_event_ts) {
+                        std::cout << _red("Events are not sorted! ") 
+                                  << id << ": " << last_event_ts << " -> " 
+                                  << e.ts << std::endl;
+                    }
+                    last_event_ts = e.ts;
+                }
+                
+                auto ts = (e.ts - first_event_ts).toNSec();
+                event_array[id] = Event(e.y, e.x, ts, e.polarity ? 1 : 0);
+                id ++;
+            }
+        }
+    }
+
+    std::cout << _green("Read ") << n_events << _green(" events") << std::endl;
     std::cout << std::endl << _green("Read ") << cam_tj.size() << _green(" camera poses and ") << std::endl;
     for (auto &obj_tj : obj_tjs) {
         if (obj_tj.second.size() == 0) continue;
@@ -340,27 +636,36 @@ int main (int argc, char** argv) {
         }
         DatasetFrame::init_cloud(obj_tj.first, obj_cloud_to_vicon_tf[obj_tj.first]);
     }
+    DatasetFrame::set_event_array(&event_array);
 
     // Remove time offset from poses
     auto time_offset = cam_tj[0].ts;
     for (auto &obj_tj : obj_tjs)
         if (obj_tj.second.size() > 0 && obj_tj.second[0].ts < time_offset) time_offset = obj_tj.second[0].ts;
-    cam_tj.subtract_time(time_offset);
+    if (time_offset < first_event_ts)
+        std::cout << _yellow("Warning: ") << "event time offset is not the smallest (" << first_event_ts 
+                  << " vs " << time_offset << ")" << std::endl;
+    time_offset = first_event_ts; // align with events
+    cam_tj.subtract_time(time_offset + ros::Duration(time_bias));
     for (auto &obj_tj : obj_tjs)
-        obj_tj.second.subtract_time(time_offset);
-    std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec())) << std::endl;    
+        obj_tj.second.subtract_time(time_offset + ros::Duration(time_bias));
+    std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec()))
+              << std::endl << std::endl;    
 
     // Align the timestamps
-    double start_ts = 0.0;
+    double start_ts = 0.2;
+    unsigned long int frame_id_through = 0, frame_id_real = 0;
     double dt = 1.0 / FPS;
     long int cam_tj_id = 0;
     std::map<int, long int> obj_tj_ids;
     std::vector<DatasetFrame> frames;
+    uint64_t event_low = 0, event_high = 0;
     while (true) {
         while (cam_tj_id < cam_tj.size() && cam_tj[cam_tj_id].ts.toSec() < start_ts) cam_tj_id ++;
         for (auto &obj_tj : obj_tjs)
             while (obj_tj_ids[obj_tj.first] < obj_tj.second.size()
                    && obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() < start_ts) obj_tj_ids[obj_tj.first] ++;
+
         start_ts += dt;
 
         bool done = false;
@@ -369,20 +674,29 @@ int main (int argc, char** argv) {
             if (obj_tj.second.size() > 0 && obj_tj_ids[obj_tj.first] >= obj_tj.second.size()) done = true;
         if (done) break;
 
+        auto ref_ts = cam_tj[cam_tj_id].ts.toSec();
+        uint64_t ts_low  = (ref_ts < slice_width) ? 0 : (ref_ts - slice_width / 2.0) * 1000000000;
+        uint64_t ts_high = (ref_ts + slice_width / 2.0) * 1000000000;
+        while (event_low  < event_array.size() && event_array[event_low].timestamp  < ts_low)  event_low ++;
+        while (event_high < event_array.size() && event_array[event_high].timestamp < ts_high) event_high ++;
+
         double max_ts_err = 0.0;
         for (auto &obj_tj : obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
             double ts_err = std::fabs(cam_tj[cam_tj_id].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
             if (ts_err > max_ts_err) max_ts_err = ts_err;
         }
+
+        frame_id_real ++;
         if (max_ts_err > 0.01) {
             std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " skipping..." << std::endl;
             continue;
         }
+        frame_id_through ++;
 
-
-        DatasetFrame frame(cam_tj[cam_tj_id]);
-        std::cout << cam_tj_id << ": " << cam_tj[cam_tj_id].ts;
+        DatasetFrame frame(cam_tj[cam_tj_id], through_mode ? frame_id_through : frame_id_real);
+        frame.add_event_slice_ids(event_low, event_high);
+        std::cout << (through_mode ? frame_id_through : frame_id_real) << ": " << cam_tj[cam_tj_id].ts << " (" << cam_tj_id << ")";
         for (auto &obj_tj : obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
             std::cout << " " << obj_tj.second[obj_tj_ids[obj_tj.first]].ts << " (" << obj_tj_ids[obj_tj.first] << ")";
@@ -394,6 +708,15 @@ int main (int argc, char** argv) {
 
     std::cout << _blue("\nTimestamp alignment done") << std::endl;
     std::cout << "\tDataset contains " << frames.size() << " frames" << std::endl;
+
+
+    // Visualization
+    int nframes = 3;
+    for (int i = 0; i < frames.size(); i += frames.size() / nframes) {
+        frames[i].show();
+    }
+
+    DatasetFrame::visualization_spin();
 
     return 0;
 }
