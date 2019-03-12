@@ -14,6 +14,40 @@ import cv2
 from utils import *
 
 
+import matplotlib.colors as colors
+def colorize_image(flow_x, flow_y):
+    hsv_buffer = np.empty((flow_x.shape[0], flow_x.shape[1], 3))
+    hsv_buffer[:,:,1] = 1.0
+    hsv_buffer[:,:,0] = (np.arctan2(flow_y, flow_x) + np.pi)/(2.0*np.pi)
+    hsv_buffer[:,:,2] = np.linalg.norm( np.stack((flow_x,flow_y), axis=0), axis=0 )
+    hsv_buffer[:,:,2] = np.log(1. + hsv_buffer[:,:,2])
+
+    flat = hsv_buffer[:,:,2].reshape((-1))
+    m = 1
+    try:
+        m = np.nanmax(flat[np.isfinite(flat)])
+    except:
+        m = 1
+    if not np.isclose(m, 0.0):
+        hsv_buffer[:,:,2] /= m
+
+    return colors.hsv_to_rgb(hsv_buffer)
+
+
+def draw_arrow(img, x, y, z, o=None):
+    if (o is None):
+        o = [20, 20]
+    l = math.sqrt(x * x + y * y)
+    o[0] = int(o[0])
+    o[1] = int(o[1])
+    ex = int(o[0] + 20 * x / l)
+    ey = int(o[1] + 20 * y / l)
+    print (l)
+
+    cv2.line(img,(o[0],o[1]),(ex,ey),(255,255,255),1)
+    return img
+
+
 def gen_text_stub(shape_y, cam_vel, objs_pos, objs_vel):
     oids = objs_pos.keys()
     step = 20
@@ -249,7 +283,7 @@ OBJ_AEE_CNT = 0.0
 def change_gt(obj_poses, imask, inf_ppose, inf_mask):
     oids = sorted(obj_poses.keys())
     masks = mask_to_masks(imask, obj_poses)
-    inf_ppose = fixup_pposvel(inf_ppose) * (-1)
+    #inf_ppose = fixup_pposvel(inf_ppose) * (-1)
 
     inf_T = inf_ppose[:,:,0:3]
 
@@ -275,7 +309,7 @@ def change_gt(obj_poses, imask, inf_ppose, inf_mask):
 def change_gt_(obj_poses, imask, inf_ppose, inf_mask):
     oids = sorted(obj_poses.keys())
     masks = mask_to_masks(imask, obj_poses)
-    inf_ppose = fixup_pposvel(inf_ppose) * (-1)
+    #inf_ppose = fixup_pposvel(inf_ppose) * (-1)
 
     inf_T = inf_ppose[:,:,0:3]
 
@@ -298,11 +332,13 @@ def change_gt_(obj_poses, imask, inf_ppose, inf_mask):
         apply_object_pos(masks[oid], inf_T, inf_obj_poses[oid][0])
 
 
+from scipy import ndimage
 def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
 
     oids = sorted(obj_poses.keys())
     masks = mask_to_masks(imask, obj_poses)
-    inf_ppose = fixup_pposvel(inf_ppose) * (-1)
+    #inf_ppose = fixup_pposvel(inf_ppose) * (-1)
+    img_gt = vel_to_color(imask, obj_poses)
 
     inf_T = inf_ppose[:,:,0:3]
 
@@ -314,17 +350,36 @@ def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
         gt_obj_0_p = obj_poses[oid]
         #print ("\n", gt_obj_0_p)
 
-        obj_0_p, alpha = get_object_pos(masks[oid], inf_T, gt_obj_0_p)
+        obj_0_p, alpha = get_object_pos(masks[oid], inf_T, gt_obj_0_p) 
         inf_obj_poses[oid] = [obj_0_p, alpha]
+        if (not np.all(np.isfinite(obj_0_p))):
+            continue
 
         EE, tf = get_EE(gt_obj_0_p[0], obj_0_p * alpha)
         print ("\t", tf, obj_0_p * alpha, gt_obj_0_p[0], obj_0_p * alpha - gt_obj_0_p[0])
 
+
     average_scale = 0
+    average_scale_cnt = 0.0
     for oid in oids:
+        if (not np.all(np.isfinite(inf_obj_poses[oid][0]))):
+            continue
         average_scale += inf_obj_poses[oid][1]
-    average_scale /= float(len(oids))
+        average_scale_cnt += 1.0
+    average_scale /= average_scale_cnt
     #average_scale *= 0.3
+
+    
+    for oid in oids:
+        if (not np.all(np.isfinite(inf_obj_poses[oid][0]))):
+            continue
+
+        m = masks[oid]
+        m = np.nan_to_num(m)
+        p = inf_obj_poses[oid][0]
+        o = ndimage.measurements.center_of_mass(m)
+
+        draw_arrow(img_gt, p[0], p[1], p[2], [o[1], o[0]])
 
 
     # =======================================================
@@ -334,12 +389,12 @@ def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
     else:
         inf_bmask = inf_mask
 
-    obj_0_img = np.zeros(inf_T.shape, dtype=np.float32)
-    gt_bin_mask = np.zeros(inf_T.shape, dtype=np.float32)
-    for oid in oids:
-        gt_bin_mask +=  np.dstack((masks[oid], masks[oid], masks[oid]))
+    #obj_0_img = np.zeros(inf_T.shape, dtype=np.float32)
+    #gt_bin_mask = np.zeros(inf_T.shape, dtype=np.float32)
+    #for oid in oids:
+    #    gt_bin_mask +=  np.dstack((masks[oid], masks[oid], masks[oid]))
 
-    obj_0_img = inf_T * np.dstack((inf_bmask, inf_bmask, inf_bmask))    
+    obj_0_img = inf_T # * np.dstack((inf_bmask, inf_bmask, inf_bmask))    
     inf_th_mask = get_th_mask(inf_T, inf_bmask, 0.3)
     # ===========================================================
 
@@ -348,21 +403,22 @@ def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
     inf_th_mask = np.dstack((inf_th_mask, inf_th_mask, inf_th_mask)) * 255
 
     inf_T = obj_0_img
-    lo = np.nanmin(inf_T)
-    hi = np.nanmax(inf_T)
-
+    #lo = np.nanmin(inf_T)
+    #hi = np.nanmax(inf_T)
     #img_inf = 255.0 * (inf_T - lo) / float(hi - lo)
     img_inf = 200.0 * np.abs(inf_T) * average_scale
-    img_inf *= inf_bmask / 255
+    #img_inf *= inf_bmask / 255
 
     #img_inf = colorize_image(img_inf[:,:,0] / 200, img_inf[:,:,2] / 200) * 255
 
     #print (lo, hi, np.nanmax(img_inf))
 
-    img_gt = vel_to_color(imask, obj_poses)
     #return np.hstack((img_gt, img_inf, gt_bin_mask * 255, inf_bmask, inf_th_mask))
 
-    return np.hstack((img_gt * 7, img_inf * 7, inf_bmask))
+    img_inf = colorize_image(inf_T[:,:,0], inf_T[:,:,1]) * 200
+
+
+    return np.hstack((img_gt * 2, img_inf * 1, inf_bmask))
 
 
 
@@ -372,7 +428,10 @@ def get_scores(inf_depth, inf_ego, inf_ppose, inf_mask,
     depth_img = do_depth(gt_depth, inf_depth)
     ppose_img = do_ppose(obj_poses, instance_mask, inf_ppose, inf_mask)
 
-
+    
+    #ppose_img = draw_arrow(ppose_img, inf_ego[0], inf_ego[1], inf_ego[2])
+    draw_arrow(ppose_img, inf_ego[0], inf_ego[1], inf_ego[2])
+    
     return np.hstack((depth_img, ppose_img))
 
 
@@ -506,13 +565,12 @@ if __name__ == '__main__':
     print ("Discretization resolution:", discretization)
  
 
-
     for i, time in enumerate(gt_ts):
         num = nums[i]
         if (i not in inf_depths.keys()):
             continue
 
-        change_gt(obj_vels[num], mask_gt[i], inf_pposes[i], inf_masks[i])
+        #change_gt(obj_vels[num], mask_gt[i], inf_pposes[i], inf_masks[i])
 
     
     #obj_vels_ = smooth_obj_vels(obj_vels, 3)
