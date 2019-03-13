@@ -61,7 +61,10 @@ public:
     static std::string window_name;
     static bool modified;
 
-    #define MAXVAL 1000
+    static constexpr float MAXVAL = 1000;
+    static constexpr float INT_LIN_SC = 10;
+    static constexpr float INT_ANG_SC = 10;
+
     static int value_rr, value_rp, value_ry;
     static int value_tx, value_ty, value_tz;
 
@@ -83,6 +86,38 @@ public:
         cv::createTrackbar("x", DatasetConfig::window_name, &value_tx, MAXVAL, on_trackbar);
         cv::createTrackbar("y", DatasetConfig::window_name, &value_ty, MAXVAL, on_trackbar);
         cv::createTrackbar("z", DatasetConfig::window_name, &value_tz, MAXVAL, on_trackbar);
+    }
+
+    static void reset_Intr_Sliders() {
+        cv::setTrackbarPos("R", DatasetConfig::window_name, MAXVAL / 2);
+        cv::setTrackbarPos("P", DatasetConfig::window_name, MAXVAL / 2);
+        cv::setTrackbarPos("Y", DatasetConfig::window_name, MAXVAL / 2);
+        cv::setTrackbarPos("x", DatasetConfig::window_name, MAXVAL / 2);
+        cv::setTrackbarPos("y", DatasetConfig::window_name, MAXVAL / 2);
+        cv::setTrackbarPos("z", DatasetConfig::window_name, MAXVAL / 2);
+    }
+
+    static void apply_Intr_Calib() {
+        rr0 = rr0 + normval(value_rr, MAXVAL, MAXVAL * INT_LIN_SC);
+        rp0 = rp0 + normval(value_rp, MAXVAL, MAXVAL * INT_LIN_SC);
+        ry0 = ry0 + normval(value_ry, MAXVAL, MAXVAL * INT_LIN_SC);
+        tx0 = tx0 + normval(value_tx, MAXVAL, MAXVAL * INT_ANG_SC);
+        ty0 = ty0 + normval(value_ty, MAXVAL, MAXVAL * INT_ANG_SC);
+        tz0 = tz0 + normval(value_tz, MAXVAL, MAXVAL * INT_ANG_SC); 
+        DatasetConfig::reset_Intr_Sliders();
+        DatasetConfig::printCalib();
+    }
+
+    static void printCalib() {
+        std::cout << std::endl << _blue("Transforms:") << std::endl;
+        std::cout << "Vicon -> Camcenter (X Y Z R P Y):" << std::endl;
+        std::cout << "\t" << tx0 << "\t" << ty0 << "\t" << tz0 << "\t" << rr0 << "\t" << rp0 << "\t" << ry0 << std::endl;
+        //std::cout << "Vicon -> Background (X Y Z Qw Qx Qy Qz):" << std::endl;
+        //auto T = room_scan->get_static().getOrigin();
+        //auto Q = room_scan->get_static().getRotation();
+        //std::cout << "\t" << T.getX() << "\t" << T.getY() << "\t" << T.getZ()
+        //          << "\t" << Q.getW() <<"\t" << Q.getX() << "\t" << Q.getY() << "\t" << Q.getZ() << std::endl << std::endl;
+
     }
 
 private:
@@ -188,12 +223,12 @@ public:
                  0,      0,     0,     1;
         Tm = Tm.inverse().eval();   
 
-        float rr = rr0 + normval(value_rr, MAXVAL, MAXVAL * 10);
-        float rp = rp0 + normval(value_rp, MAXVAL, MAXVAL * 10);
-        float ry = ry0 + normval(value_ry, MAXVAL, MAXVAL * 10);
-        float tx = tx0 + normval(value_tx, MAXVAL, MAXVAL * 10);
-        float ty = ty0 + normval(value_ty, MAXVAL, MAXVAL * 10);
-        float tz = tz0 + normval(value_tz, MAXVAL, MAXVAL * 10);
+        float rr = rr0 + normval(value_rr, MAXVAL, MAXVAL * INT_LIN_SC);
+        float rp = rp0 + normval(value_rp, MAXVAL, MAXVAL * INT_LIN_SC);
+        float ry = ry0 + normval(value_ry, MAXVAL, MAXVAL * INT_LIN_SC);
+        float tx = tx0 + normval(value_tx, MAXVAL, MAXVAL * INT_ANG_SC);
+        float ty = ty0 + normval(value_ty, MAXVAL, MAXVAL * INT_ANG_SC);
+        float tz = tz0 + normval(value_tz, MAXVAL, MAXVAL * INT_ANG_SC);
 
         tf::Transform E;
         tf::Vector3 T;
@@ -325,6 +360,16 @@ public:
             code = cv::waitKey(1);
             if (code == 32) {
                 show_mask = !show_mask;
+                DatasetConfig::modified = true;
+            }
+
+            if (code == 99) { // 'c'
+                DatasetConfig::reset_Intr_Sliders();
+                DatasetConfig::modified = true;
+            }
+
+            if (code == 115) { // 's'
+                DatasetConfig::apply_Intr_Calib();
                 DatasetConfig::modified = true;
             }
 
@@ -549,7 +594,10 @@ int main (int argc, char** argv) {
         bag_name = boost::filesystem::path(dataset_folder).parent_path().stem().string();
     }
 
-    bag_name = boost::filesystem::path(dataset_folder).append(bag_name + ".bag").string();
+    //bag_name = boost::filesystem::path(dataset_folder).append(bag_name + ".bag").string();
+    auto bag_name_path = boost::filesystem::path(dataset_folder);
+    bag_name_path /= (bag_name + ".bag");
+    bag_name = bag_name_path.string();
     std::cout << _blue("Procesing bag file: ") << bag_name << std::endl;
 
     rosbag::Bag bag;
@@ -675,11 +723,15 @@ int main (int argc, char** argv) {
         if (obj_tj.second.size() > 0 && obj_tj.second[0].ts < time_offset) time_offset = obj_tj.second[0].ts;
     if (time_offset < first_event_ts)
         std::cout << _yellow("Warning: ") << "event time offset is not the smallest (" << first_event_ts 
-                  << " vs " << time_offset << ")" << std::endl;
+                  << " vs " << time_offset << ")" << std::endl; 
     time_offset = first_event_ts; // align with events
     cam_tj.subtract_time(time_offset + ros::Duration(time_bias));
     for (auto &obj_tj : obj_tjs)
         obj_tj.second.subtract_time(time_offset + ros::Duration(time_bias));
+    while(image_ts.size() > 0 && *image_ts.begin() < time_offset + ros::Duration(time_bias)) {
+        image_ts.erase(image_ts.begin());
+        images.erase(images.begin());
+    }
     for (uint64_t i = 0; i < image_ts.size(); ++i)
         image_ts[i] = ros::Time((image_ts[i] - time_offset - ros::Duration(time_bias)).toSec());
     std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec()))
@@ -725,12 +777,11 @@ int main (int argc, char** argv) {
             if (ts_err > max_ts_err) max_ts_err = ts_err;
         }
 
-        frame_id_real ++;
         if (max_ts_err > 0.01) {
             std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " skipping..." << std::endl;
+            frame_id_real ++;
             continue;
         }
-        frame_id_through ++;
 
         DatasetFrame frame(cam_tj[cam_tj_id], through_mode ? frame_id_through : frame_id_real);
         frame.add_event_slice_ids(event_low, event_high);
@@ -743,6 +794,9 @@ int main (int argc, char** argv) {
         }
         std::cout << std::endl;
         frames.push_back(frame);
+
+        frame_id_real ++;
+        frame_id_through ++;
     }
 
     std::cout << _blue("\nTimestamp alignment done") << std::endl;

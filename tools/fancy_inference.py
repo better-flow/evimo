@@ -366,6 +366,9 @@ def do_ppose(obj_poses, imask, inf_ppose, inf_mask):
             continue
         average_scale += inf_obj_poses[oid][1]
         average_scale_cnt += 1.0
+    if (average_scale_cnt < 1.0):
+        average_scale_cnt = 1.0
+    
     average_scale /= average_scale_cnt
     #average_scale *= 0.3
 
