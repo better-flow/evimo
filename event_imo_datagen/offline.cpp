@@ -223,7 +223,7 @@ public:
                  0,      0,     0,     1;
 
         Eigen::Matrix4f T2;
-        T2 <<  0.0,    0.0,   1.0,  0.00,
+        T2 <<  0.0,    0.0,  -1.0,  0.00,
                0.0,    1.0,   0.0,  0.00,
                1.0,    0.0,   0.0,  0.00,
                  0,      0,     0,     1;
@@ -245,9 +245,9 @@ public:
         E.setOrigin(T);
         pcl_ros::transformAsMatrix(E, E_eig);
 
-        //cam_E = ViObject::mat2tf(T1) * E;// * ViObject::mat2tf(T2);
-        Eigen::Matrix4f full_extr_calib = T1 * E_eig * T2;
-        cam_E = ViObject::mat2tf(full_extr_calib);
+        cam_E = ViObject::mat2tf(T1) * E * ViObject::mat2tf(T2);
+        //Eigen::Matrix4f full_extr_calib = T1 * E_eig * T2;
+        //cam_E = ViObject::mat2tf(full_extr_calib);
     }
 };
 
@@ -496,8 +496,6 @@ protected:
 
         float x_ = p.x / p.z;
         float y_ = p.y / p.z;
-        //float x_ = p.z / p.x;
-        //float y_ = p.y / p.x;
 
         float r2 = x_ * x_ + y_ * y_;
         float r4 = r2 * r2;
@@ -516,13 +514,9 @@ protected:
             return;
 
         for (auto &p: *cl) {
-            float rng = p.z;
-            
-            if (oid == 2) {
-                //std::cout << p.x << " " << p.y << " " << p.z << "\n";
-                //std::cout << p.z << " " << p.y << " " << p.x << "\n";
-            }
+            p.z = -p.z;
 
+            float rng = p.z;
             if (rng < 0.001)
                 continue;
             
@@ -531,12 +525,6 @@ protected:
 
             int u = -1, v = -1;
             this->project_point(p, u, v);
- 
-
-            if (oid == 2) {
-                //std::cout << "-" << p.x << " " << p.y << " " << p.z << " " << u << " " << v << "\n";
-                //std::cout << "-" << p.z << " " << p.y << " " << p.x << " " << u << " " << v << "\n";
-            }
 
             if (u < 0 || v < 0 || v >= cols || u >= rows)
                 continue;
@@ -830,7 +818,7 @@ int main (int argc, char** argv) {
 
 
     // Visualization
-    int nframes = 1;
+    int nframes = 4;
     for (int i = 0; i < frames.size(); i += frames.size() / nframes) {
         frames[i].show();
     }
