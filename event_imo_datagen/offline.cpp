@@ -216,12 +216,17 @@ private:
 
 public:
     static void update_cam_calib() {
-        Eigen::Matrix4f Tm;
-        Tm <<  0.0,    1.0,   0.0,  0.00,
-              -1.0,    0.0,   0.0,  0.00,
+        Eigen::Matrix4f T1;
+        T1 <<  0.0,   -1.0,   0.0,  0.00,
+               1.0,    0.0,   0.0,  0.00,
                0.0,    0.0,   1.0,  0.00,
                  0,      0,     0,     1;
-        Tm = Tm.inverse().eval();   
+
+        Eigen::Matrix4f T2;
+        T2 <<  0.0,    0.0,   1.0,  0.00,
+               0.0,    1.0,   0.0,  0.00,
+               1.0,    0.0,   0.0,  0.00,
+                 0,      0,     0,     1;
 
         float rr = rr0 + normval(value_rr, MAXVAL, MAXVAL * INT_LIN_SC);
         float rp = rp0 + normval(value_rp, MAXVAL, MAXVAL * INT_LIN_SC);
@@ -230,6 +235,7 @@ public:
         float ty = ty0 + normval(value_ty, MAXVAL, MAXVAL * INT_ANG_SC);
         float tz = tz0 + normval(value_tz, MAXVAL, MAXVAL * INT_ANG_SC);
 
+        Eigen::Matrix4f E_eig;
         tf::Transform E;
         tf::Vector3 T;
         tf::Quaternion q;
@@ -237,7 +243,11 @@ public:
         T.setValue(tx, ty, tz);
         E.setRotation(q);
         E.setOrigin(T);
-        cam_E = ViObject::mat2tf(Tm) * E;
+        pcl_ros::transformAsMatrix(E, E_eig);
+
+        //cam_E = ViObject::mat2tf(T1) * E;// * ViObject::mat2tf(T2);
+        Eigen::Matrix4f full_extr_calib = T1 * E_eig * T2;
+        cam_E = ViObject::mat2tf(full_extr_calib);
     }
 };
 
@@ -480,12 +490,15 @@ public:
 
 protected:
     void project_point(pcl::PointXYZRGB p, int &u, int &v) {
-        u = 0; v = 0;
-        if (p.x < 0.00001)
+        u = -1; v = -1;
+        if (p.z < 0.00001)
             return;
 
-        float x_ = p.z / p.x;
-        float y_ = p.y / p.x;
+        float x_ = p.x / p.z;
+        float y_ = p.y / p.z;
+        //float x_ = p.z / p.x;
+        //float y_ = p.y / p.x;
+
         float r2 = x_ * x_ + y_ * y_;
         float r4 = r2 * r2;
         float r6 = r2 * r2 * r2;
@@ -503,15 +516,28 @@ protected:
             return;
 
         for (auto &p: *cl) {
-            float rng = p.x;
+            float rng = p.z;
+            
+            if (oid == 2) {
+                //std::cout << p.x << " " << p.y << " " << p.z << "\n";
+                //std::cout << p.z << " " << p.y << " " << p.x << "\n";
+            }
+
             if (rng < 0.001)
                 continue;
             
             auto cols = this->depth.cols;
             auto rows = this->depth.rows;
 
-            int u = 0, v = 0;
+            int u = -1, v = -1;
             this->project_point(p, u, v);
+ 
+
+            if (oid == 2) {
+                //std::cout << "-" << p.x << " " << p.y << " " << p.z << " " << u << " " << v << "\n";
+                //std::cout << "-" << p.z << " " << p.y << " " << p.x << " " << u << " " << v << "\n";
+            }
+
             if (u < 0 || v < 0 || v >= cols || u >= rows)
                 continue;
      
@@ -804,7 +830,7 @@ int main (int argc, char** argv) {
 
 
     // Visualization
-    int nframes = 3;
+    int nframes = 1;
     for (int i = 0; i < frames.size(); i += frames.size() / nframes) {
         frames[i].show();
     }
