@@ -2,8 +2,12 @@ cmake_minimum_required(VERSION 2.8.3)
 project(event_imo_datagen)
 
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+#set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+#set(CMAKE_BUILD_TYPE Release)
+
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g")
 set(CMAKE_BUILD_TYPE Release)
+
 
 add_definitions(-std=c++14)
 

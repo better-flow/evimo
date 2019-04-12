@@ -574,9 +574,11 @@ int main (int argc, char** argv) {
     float FPS = 40.0;
     int traj_smoothing = 1;
     bool through_mode = false;
+    int show = -1;
     if (!nh.getParam(node_name + "/fps", FPS)) FPS = 40;
     if (!nh.getParam(node_name + "/smoothing", traj_smoothing)) traj_smoothing = 1;
     if (!nh.getParam(node_name + "/numbering", through_mode)) through_mode = false;
+    if (!nh.getParam(node_name + "/show", show)) show = -1;
 
     float slice_width = 0.1;
     if (!nh.getParam(node_name + "/slice_width", slice_width)) slice_width = 0.03;
@@ -818,12 +820,120 @@ int main (int argc, char** argv) {
 
 
     // Visualization
-    int nframes = 4;
-    for (int i = 0; i < frames.size(); i += frames.size() / nframes) {
+    int step = std::max(int(frames.size()) / show, 1);
+    for (int i = 0; i < frames.size() && show > 0; i += step) {
         frames[i].show();
+    }    
+    if (show > 0) {
+        DatasetFrame::visualization_spin();
     }
 
-    DatasetFrame::visualization_spin();
+    // Projecting the clouds and generating masks / depth maps
+    std::cout << std::endl << _yellow("Generating ground truth") << std::endl; 
+    for (int i = 0; i < frames.size(); ++i) {
+        frames[i].generate();
+        if (i % 10 == 0) {
+            std::cout << "\tFrame " << i + 1 << " / " << frames.size() <<  std::endl;
+        }
+    }
+
+    // Save the data
+    auto gt_dir_path = boost::filesystem::path(dataset_folder);
+    gt_dir_path /= "gt";
+
+    auto img_dir_path = boost::filesystem::path(dataset_folder);
+    img_dir_path /= "img";
+
+    std::string tsfname = dataset_folder + "/ts.txt";
+    std::ofstream ts_file(tsfname, std::ofstream::out);
+
+    std::string obj_fname = dataset_folder + "/objects.txt";
+    std::ofstream obj_file(obj_fname, std::ofstream::out);
+
+    std::string cam_fname = dataset_folder + "/trajectory.txt";
+    std::ofstream cam_file(cam_fname, std::ofstream::out);
+
+    std::string efname = dataset_folder + "/events.txt";
+    std::ofstream event_file(efname, std::ofstream::out);
+
+    std::cout << _blue("Removing old: " + gt_dir_path.string()) << std::endl; 
+    boost::filesystem::remove_all(gt_dir_path);
+    std::cout << "Creating: " << _green(gt_dir_path.string()) << std::endl; 
+    boost::filesystem::create_directory(gt_dir_path);
+
+    if (with_images) {
+        std::cout << _blue("Removing old: " + img_dir_path.string()) << std::endl; 
+        boost::filesystem::remove_all(img_dir_path);
+        std::cout << "Creating: " << _green(img_dir_path.string()) << std::endl; 
+        boost::filesystem::create_directory(img_dir_path);
+    }
+
+    std::cout << std::endl << _yellow("Writing depth and mask ground truth") << std::endl; 
+    for (int i = 0; i < frames.size(); ++i) {
+ 
+        // camera pose
+        auto cam_pos_loc = frames[i].cam_pose.pq.getOrigin();
+        auto cam_pos_rot = frames[i].cam_pose.pq.getRotation();
+        cam_file << i << " "
+                 << cam_pos_loc.getX() << " " << cam_pos_loc.getY() << " " << cam_pos_loc.getZ() << " "
+                 << cam_pos_rot.getW() << " " << cam_pos_rot.getX() << " " << cam_pos_rot.getY() << " "
+                 << cam_pos_rot.getZ() << std::endl;
+        
+        // object poses
+        for (auto &pair : frames[i].obj_poses) {
+            auto obj_pos_loc = pair.second.pq.getOrigin();
+            auto obj_pos_rot = pair.second.pq.getRotation();
+            obj_file << i << " " << pair.first << " "
+                     << obj_pos_loc.getX() << " " << obj_pos_loc.getY() << " " << obj_pos_loc.getZ() << " "
+                     << obj_pos_rot.getW() << " " << obj_pos_rot.getX() << " " << obj_pos_rot.getY() << " "
+                     << obj_pos_rot.getZ() << std::endl;
+        }
+
+        // masks and depth
+        std::string img_name = "/frame_" + std::to_string(i) + ".png";
+        std::string gtfname = gt_dir_path.string() + img_name;
+        cv::Mat depth, mask;
+        frames[i].depth.convertTo(depth, CV_16UC1, 1000);
+        frames[i].mask.convertTo(mask, CV_16UC1, 1000);
+        std::vector<cv::Mat> ch = {depth, depth, mask};
+
+        cv::Mat gt_frame_i16(depth.rows, depth.cols, CV_16UC3, cv::Scalar(0, 0, 0));
+        cv::merge(ch, gt_frame_i16);
+ 
+        gt_frame_i16.convertTo(gt_frame_i16, CV_16UC3);
+        cv::imwrite(gtfname, gt_frame_i16);        
+
+        if (with_images) {
+            cv::imwrite(img_dir_path.string() + img_name, frames[i].img);        
+        }
+
+        // timestamps
+        ts_file << "gt" + img_name << " " << frames[i].cam_pose.ts.toSec() << std::endl;
+
+        if (i % 10 == 0) {
+            std::cout << "\tWritten " << i + 1 << " / " << frames.size() <<  std::endl;
+        }
+    }
+    ts_file.close();
+    obj_file.close();
+    cam_file.close();
+
+    std::cout << std::endl << _yellow("Writing events.txt") << std::endl; 
+    std::stringstream ss;
+    for (uint64_t i = 0; i < event_array.size(); ++i) {
+        if (i % 100000 == 0) {
+            std::cout << "\tFormatting " << i + 1 << " / " << event_array.size() << std::endl;
+        }
+
+        ss << std::fixed << std::setprecision(9) 
+           << double(event_array[i].timestamp / 1000) / 1000000.0 
+           << " " << event_array[i].fr_y << " " << event_array[i].fr_x 
+           << " " << int(event_array[i].polarity) << std::endl; 
+    }
+    
+    event_file << ss.str();
+    event_file.close();
+    std::cout << std::endl << _green("Done!") << std::endl; 
 
     return 0;
 }
