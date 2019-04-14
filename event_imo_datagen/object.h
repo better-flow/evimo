@@ -99,12 +99,16 @@ public:
     }
 
     // A separate method, for offline prcessing
-    auto transform_to_camframe(tf::Transform &cam_tf) {
+    auto transform_to_camframe(const tf::Transform &cam_tf) {
         this->last_to_camcenter = cam_tf;
-        auto full_tf =  this->last_to_camcenter.inverse() * this->s_transform;
+        auto full_tf = this->get_tf_in_camera_frame(cam_tf);
         auto out_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(out_cloud), full_tf);
         return out_cloud;
+    }
+
+    tf::Transform get_tf_in_camera_frame(const tf::Transform &cam_tf) {
+        return this->last_to_camcenter.inverse() * this->s_transform;
     }
 
     void transform(tf::Transform s_transform) {
@@ -288,12 +292,17 @@ public:
     }
 
     // A separate method, for offline prcessing
-    auto transform_to_camframe(tf::Transform &cam_tf, tf::Transform &obj_tf) {
+    auto transform_to_camframe(const tf::Transform &cam_tf, const tf::Transform &obj_tf) {
+        auto full_tf = this->get_tf_in_camera_frame(cam_tf, obj_tf);
         auto out_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
-        auto inv_cam = cam_tf.inverse();
-        auto full_tf = inv_cam * obj_tf * this->s_transform;
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(out_cloud), full_tf);
         return out_cloud;
+    }
+
+    tf::Transform get_tf_in_camera_frame(const tf::Transform &cam_tf, const tf::Transform &obj_tf) {
+        auto inv_cam = cam_tf.inverse();
+        auto full_tf = inv_cam * obj_tf * this->s_transform;
+        return full_tf;
     }
 
     float get_visibility() {

@@ -272,6 +272,16 @@ public:
     tf::Transform pq;
     Pose(ros::Time ts_, tf::Transform pq_):
         ts(ts_), pq(pq_) {}
+
+    operator tf::Transform() const {return this->pq; }
+    friend std::ostream &operator<< (std::ostream &output, const Pose &P) { 
+        auto loc = P.pq.getOrigin();
+        auto rot = P.pq.getRotation();
+        output << loc.getX() << " " << loc.getY() << " " << loc.getZ() << " "
+               << rot.getW() << " " << rot.getX() << " " << rot.getY() << " "
+               << rot.getZ();
+        return output;
+    }
 };
 
 
@@ -389,7 +399,7 @@ public:
             for (auto &window : window_names) {
                 window.first->generate();
                 cv::Mat img;
-                
+
                 cv::Mat img_pr;
                 if (DatasetFrame::event_array != nullptr) {
                     auto ev_slice = Slice<std::vector<Event>>(*DatasetFrame::event_array, 
@@ -463,6 +473,23 @@ public:
         DatasetFrame::visualization_list.push_back(this);
     }
 
+    Pose get_true_camera_pose() {
+        auto cam_tf = this->cam_pose.pq * DatasetConfig::cam_E;
+        return Pose(this->cam_pose.ts, cam_tf);
+    }
+
+    Pose get_true_object_pose(int id) {
+        if (this->obj_poses.find(id) == this->obj_poses.end()) {
+            std::cout << _red("Error! ") << "No pose for object "
+                      << id << " frame id " << this->frame_id << std::endl;
+        }
+
+        auto cam_tf = this->get_true_camera_pose();
+        auto obj_tf = DatasetFrame::clouds.at(id)->get_tf_in_camera_frame(cam_tf, 
+                                                       this->obj_poses.at(id).pq);
+        return Pose(this->cam_pose.ts, obj_tf);
+    }
+
     // Generate frame
     void generate() {
         this->depth = cv::Scalar(0);
@@ -470,7 +497,7 @@ public:
         
         DatasetConfig::update_cam_calib();
 
-        auto cam_tf = this->cam_pose.pq * DatasetConfig::cam_E;
+        auto cam_tf = this->get_true_camera_pose();
         if (DatasetFrame::background != nullptr) {
             auto cl = DatasetFrame::background->transform_to_camframe(cam_tf);
             this->project_cloud(cl, 0);
@@ -573,11 +600,12 @@ int main (int argc, char** argv) {
 
     float FPS = 40.0;
     int traj_smoothing = 1;
-    bool through_mode = false;
+    bool through_mode = false, generate = true;
     int show = -1;
     if (!nh.getParam(node_name + "/fps", FPS)) FPS = 40;
     if (!nh.getParam(node_name + "/smoothing", traj_smoothing)) traj_smoothing = 1;
     if (!nh.getParam(node_name + "/numbering", through_mode)) through_mode = false;
+    if (!nh.getParam(node_name + "/generate", generate)) generate = true;
     if (!nh.getParam(node_name + "/show", show)) show = -1;
 
     float slice_width = 0.1;
@@ -830,7 +858,7 @@ int main (int argc, char** argv) {
 
     // Projecting the clouds and generating masks / depth maps
     std::cout << std::endl << _yellow("Generating ground truth") << std::endl; 
-    for (int i = 0; i < frames.size(); ++i) {
+    for (int i = 0; (i < frames.size()) && generate; ++i) {
         frames[i].generate();
         if (i % 10 == 0) {
             std::cout << "\tFrame " << i + 1 << " / " << frames.size() <<  std::endl;
@@ -846,6 +874,9 @@ int main (int argc, char** argv) {
 
     std::string tsfname = dataset_folder + "/ts.txt";
     std::ofstream ts_file(tsfname, std::ofstream::out);
+
+    std::string rgbtsfname = dataset_folder + "/images.txt";
+    std::ofstream rgb_ts_file(rgbtsfname, std::ofstream::out);
 
     std::string obj_fname = dataset_folder + "/objects.txt";
     std::ofstream obj_file(obj_fname, std::ofstream::out);
@@ -872,25 +903,17 @@ int main (int argc, char** argv) {
     for (int i = 0; i < frames.size(); ++i) {
  
         // camera pose
-        auto cam_pos_loc = frames[i].cam_pose.pq.getOrigin();
-        auto cam_pos_rot = frames[i].cam_pose.pq.getRotation();
-        cam_file << i << " "
-                 << cam_pos_loc.getX() << " " << cam_pos_loc.getY() << " " << cam_pos_loc.getZ() << " "
-                 << cam_pos_rot.getW() << " " << cam_pos_rot.getX() << " " << cam_pos_rot.getY() << " "
-                 << cam_pos_rot.getZ() << std::endl;
-        
+        auto cam_pose = frames[i].get_true_camera_pose();
+        cam_file << frames[i].frame_id << " " << cam_pose << std::endl;
+
         // object poses
         for (auto &pair : frames[i].obj_poses) {
-            auto obj_pos_loc = pair.second.pq.getOrigin();
-            auto obj_pos_rot = pair.second.pq.getRotation();
-            obj_file << i << " " << pair.first << " "
-                     << obj_pos_loc.getX() << " " << obj_pos_loc.getY() << " " << obj_pos_loc.getZ() << " "
-                     << obj_pos_rot.getW() << " " << obj_pos_rot.getX() << " " << obj_pos_rot.getY() << " "
-                     << obj_pos_rot.getZ() << std::endl;
+            auto obj_pose = frames[i].get_true_object_pose(pair.first);
+            obj_file << frames[i].frame_id << " " << pair.first << " " << obj_pose << std::endl;
         }
 
         // masks and depth
-        std::string img_name = "/frame_" + std::to_string(i) + ".png";
+        std::string img_name = "/frame_" + std::to_string(frames[i].frame_id) + ".png";
         std::string gtfname = gt_dir_path.string() + img_name;
         cv::Mat depth, mask;
         frames[i].depth.convertTo(depth, CV_16UC1, 1000);
@@ -905,6 +928,7 @@ int main (int argc, char** argv) {
 
         if (with_images) {
             cv::imwrite(img_dir_path.string() + img_name, frames[i].img);        
+            rgb_ts_file << frames[i].cam_pose.ts.toSec() << " " << "img" + img_name << std::endl;
         }
 
         // timestamps
@@ -915,6 +939,7 @@ int main (int argc, char** argv) {
         }
     }
     ts_file.close();
+    rgb_ts_file.close();
     obj_file.close();
     cam_file.close();
 

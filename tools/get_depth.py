@@ -144,15 +144,16 @@ if __name__ == '__main__':
     gt_ts          = sl_npz['gt_ts']
 
 
-    rgb_dir = os.path.join(args.base_dir, 'rgb')
+    rgb_dir = os.path.join(args.base_dir, 'img')
     add_rgb = True
     if not os.path.exists(rgb_dir):
         add_rgb = False
 
     rgb_name_list = []
     if (add_rgb):
-        flist = sorted(os.listdir(rgb_dir))
-        rgb_ts = np.loadtxt(os.path.join(args.base_dir, 'rgb_ts.txt'), usecols=0)
+        #flist = sorted(os.listdir(rgb_dir))
+        flist = np.loadtxt(os.path.join(args.base_dir, 'images.txt'), usecols=1, dtype='str')
+        rgb_ts = np.loadtxt(os.path.join(args.base_dir, 'images.txt'), usecols=0)
         print ("Image files:", len(flist), "Image timestamps:", rgb_ts.shape, "Gt ts:", len(gt_ts))
 
         for i, ts in enumerate(gt_ts):
@@ -295,7 +296,7 @@ if __name__ == '__main__':
 
 
         if (add_rgb):
-            rgb_img = cv2.imread(os.path.join(rgb_dir, rgb_name_list[i]), cv2.IMREAD_COLOR)
+            rgb_img = cv2.imread(os.path.join(rgb_dir, rgb_name_list[i].split('/')[-1]), cv2.IMREAD_COLOR)
             rgb_img = undistort_img(rgb_img,  K, D)
 
             rgb_img[mask > 10] = rgb_img[mask > 10] * 0.5 + col_mask[mask > 10] * 0.5
