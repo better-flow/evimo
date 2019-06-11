@@ -18,8 +18,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
  
-
-
   <depend>OpenCV</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
@@ -36,6 +34,8 @@
   <depend>laser_geometry</depend>
   <depend>libpcl-all-dev</depend>
   <depend>message_runtime</depend>
+  <depend>dvs_msgs</depend>
+  <depend>prophesee_event_msgs</depend>
 
   <exec_depend>libpcl-all</exec_depend>
 

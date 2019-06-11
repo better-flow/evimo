@@ -28,6 +28,8 @@ find_package(catkin REQUIRED COMPONENTS
              laser_geometry
              std_msgs
              vicon
+             dvs_msgs
+             prophesee_event_msgs
 )
 
 
@@ -35,7 +37,7 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(OpenCV REQUIRED)
 
 
-catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs vicon)
+catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs vicon dvs_msgs prophesee_event_msgs)
 
 
 include_directories(${catkin_INCLUDE_DIRS}

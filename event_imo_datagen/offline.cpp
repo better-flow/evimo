@@ -1,5 +1,6 @@
 #include <vector>
 #include <algorithm>
+#include <type_traits>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -33,8 +34,13 @@
 
 #include <vicon/Subject.h>
 
+// DVS / DAVIS
 #include <dvs_msgs/Event.h>
 #include <dvs_msgs/EventArray.h>
+
+// PROPHESEE
+#include <prophesee_event_msgs/PropheseeEvent.h>
+#include <prophesee_event_msgs/PropheseeEventBuffer.h>
 
 #include "object.h"
 #include "event_vis.h"
@@ -704,9 +710,19 @@ int main (int argc, char** argv) {
         }
 
         if (m.getTopic() == event_topic) {
-            auto msg = m.instantiate<dvs_msgs::EventArray>();  
-            if (msg == NULL) continue;
-            n_events += msg->events.size();
+            // DVS / DAVIS event messages
+            auto msg_dvs = m.instantiate<dvs_msgs::EventArray>();  
+            if (msg_dvs != NULL) {
+                n_events += msg_dvs->events.size();
+            }
+
+            // PROPHESEE event messages
+            auto msg_prs = m.instantiate<prophesee_event_msgs::PropheseeEventBuffer>();  
+            if (msg_prs != NULL) {
+                n_events += msg_prs->events.size();
+            }
+
+            continue;
         }
 
         if (with_images && (m.getTopic() == img_topic)) {
@@ -724,28 +740,57 @@ int main (int argc, char** argv) {
     std::vector<Event> event_array(n_events);
     uint64_t id = 0;
     ros::Time first_event_ts;
+    ros::Time first_event_message_ts;
     ros::Time last_event_ts;
     for (auto &m : view) {
-        if (m.getTopic() == event_topic) {
-            auto msg = m.instantiate<dvs_msgs::EventArray>();  
-            if (msg == NULL) continue;
-            for (auto &e : msg->events) {
-                if (id == 0) {
-                    first_event_ts = e.ts;
-                    last_event_ts = e.ts;
-                } else {
-                    if (e.ts < last_event_ts) {
-                        std::cout << _red("Events are not sorted! ") 
-                                  << id << ": " << last_event_ts << " -> " 
-                                  << e.ts << std::endl;
-                    }
-                    last_event_ts = e.ts;
-                }
-                
-                auto ts = (e.ts - first_event_ts).toNSec();
-                event_array[id] = Event(e.y, e.x, ts, e.polarity ? 1 : 0);
-                id ++;
+        if (m.getTopic() != event_topic)
+            continue;
+
+        auto msg_dvs = m.instantiate<dvs_msgs::EventArray>();
+        auto msg_prs = m.instantiate<prophesee_event_msgs::PropheseeEventBuffer>();  
+
+        auto msize = 0;
+        if (msg_dvs != NULL) msize = msg_dvs->events.size();
+        if (msg_prs != NULL) msize = msg_prs->events.size();
+
+        for (uint64_t i = 0; i < msize; ++i) {
+            int32_t x = 0, y = 0;
+            ros::Time current_event_ts = ros::Time(0);
+            int polarity = 0;
+
+            // Sensor-specific switch:
+            // DVS / DAVIS
+            if (msg_dvs != NULL) { 
+                auto &e = msg_dvs->events[i];
+                current_event_ts = e.ts;
+                x = e.x; y = e.y;
+                polarity = e.polarity ? 1 : 0;
             }
+
+            // PROPHESEE
+            if (msg_prs != NULL) { 
+                auto &e = msg_prs->events[i];
+                current_event_ts = ros::Time(double(e.t) / 1000000.0);
+                x = e.x; y = e.y;
+                polarity = e.p ? 1 : 0;
+            }
+
+            if (id == 0) {
+                first_event_ts = current_event_ts;
+                last_event_ts = current_event_ts;
+                first_event_message_ts = m.getTime();
+            } else {
+                if (current_event_ts < last_event_ts) {
+                    std::cout << _red("Events are not sorted! ") 
+                              << id << ": " << last_event_ts << " -> " 
+                              << current_event_ts << std::endl;
+                }
+                last_event_ts = current_event_ts;
+            }
+
+            auto ts = (current_event_ts - first_event_ts).toNSec();
+            event_array[id] = Event(y, x, ts, polarity);
+            id ++;
         }
     }
 
@@ -769,6 +814,9 @@ int main (int argc, char** argv) {
         std::cout << _yellow("Warning: ") << "event time offset is not the smallest (" << first_event_ts 
                   << " vs " << time_offset << ")" << std::endl; 
     time_offset = first_event_ts; // align with events
+
+    time_offset = first_event_message_ts;
+
     cam_tj.subtract_time(time_offset + ros::Duration(time_bias));
     for (auto &obj_tj : obj_tjs)
         obj_tj.second.subtract_time(time_offset + ros::Duration(time_bias));
@@ -777,7 +825,8 @@ int main (int argc, char** argv) {
         images.erase(images.begin());
     }
     for (uint64_t i = 0; i < image_ts.size(); ++i)
-        image_ts[i] = ros::Time((image_ts[i] - time_offset - ros::Duration(time_bias)).toSec());
+        image_ts[i] = ros::Time((image_ts[i] - time_offset).toSec() < 0 ? 0 : (image_ts[i] - time_offset).toSec());
+
     std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec()))
               << std::endl << std::endl;    
 
@@ -821,7 +870,7 @@ int main (int argc, char** argv) {
             if (ts_err > max_ts_err) max_ts_err = ts_err;
         }
 
-        if (max_ts_err > 0.01) {
+        if (max_ts_err > 0.005) {
             std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " skipping..." << std::endl;
             frame_id_real ++;
             continue;
@@ -845,7 +894,6 @@ int main (int argc, char** argv) {
 
     std::cout << _blue("\nTimestamp alignment done") << std::endl;
     std::cout << "\tDataset contains " << frames.size() << " frames" << std::endl;
-
 
     // Visualization
     int step = std::max(int(frames.size()) / show, 1);
@@ -900,7 +948,7 @@ int main (int argc, char** argv) {
     }
 
     std::cout << std::endl << _yellow("Writing depth and mask ground truth") << std::endl; 
-    for (int i = 0; i < frames.size(); ++i) {
+    for (int i = 0; (i < frames.size()) && generate; ++i) {
  
         // camera pose
         auto cam_pose = frames[i].get_true_camera_pose();
@@ -945,7 +993,7 @@ int main (int argc, char** argv) {
 
     std::cout << std::endl << _yellow("Writing events.txt") << std::endl; 
     std::stringstream ss;
-    for (uint64_t i = 0; i < event_array.size(); ++i) {
+    for (uint64_t i = 0; (i < event_array.size()) && generate; ++i) {
         if (i % 100000 == 0) {
             std::cout << "\tFormatting " << i + 1 << " / " << event_array.size() << std::endl;
         }
@@ -955,7 +1003,7 @@ int main (int argc, char** argv) {
            << " " << event_array[i].fr_y << " " << event_array[i].fr_x 
            << " " << int(event_array[i].polarity) << std::endl; 
     }
-    
+
     event_file << ss.str();
     event_file.close();
     std::cout << std::endl << _green("Done!") << std::endl; 
