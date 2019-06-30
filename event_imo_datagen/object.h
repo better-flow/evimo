@@ -57,8 +57,8 @@ protected:
     tf::Transform s_transform, last_to_camcenter;
 
 public:
-    StaticObject (std::string folder_) : 
-        folder(folder_), 
+    StaticObject (std::string folder_) :
+        folder(folder_),
         obj_cloud(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_transformed(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_camera_frame(new pcl::PointCloud<pcl::PointXYZRGB>) {
@@ -74,7 +74,7 @@ public:
 
         if (fext == "pcd") {
             std::cout << "Reading as .pcd...\n";
-            pcl::io::loadPCDFile(this->cloud_fname, *(this->obj_cloud));  
+            pcl::io::loadPCDFile(this->cloud_fname, *(this->obj_cloud));
         } else if (fext == "ply") {
             std::cout << "Reading as .ply...\n";
             pcl::io::loadPLYFile(this->cloud_fname, *(this->obj_cloud));
@@ -153,7 +153,7 @@ protected:
     PoseManager pose_manager;
 
 public:
-    ViObject (ros::NodeHandle n_, std::string folder_, int id_) : 
+    ViObject (ros::NodeHandle n_, std::string folder_, int id_) :
         n_(n_), it_(n_), folder(folder_), id(id_),
         obj_cloud(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_transformed(new pcl::PointCloud<pcl::PointXYZRGB>),
@@ -163,7 +163,7 @@ public:
 
         this->name = "Object_" + std::to_string(this->id);
         std::cout << "Initializing " << this->name << std::endl;
-        
+
         this->obj_pub = n_.advertise<pcl::PointCloud<pcl::PointXYZRGB>> ("/ev_imo/" + this->name, 100);
         this->vis_pub = n_.advertise<visualization_msgs::MarkerArray>("/ev_imo/markers", 0);
         this->obj_sub = n_.subscribe("/vicon/" + this->name, 0, &ViObject::vicon_pos_cb, this);
@@ -176,7 +176,7 @@ public:
 
         if (fext == "pcd") {
             std::cout << "Reading as .pcd...\n";
-            pcl::io::loadPCDFile(this->cloud_fname, *(this->obj_cloud));  
+            pcl::io::loadPCDFile(this->cloud_fname, *(this->obj_cloud));
         } else if (fext == "ply") {
             std::cout << "Reading as .ply...\n";
             pcl::io::loadPLYFile(this->cloud_fname, *(this->obj_cloud));
@@ -193,17 +193,17 @@ public:
         //this->LAST_SVD = Eigen::MatrixXf::Identity(4, 4);
 
         std::ifstream cfg(this->config_fname, std::ifstream::in);
-        int id = -1; 
+        int id = -1;
         double x = 0, y = 0, z = 0;
         while (!cfg.eof()) {
-            if (!(cfg >> id >> x >> y >> z))                     
+            if (!(cfg >> id >> x >> y >> z))
                 continue;
             pcl::PointXYZRGB p;
             p.x = x; p.y = y; p.z = z;
             p.r = 255; p.g = 255; p.b = 255;
             this->obj_markerpos->push_back(p);
         }
-        
+
         std::cout << this->name << " initialized with " << this->obj_markerpos->size() << " markers:" << std::endl;
         std::cout << " ID\t|\t\tcoordinate" << std::endl;
         id = 0;
@@ -217,7 +217,7 @@ public:
     // Callbacks
     void vicon_pos_cb(const vicon::Subject& subject) {
         this->last_pos = subject;
-        
+
         if (this->poses_received == 0)
             this->init_cloud_to_vicon_tf(subject);
 
@@ -376,8 +376,8 @@ public:
         tf::Vector3 origin;
         origin.setValue(static_cast<double>(Tm(0,3)),static_cast<double>(Tm(1,3)),static_cast<double>(Tm(2,3)));
         tf::Matrix3x3 tf3d;
-        tf3d.setValue(static_cast<double>(Tm(0,0)), static_cast<double>(Tm(0,1)), static_cast<double>(Tm(0,2)), 
-                      static_cast<double>(Tm(1,0)), static_cast<double>(Tm(1,1)), static_cast<double>(Tm(1,2)), 
+        tf3d.setValue(static_cast<double>(Tm(0,0)), static_cast<double>(Tm(0,1)), static_cast<double>(Tm(0,2)),
+                      static_cast<double>(Tm(1,0)), static_cast<double>(Tm(1,1)), static_cast<double>(Tm(1,2)),
                       static_cast<double>(Tm(2,0)), static_cast<double>(Tm(2,1)), static_cast<double>(Tm(2,2)));
         return tf::Transform (tf3d, origin);
     }
@@ -388,7 +388,7 @@ public:
         tf::Quaternion q(p.orientation.x,
                          p.orientation.y,
                          p.orientation.z,
-                         p.orientation.w); 
+                         p.orientation.w);
         transform.setRotation(q);
         return transform;
     }

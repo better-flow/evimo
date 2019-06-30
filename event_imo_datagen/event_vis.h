@@ -148,7 +148,7 @@ template<class T> cv::Mat EventFile::color_time_img (T *events, int scale) {
 
         x += scale / 2;
         y += scale / 2;
-        
+
         for (int jx = x - scale / 2; jx <= x + scale / 2; ++jx) {
             for (int jy = y - scale / 2; jy <= y + scale / 2; ++jy) {
                 project_img.at<cv::Vec3f>(jx, jy)[0] += cos(angle);
@@ -157,7 +157,7 @@ template<class T> cv::Mat EventFile::color_time_img (T *events, int scale) {
             }
         }
     }
-        
+
     for (int jx = 0; jx < scale_img_x; ++jx) {
         for (int jy = 0; jy < scale_img_y; ++jy) {
             if (project_img_cnt.at<float>(jx, jy) < 1) continue;
@@ -169,7 +169,7 @@ template<class T> cv::Mat EventFile::color_time_img (T *events, int scale) {
             double angle = 0;
             if (speed != 0)
                 angle = (atan2(vy, vx) + 3.1416) * 180 / 3.1416;
-            
+
             project_img_avg.at<cv::Vec3b>(jx, jy)[0] = angle / 2;
             project_img_avg.at<cv::Vec3b>(jx, jy)[1] = speed * 255;
             project_img_avg.at<cv::Vec3b>(jx, jy)[2] = 255;
@@ -227,7 +227,7 @@ void EventFile::nonzero_norm (cv::Mat img) {
 
 cv::Vec3b EventFile::id2rgb(unsigned int id) {
     cv::Vec3b ret;
-    int COLORS[6][3] = {{255, 255, 0}, {255, 0, 255}, {0, 255, 255}, 
+    int COLORS[6][3] = {{255, 255, 0}, {255, 0, 255}, {0, 255, 255},
                         {255, 0, 0},   {0, 255, 0},   {0, 0, 255}};
     int len = sizeof(COLORS) / sizeof(*COLORS);
     ret[0] = COLORS[id % len][0];
