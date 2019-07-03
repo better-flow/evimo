@@ -1,5 +1,6 @@
 #include <vector>
 #include <algorithm>
+#include <thread>
 #include <type_traits>
 #include <cmath>
 #include <iomanip>
@@ -486,6 +487,9 @@ protected:
 
     // Baseline timestamp
     double timestamp;
+
+    // Thread handle
+    std::thread thread_handle;
 public:
     uint64_t cam_pose_id;
     std::map<int, uint64_t> obj_pose_ids;
@@ -550,7 +554,11 @@ public:
             DatasetConfig::modified = false;
 
             for (auto &window : window_names) {
-                window.first->generate();
+                window.first->generate_async();
+            }
+
+            for (auto &window : window_names) {
+                window.first->join();
 
                 cv::Mat img;
                 switch (vis_mode) {
@@ -619,6 +627,16 @@ public:
         return this->timestamp - DatasetConfig::get_time_offset_pose_to_host_correction();
     }
 
+    std::string get_info() {
+        std::string s;
+        s += std::to_string(frame_id) + ": " + std::to_string(get_timestamp()) + "\t";
+        s += std::to_string(get_true_camera_pose().ts.toSec()) + "\t";
+        for (auto &obj : DatasetFrame::clouds) {
+            s += std::to_string(this->_get_raw_object_pose(obj.first).ts.toSec()) + "\t";
+        }
+        return s;
+    }
+
     // Generate frame
     void generate() {
         this->depth = cv::Scalar(0);
@@ -648,6 +666,14 @@ public:
             auto cl = obj.second->transform_to_camframe(cam_tf, obj_pose.pq);
             this->project_cloud(cl, id);
         }
+    }
+
+    void generate_async() {
+        this->thread_handle = std::thread(&DatasetFrame::generate, this);
+    }
+
+    void join() {
+        this->thread_handle.join();
     }
 
     // Visualization pipeline
@@ -894,6 +920,7 @@ public:
                 case 3: img = f.get_visualization_event_projection(true); break;
             }
 
+            //std::cout << f.get_info() << "\n";
             cv::imshow("Frames", img);
         }
 
@@ -1184,7 +1211,9 @@ int main (int argc, char** argv) {
             continue;
         }
 
-        DatasetFrame frame(cam_tj_id, ref_ts, through_mode ? frame_id_through : frame_id_real);
+        frames.emplace_back(cam_tj_id, ref_ts, through_mode ? frame_id_through : frame_id_real);
+        DatasetFrame &frame = frames.back();
+
         frame.add_event_slice_ids(event_low, event_high);
         if (with_images) frame.add_img(images[frame_id_real]);
         std::cout << (through_mode ? frame_id_through : frame_id_real) << ": " << cam_tj[cam_tj_id].ts
@@ -1196,7 +1225,6 @@ int main (int argc, char** argv) {
             frame.add_object_pos_id(obj_tj.first, obj_tj_ids[obj_tj.first]);
         }
         std::cout << std::endl;
-        frames.push_back(frame);
 
         frame_id_real ++;
         frame_id_through ++;
@@ -1225,7 +1253,11 @@ int main (int argc, char** argv) {
     // Projecting the clouds and generating masks / depth maps
     std::cout << std::endl << _yellow("Generating ground truth") << std::endl;
     for (int i = 0; i < frames.size(); ++i) {
-        frames[i].generate();
+        frames[i].generate_async();
+    }
+
+    for (int i = 0; i < frames.size(); ++i) {
+        frames[i].join();
         if (i % 10 == 0) {
             std::cout << "\tFrame " << i + 1 << " / " << frames.size() <<  std::endl;
         }
