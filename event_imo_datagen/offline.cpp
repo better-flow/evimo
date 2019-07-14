@@ -1,4 +1,5 @@
 #include <vector>
+#include <valarray>
 #include <algorithm>
 #include <thread>
 #include <type_traits>
@@ -397,7 +398,7 @@ std::string DatasetConfig::window_name;
 int DatasetConfig::value_rr = MAXVAL / 2, DatasetConfig::value_rp = MAXVAL / 2, DatasetConfig::value_ry = MAXVAL / 2;
 int DatasetConfig::value_tx = MAXVAL / 2, DatasetConfig::value_ty = MAXVAL / 2, DatasetConfig::value_tz = MAXVAL / 2;
 bool DatasetConfig::modified = true;
-float DatasetConfig::pose_filtering_window = 0.02;
+float DatasetConfig::pose_filtering_window = 0.04;
 
 // Time offset controls
 float DatasetConfig::image_to_event_to, DatasetConfig::pose_to_event_to;
@@ -536,6 +537,34 @@ public:
         this->occlusion = this->occlusion / float(p.markers.size());
     }
 
+    void setT(std::valarray<float> t) {
+        tf::Vector3 T(t[0], t[1], t[2]);
+        this->pq.setOrigin(T);
+    }
+
+    void setR(std::valarray<float> r) {
+        tf::Quaternion q;
+        q.setRPY(r[0], r[1], r[2]);
+        this->pq.setRotation(q);
+    }
+
+    std::valarray<float> getT() {
+        tf::Vector3 T = this->pq.getOrigin();
+        return {(float)T.getX(), (float)T.getY(), (float)T.getZ()};
+    }
+
+    std::valarray<float> getR() {
+        tf::Quaternion q = this->pq.getRotation();
+        float w = q.getW(), x = q.getX(), y = q.getY(), z = q.getZ();
+        float X = std::atan2(2.0f * (w * x + y * z), 1.0f - 2.0f * (x * x + y * y));
+        float sin_val = 2.0f * (w * y - z * x);
+        sin_val = (sin_val >  1.0f) ?  1.0f : sin_val;
+        sin_val = (sin_val < -1.0f) ? -1.0f : sin_val;
+        float Y = std::asin(sin_val);
+        float Z = std::atan2(2.0f * (w * z + x * y), 1.0f - 2.0f * (y * y + z * z));
+        return {X, Y, Z};
+    }
+
     double get_ts_sec() {return this->ts.toSec(); }
 
     operator tf::Transform() const {return this->pq; }
@@ -559,7 +588,7 @@ private:
     std::vector<Pose> poses; /**< array of poses */
 
 public:
-    Trajectory(int32_t window_size = 1)
+    Trajectory(int32_t window_size = 0)
         : filtering_window_size(window_size) {}
 
     void set_filtering_window_size(auto window_size) {this->filtering_window_size = window_size; }
@@ -596,10 +625,24 @@ protected:
              std::make_pair(central_ts - this->filtering_window_size / 2.0,
                             central_ts + this->filtering_window_size / 2.0), idx);
         Pose filtered_p;
+        filtered_p.ts = ros::Time(central_ts);
+        filtered_p.occlusion = this->poses[idx].occlusion;
+        auto rot = filtered_p.getR();
+        auto tr  = filtered_p.getT();
+
         for (auto &p : poses_in_window) {
-            filtered_p = p;
+            rot += p.getR();
+            tr  += p.getT();
         }
 
+        rot /= float(poses_in_window.size());
+        tr  /= float(poses_in_window.size());
+
+        filtered_p.setR(rot);
+        filtered_p.setT(tr);
+
+        if (poses_in_window.size() > 1)
+            std::cout << "Filtering pose with\t" << poses_in_window.size() << "\tneighbours\n";
         return filtered_p;
     }
 
