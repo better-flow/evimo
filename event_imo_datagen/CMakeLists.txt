@@ -9,20 +9,20 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g")
 set(CMAKE_BUILD_TYPE Release)
 
 
-add_definitions(-std=c++14)
+add_definitions(-std=c++17)
 
 
 
-find_package(catkin REQUIRED COMPONENTS 
-             cv_bridge 
-             geometry_msgs 
-             image_transport 
-             message_generation 
-             pcl_conversions 
-             pcl_ros 
-             roscpp 
+find_package(catkin REQUIRED COMPONENTS
+             cv_bridge
+             geometry_msgs
+             image_transport
+             message_generation
+             pcl_conversions
+             pcl_ros
+             roscpp
              sensor_msgs
-             visualization_msgs 
+             visualization_msgs
              tf
              tf_conversions
              laser_geometry

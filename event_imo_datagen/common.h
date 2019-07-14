@@ -77,6 +77,13 @@ typedef EventCloudTemplate<CircularArray<Event, MAX_EVENT_PER_PX, FROM_MS(MAX_TI
 #define _bold(str) std::string("\033[1m" + std::string(str) + "\033[0m")
 #define _underline(str) std::string("\033[4m" + std::string(str) + "\033[0m")
 
+
+class SensorMeasurement {
+public:
+    virtual double get_ts_sec() = 0;
+};
+
+
 template <typename T>
 std::string to_string_p(const T a_value, const int n = 6)
 {

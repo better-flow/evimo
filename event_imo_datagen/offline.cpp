@@ -70,6 +70,9 @@ public:
     // Event slice width, for visualization
     static float slice_width;
 
+    // Pose filtering window, in seconds
+    static float pose_filtering_window;
+
     // Other parameters
     static std::map<int, bool> enabled_objects;
     static std::string window_name;
@@ -158,6 +161,16 @@ public:
 
         if (code == 93) { // ']'
             DatasetConfig::slice_width += 0.01;
+            DatasetConfig::modified = true;
+        }
+
+        if (code == 111) { // 'o'
+            DatasetConfig::pose_filtering_window = std::max(0.0, DatasetConfig::pose_filtering_window - 0.01);
+            DatasetConfig::modified = true;
+        }
+
+        if (code == 112) { // 'p'
+            DatasetConfig::pose_filtering_window += 0.01;
             DatasetConfig::modified = true;
         }
 
@@ -384,6 +397,7 @@ std::string DatasetConfig::window_name;
 int DatasetConfig::value_rr = MAXVAL / 2, DatasetConfig::value_rp = MAXVAL / 2, DatasetConfig::value_ry = MAXVAL / 2;
 int DatasetConfig::value_tx = MAXVAL / 2, DatasetConfig::value_ty = MAXVAL / 2, DatasetConfig::value_tz = MAXVAL / 2;
 bool DatasetConfig::modified = true;
+float DatasetConfig::pose_filtering_window = 0.02;
 
 // Time offset controls
 float DatasetConfig::image_to_event_to, DatasetConfig::pose_to_event_to;
@@ -391,14 +405,122 @@ int DatasetConfig::image_to_event_to_slider = MAXVAL / 2, DatasetConfig::pose_to
 
 
 // Service functions
-class Pose {
+template <class T> class Slice {
+protected:
+    T *data;
+    std::pair<size_t, size_t> indices;
+    size_t current_size;
+
+protected:
+    Slice(T &vec)
+        : data(&vec), indices(0, 0), current_size(0) {}
+
+    void set_indices(std::pair<size_t, size_t> p) {
+        this->indices = p;
+        this->current_size = p.second - p.first + 1;
+
+        if (p.first > p.second)
+            throw std::string("Attempt to create a Slice with first index bigger than the second! (" +
+                              std::to_string(p.first) + " > " + std::to_string(p.second) + ")");
+        if (p.second >= this->data->size())
+            throw std::string("the second index in Slice is bigger than input vector size! (" +
+                              std::to_string(p.second) + " >= " + std::to_string(this->data->size()) + ")");
+    }
+
+public:
+    typedef T value_type;
+
+    Slice(T &vec, std::pair<uint64_t, uint64_t> p)
+        : Slice(vec) {
+        this->set_indices(p);
+    }
+
+    std::pair<size_t, size_t> get_indices() {
+        return this->indices;
+    }
+
+    size_t size() {return this->current_size; }
+    auto begin()  {return this->data->begin() + this->indices.first; }
+    auto end()    {return this->data->begin() + this->indices.second + 1; }
+    auto operator [] (size_t idx) {return (*this->data)[idx + this->indices.first]; }
+};
+
+
+template <class T> class TimeSlice : public Slice<T> {
+protected:
+    std::pair<double, double> time_bounds;
+    double get_ts(size_t idx) const {return (this->data->begin() + idx)->get_ts_sec(); }
+
+public:
+    TimeSlice(T &vec)
+        : Slice<T>(vec) {
+        if (this->data->size() == 0)
+            throw std::string("TimeSlice: cannot construct on an empty container!");
+
+        this->time_bounds.first  = this->get_ts(0);
+        this->time_bounds.second = this->get_ts(this->data->size() - 1);
+        this->set_indices(std::pair<uint64_t, uint64_t>(0, this->data->size() - 1));
+    }
+
+    TimeSlice(T &vec, std::pair<double, double> p, std::pair<size_t, size_t> hint)
+        : Slice<T>(vec), time_bounds(p) {
+        std::pair<uint64_t, uint64_t> idx_pair;
+        idx_pair.first  = this->find_nearest(this->time_bounds.first,  hint.first);
+        idx_pair.second = this->find_nearest(this->time_bounds.second, hint.second);
+        this->set_indices(idx_pair);
+    }
+
+    TimeSlice(T &vec, std::pair<double, double> p, size_t hint = 0)
+        : TimeSlice(vec, p, std::make_pair(hint, hint)) {}
+
+    size_t find_nearest(double ts, size_t hint = 0) const {
+        // Assuming data is sorted according to timestamps, in ascending order
+        if (this->data->size() == 0)
+            throw std::string("find_nearest: data container is empty!");
+
+        if (hint >= this->data->size())
+            throw std::string("find_nearest: hint specified is out of bounds!");
+
+        size_t best_idx = hint;
+        auto initial_ts = this->get_ts(best_idx);
+        double best_error = std::fabs(initial_ts - ts);
+
+        int8_t step = 1;
+        if (ts < initial_ts) step = -1;
+
+        int32_t idx = hint;
+        while (idx >= 0 && idx < this->data->size() && step * (ts - this->get_ts(idx)) >= 0.0) {
+            if (std::fabs(ts - this->get_ts(idx)) < best_error) {
+                best_error = std::fabs(ts - this->get_ts(idx));
+                best_idx = idx;
+            }
+
+            idx += step;
+        }
+
+        idx += step;
+        if (idx >= 0 && idx < this->data->size() && std::fabs(ts - this->get_ts(idx)) < best_error) {
+            best_error = std::fabs(ts - this->get_ts(idx));
+            best_idx = idx;
+        }
+
+        return best_idx;
+    }
+
+    std::pair<double, double> get_time_bounds() {
+        return this->time_bounds;
+    }
+};
+
+
+class Pose : public SensorMeasurement {
 public:
     ros::Time ts;
     tf::Transform pq;
     float occlusion;
 
-    Pose():
-        ts(0) {}
+    Pose()
+        : ts(0), occlusion(std::numeric_limits<double>::quiet_NaN()) {this->pq.setIdentity(); }
     Pose(ros::Time ts_, tf::Transform pq_)
         : ts(ts_), pq(pq_), occlusion(std::numeric_limits<double>::quiet_NaN()) {}
     Pose(ros::Time ts_, const vicon::Subject& p)
@@ -414,6 +536,8 @@ public:
         this->occlusion = this->occlusion / float(p.markers.size());
     }
 
+    double get_ts_sec() {return this->ts.toSec(); }
+
     operator tf::Transform() const {return this->pq; }
     friend std::ostream &operator<< (std::ostream &output, const Pose &P) {
         auto loc = P.pq.getOrigin();
@@ -426,19 +550,29 @@ public:
 };
 
 
+/*! Trajectory class */
 class Trajectory {
+protected:
+    double filtering_window_size; /**< size of trajectory filtering window, in seconds */
+
+private:
+    std::vector<Pose> poses; /**< array of poses */
+
 public:
-    std::vector<Pose> poses;
+    Trajectory(int32_t window_size = 1)
+        : filtering_window_size(window_size) {}
+
+    void set_filtering_window_size(auto window_size) {this->filtering_window_size = window_size; }
+    auto get_filtering_window_size() {return this->filtering_window_size; }
+
     void add(ros::Time ts_, auto pq_) {
         this->poses.push_back(Pose(ts_, pq_));
     }
 
     size_t size() {return this->poses.size(); }
-    inline auto begin() {return this->poses.begin(); }
-    inline auto end()   {return this->poses.end(); }
-    inline auto operator [] (size_t idx) {return this->poses[idx]; }
+    auto operator [] (size_t idx) {return this->get_filtered(idx); }
 
-    bool check() {
+    virtual bool check() {
         if (this->size() == 0) return true;
         auto prev_ts = this->poses[0].ts;
         for (auto &p : this->poses) {
@@ -448,28 +582,31 @@ public:
         return true;
     }
 
-    void subtract_time(ros::Time t) {
+    virtual void subtract_time(ros::Time t) final {
         for (auto &p : this->poses) p.ts = ros::Time((p.ts - t).toSec());
     }
-};
 
-
-template <class T> class Slice {
 protected:
-    T *data;
-    std::pair<uint64_t, uint64_t> pair;
-    size_t current_size;
+    auto begin() {return this->poses.begin(); }
+    auto end()   {return this->poses.end(); }
 
-public:
-    typedef T value_type;
+    virtual Pose get_filtered(size_t idx) {
+        auto central_ts = this->poses[idx].get_ts_sec();
+        auto poses_in_window = TimeSlice<Trajectory>(*this,
+             std::make_pair(central_ts - this->filtering_window_size / 2.0,
+                            central_ts + this->filtering_window_size / 2.0), idx);
+        Pose filtered_p;
+        for (auto &p : poses_in_window) {
+            filtered_p = p;
+        }
 
-    Slice(T &vec, std::pair<uint64_t, uint64_t> p)
-        : data(&vec), pair(p), current_size(p.second - p.first) {}
+        return filtered_p;
+    }
 
-    size_t size() {return this->size; }
-    auto begin()  {return this->data->begin() + this->pair.first; }
-    auto end()    {return this->data->begin() + this->pair.second; }
+    friend class Slice<Trajectory>;
+    friend class TimeSlice<Trajectory>;
 };
+
 
 
 class DatasetFrame {
@@ -582,18 +719,20 @@ public:
         : cam_pose_id(cam_p_id), timestamp(ref_ts), frame_id(fid), event_slice_ids(0, 0),
           depth(DatasetConfig::res_x, DatasetConfig::res_y, CV_32F, cv::Scalar(0)),
           mask(DatasetConfig::res_x, DatasetConfig::res_y, CV_8U, cv::Scalar(0)) {
-        this->optimize_pos_time_offset(*(this->cam_tj), this->cam_pose_id, this->get_timestamp());
+        this->cam_pose_id = TimeSlice(*this->cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
     }
 
     void add_object_pos_id(int id, uint64_t obj_p_id) {
         this->obj_pose_ids.insert(std::make_pair(id, obj_p_id));
-        this->optimize_pos_time_offset(this->obj_tjs->at(id), this->obj_pose_ids[id], this->get_timestamp());
+        this->obj_pose_ids[id] = TimeSlice(this->obj_tjs->at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
     }
 
     void add_event_slice_ids(uint64_t event_low, uint64_t event_high) {
         this->event_slice_ids = std::make_pair(event_low, event_high);
-        this->optimize_evt_time_offset(*(this->event_array), this->event_slice_ids,
-                    this->timestamp - DatasetConfig::get_time_offset_event_to_host_correction());
+        this->event_slice_ids = TimeSlice(*this->event_array,
+            std::make_pair(this->timestamp - DatasetConfig::get_time_offset_event_to_host_correction() - DatasetConfig::slice_width / 2.0,
+                           this->timestamp - DatasetConfig::get_time_offset_event_to_host_correction() + DatasetConfig::slice_width / 2.0),
+            this->event_slice_ids).get_indices();
     }
 
     void add_img(cv::Mat &img_) {
@@ -643,10 +782,13 @@ public:
         this->mask  = cv::Scalar(0);
 
         DatasetConfig::update_cam_calib();
+        this->cam_tj->set_filtering_window_size(DatasetConfig::pose_filtering_window);
+        this->cam_pose_id = TimeSlice(*this->cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
+        this->event_slice_ids = TimeSlice(*this->event_array,
+            std::make_pair(this->timestamp - DatasetConfig::get_time_offset_event_to_host_correction() - DatasetConfig::slice_width / 2.0,
+                           this->timestamp - DatasetConfig::get_time_offset_event_to_host_correction() + DatasetConfig::slice_width / 2.0),
+            this->event_slice_ids).get_indices();
 
-        this->optimize_pos_time_offset(*(this->cam_tj), this->cam_pose_id, this->get_timestamp());
-        this->optimize_evt_time_offset(*(this->event_array), this->event_slice_ids,
-                               this->timestamp - DatasetConfig::get_time_offset_event_to_host_correction());
         auto cam_tf = this->get_true_camera_pose();
         if (DatasetFrame::background != nullptr) {
             auto cl = DatasetFrame::background->transform_to_camframe(cam_tf);
@@ -655,7 +797,9 @@ public:
 
         for (auto &obj : DatasetFrame::clouds) {
             auto id = obj.first;
-            this->optimize_pos_time_offset(this->obj_tjs->at(id), this->obj_pose_ids[id], this->get_timestamp());
+            this->obj_tjs->at(id).set_filtering_window_size(DatasetConfig::pose_filtering_window);
+            this->obj_pose_ids[id] = TimeSlice(this->obj_tjs->at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
+
             if (this->obj_pose_ids.find(id) == this->obj_pose_ids.end()) {
                 std::cout << _yellow("Warning! ") << "No pose for object "
                           << id << ", frame id = " << this->frame_id << std::endl;
@@ -825,47 +969,6 @@ protected:
             return DatasetFrame::obj_tjs->at(id)[obj_tj_size - 1];
         }
         return DatasetFrame::obj_tjs->at(id)[obj_pose_id];
-    }
-
-    void optimize_pos_time_offset(Trajectory &tj, uint64_t &pose_id, double time_sec) {
-        auto get_ts   = [&](uint64_t i) { return tj[i].ts.toSec(); };
-        this->_optimize_time_offset(get_ts, pose_id, tj.size(), time_sec);
-    }
-
-    void optimize_evt_time_offset(std::vector<Event> &event_array,
-                std::pair<uint64_t, uint64_t> &ids, double time_sec) {
-        auto get_ts   = [&](uint64_t i) { return (long double)event_array[i].timestamp / 1000000000.0; };
-        this->_optimize_time_offset(get_ts, ids.first, event_array.size(), time_sec - DatasetConfig::slice_width / 2.0);
-        this->_optimize_time_offset(get_ts, ids.second, event_array.size(), time_sec + DatasetConfig::slice_width / 2.0);
-    }
-
-    void _optimize_time_offset(auto get_ts, uint64_t &pose_id, uint64_t size, double time_sec) {
-        auto tj_size = size;
-        double initial_ts = get_ts(pose_id);
-        double initial_error = std::fabs(initial_ts - time_sec);
-
-        int64_t i = pose_id + 1;
-        double last_error = std::fabs(get_ts(pose_id) - time_sec);
-        for (; i < tj_size; ++i) {
-            double error = std::fabs(get_ts(i) - time_sec);
-            if (error > last_error) {
-                i--;
-                break;
-            }
-            last_error = error;
-        }
-        i--;
-        for (; i >= 0; i--) {
-            double error = std::fabs(get_ts(i) - time_sec);
-            if (error > last_error) {
-                i++;
-                break;
-            }
-            last_error = error;
-        }
-        if (i >= tj_size) i = tj_size - 1;
-        if (i < 0) i = 0;
-        pose_id = i;
     }
 };
 
@@ -1349,7 +1452,7 @@ int main (int argc, char** argv) {
         }
 
         ss << std::fixed << std::setprecision(9)
-           << double(event_array[i].timestamp / 1000) / 1000000.0
+           << event_array[i].get_ts_sec()
            << " " << event_array[i].fr_y << " " << event_array[i].fr_x
            << " " << int(event_array[i].polarity) << std::endl;
     }
