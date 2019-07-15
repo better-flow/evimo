@@ -156,12 +156,12 @@ public:
         }
 
         if (code == 91) { // '['
-            DatasetConfig::slice_width = std::max(0.0, DatasetConfig::slice_width - 0.01);
+            DatasetConfig::slice_width = std::max(0.0, DatasetConfig::slice_width - 0.005);
             DatasetConfig::modified = true;
         }
 
         if (code == 93) { // ']'
-            DatasetConfig::slice_width += 0.01;
+            DatasetConfig::slice_width += 0.005;
             DatasetConfig::modified = true;
         }
 
@@ -1341,8 +1341,8 @@ int main (int argc, char** argv) {
         auto ref_ts = (with_images ? image_ts[frame_id_real].toSec() : cam_tj[cam_tj_id].ts.toSec());
         uint64_t ts_low  = (ref_ts < DatasetConfig::slice_width) ? 0 : (ref_ts - DatasetConfig::slice_width / 2.0) * 1000000000;
         uint64_t ts_high = (ref_ts + DatasetConfig::slice_width / 2.0) * 1000000000;
-        while (event_low  < event_array.size() && event_array[event_low].timestamp  < ts_low)  event_low ++;
-        while (event_high < event_array.size() && event_array[event_high].timestamp < ts_high) event_high ++;
+        while (event_low  < event_array.size() - 1 && event_array[event_low].timestamp  < ts_low)  event_low ++;
+        while (event_high < event_array.size() - 1 && event_array[event_high].timestamp < ts_high) event_high ++;
 
         double max_ts_err = 0.0;
         for (auto &obj_tj : obj_tjs) {
