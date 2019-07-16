@@ -40,14 +40,13 @@ find_package(OpenCV REQUIRED)
 catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs vicon dvs_msgs prophesee_event_msgs)
 
 
-include_directories(${catkin_INCLUDE_DIRS}
+include_directories(.
+                    ${catkin_INCLUDE_DIRS}
 	                ${PCL_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS})
 
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
-
-
 
 
 ###########
@@ -62,7 +61,9 @@ target_link_libraries(event_imo_online
 )
 
 
-add_executable(event_imo_offline offline.cpp)
+add_executable(event_imo_offline offline.cpp
+                                 dataset.cpp
+                                 dataset_frame.cpp)
 
 target_link_libraries(event_imo_offline
     ${catkin_LIBRARIES}

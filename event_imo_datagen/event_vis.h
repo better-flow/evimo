@@ -1,9 +1,8 @@
+#include <common.h>
+#include <event.h>
+
 #ifndef EVENT_VIS_H
 #define EVENT_VIS_H
-
-#include "common.h"
-#include "event.h"
-
 
 class EventFile {
 public:
