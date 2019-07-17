@@ -79,7 +79,10 @@ public:
             }
         }
 
-        cv::destroyAllWindows();
+        for (auto &frame_ptr : DatasetFrame::visualization_list) {
+            cv::destroyWindow(window_names[frame_ptr]);
+        }
+
         DatasetFrame::visualization_list.clear();
     }
 
@@ -195,7 +198,7 @@ public:
     cv::Mat get_visualization_mask(bool overlay_events = true);
 
 protected:
-    void project_point(pcl::PointXYZRGB p, int &u, int &v) {
+    template<class T> void project_point(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
@@ -215,7 +218,7 @@ protected:
         v = Dataset::fy * y__ + Dataset::cy;
     }
 
-    void project_cloud(auto cl, int oid) {
+    template<class T> void project_cloud(T cl, int oid) {
         if (cl->size() == 0)
             return;
 

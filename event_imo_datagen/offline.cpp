@@ -96,7 +96,8 @@ public:
 
             if (code == 99) { // 'c'
                 Backprojector bp(f.get_timestamp(), 0.5, 30);
-                bp.visualize_parallel();
+                //bp.visualize_parallel();
+                bp.visualize_3D();
             }
         }
 
@@ -123,11 +124,9 @@ int main (int argc, char** argv) {
     }
 
     float FPS = 40.0;
-    int traj_smoothing = 1;
     bool through_mode = false, generate = true;
     int show = -1;
     if (!nh.getParam(node_name + "/fps", FPS)) FPS = 40;
-    if (!nh.getParam(node_name + "/smoothing", traj_smoothing)) traj_smoothing = 1;
     if (!nh.getParam(node_name + "/numbering", through_mode)) through_mode = false;
     if (!nh.getParam(node_name + "/generate", generate)) generate = true;
     if (!nh.getParam(node_name + "/show", show)) show = -1;

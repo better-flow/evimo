@@ -192,10 +192,10 @@ public:
     Trajectory(int32_t window_size = 0)
         : filtering_window_size(window_size) {}
 
-    void set_filtering_window_size(auto window_size) {this->filtering_window_size = window_size; }
+    void set_filtering_window_size(double window_size) {this->filtering_window_size = window_size; }
     auto get_filtering_window_size() {return this->filtering_window_size; }
 
-    void add(ros::Time ts_, auto pq_) {
+    template<class T> void add(ros::Time ts_, T pq_) {
         this->poses.push_back(Pose(ts_, pq_));
     }
 
