@@ -16,12 +16,13 @@ protected:
     std::vector<DatasetFrame> frames;
 
     pcl::visualization::PCLVisualizer::Ptr viewer;
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr event_pc;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr event_pc, mask_pc;
 
 public:
     Backprojector(double timestamp, double window_size, double framerate)
         : timestamp(timestamp), window_size(window_size)
-        , event_pc(new pcl::PointCloud<pcl::PointXYZRGB>) {
+        , event_pc(new pcl::PointCloud<pcl::PointXYZRGB>)
+        , mask_pc(new pcl::PointCloud<pcl::PointXYZRGB>) {
 
         uint32_t i = 0;
         uint64_t last_cam_pos_id = 0;
@@ -45,13 +46,18 @@ public:
 
     void generate() {
         this->event_pc->clear();
+        this->mask_pc->clear();
+
+        // Conver timestamp to z coordinate
+        auto ts_to_z = [=](double ts) { return (ts - (this->timestamp - this->window_size / 2.0)) * 3.0; };
+
+        // Event cloud
         auto e_slice = TimeSlice(Dataset::event_array,
           std::make_pair(std::max(0.0, this->timestamp - this->window_size / 2.0), this->timestamp + this->window_size / 2.0),
           std::make_pair(this->frames.front().event_slice_ids.first, this->frames.back().event_slice_ids.second));
         for (auto &e : e_slice) {
             pcl::PointXYZRGB p;
-            p.x = float(e.get_x()) / 200.0; p.y = float(e.get_y()) / 200.0f; p.z = e.get_ts_sec() - (this->timestamp - this->window_size / 2.0);
-            p.z *= 3.0;
+            p.x = float(e.get_x()) / 200.0; p.y = float(e.get_y()) / 200.0f; p.z = ts_to_z(e.get_ts_sec());
             uint32_t rgb = (static_cast<uint32_t>(0) << 16 |
                             static_cast<uint32_t>(20) << 8  | 
                             static_cast<uint32_t>(255));
@@ -59,14 +65,56 @@ public:
             this->event_pc->push_back(p);
         }
 
+        // Mask trace cloud
+        for (auto &f : this->frames) f.generate_async();
+        for (auto &f : this->frames) f.join();
+
+        for (auto &f : this->frames) {
+            auto cl = this->mask_to_cloud(f.mask, ts_to_z(f.get_timestamp()));
+            *this->mask_pc += *cl;
+        }
+
         if (this->viewer) {
             viewer->removeAllPointClouds();
-            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(this->event_pc);
-            viewer->addPointCloud<pcl::PointXYZRGB>(this->event_pc, rgb, "event cloud");
+
+            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> ec_rgb(this->event_pc);
+            viewer->addPointCloud<pcl::PointXYZRGB>(this->event_pc, ec_rgb, "event cloud");
             viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "event cloud");
+
+            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> m_rgb(this->mask_pc);
+            viewer->addPointCloud<pcl::PointXYZRGB>(this->mask_pc, m_rgb, "mask cloud");
+            viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "mask cloud");
         }
     }
 
+    std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> mask_to_cloud(cv::Mat mask, double z) {
+        auto cl = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+        auto kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+
+        cv::Mat boundary;
+        cv::morphologyEx(mask, boundary, cv::MORPH_GRADIENT, kernel);
+
+        auto cols = mask.cols;
+        auto rows = mask.rows;
+
+        for (uint32_t i = 0; i < rows; ++i) {
+            for (uint32_t j = 0; j < cols; ++j) {
+                if (boundary.at<uint8_t>(i, j) == 0) continue;
+
+                pcl::PointXYZRGB p;
+                p.x = float(i) / 200; p.y = float(j) / 200; p.z = z;
+                uint32_t rgb = (static_cast<uint32_t>(255) << 16 |
+                                static_cast<uint32_t>(0) << 8  | 
+                                static_cast<uint32_t>(0));
+                p.rgb = *reinterpret_cast<float*>(&rgb);
+                cl->push_back(p);
+            }
+        }
+
+        return cl;
+    }
+
+    // Visualization
     void visualize_parallel() {
         for (auto &frame : this->frames) {
             frame.show();
@@ -75,22 +123,27 @@ public:
         DatasetFrame::visualization_spin();
     }
 
-    void visualize_3D() {
+    void initViewer() {
         this->viewer = pcl::visualization::PCLVisualizer::Ptr(new pcl::visualization::PCLVisualizer("3D Viewer"));
         this->viewer->setBackgroundColor (0.9, 0.9, 0.9);
         this->viewer->addCoordinateSystem (1.0);
         this->viewer->initCameraParameters();
         this->viewer->registerKeyboardCallback(&Backprojector::keyboard_handler, *this);
 
-        this->generate();
+        //this->generate();
 
-        using namespace std::chrono_literals;
-        while (!viewer->wasStopped()) {
-            viewer->spinOnce(100);
-            std::this_thread::sleep_for(100ms);
-        }
+        //using namespace std::chrono_literals;
+        //while (!viewer->wasStopped()) {
+        //this->maybeViewerSpinOnce();
+        //    std::this_thread::sleep_for(100ms);
+        //}
 
-        this->viewer = pcl::visualization::PCLVisualizer::Ptr();
+        //this->viewer = pcl::visualization::PCLVisualizer::Ptr();
+    }
+
+    void maybeViewerSpinOnce() {
+        if (!this->viewer) return;
+        this->viewer->spinOnce(100);
     }
 
     void keyboard_handler(const pcl::visualization::KeyboardEvent &event,

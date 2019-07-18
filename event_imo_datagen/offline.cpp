@@ -72,10 +72,19 @@ public:
         const uint8_t nmodes = 4;
         uint8_t vis_mode = 0;
 
+        bool enable_3D = false;
+        std::shared_ptr<Backprojector> bp;
+
         int code = 0; // Key code
-        while (code != 32) {
+        while (code != 27) {
             code = cv::waitKey(1);
+            if (bp) bp->maybeViewerSpinOnce();
+
             Dataset::handle_keys(code, vis_mode, nmodes);
+
+            if (code == 99) { // 'c'
+                Dataset::modified = true;
+            }
 
             if (!Dataset::modified) continue;
             Dataset::modified = false;
@@ -95,10 +104,16 @@ public:
             cv::imshow("Frames", img);
 
             if (code == 99) { // 'c'
-                Backprojector bp(f.get_timestamp(), 0.5, 30);
-                //bp.visualize_parallel();
-                bp.visualize_3D();
+                enable_3D = !enable_3D;
+                if (enable_3D) {
+                    bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.5, 200);
+                    bp->initViewer();
+                }
             }
+
+            //bp.visualize_parallel();
+
+            if (bp) bp->generate();
         }
 
         cv::destroyAllWindows();
