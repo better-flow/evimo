@@ -197,8 +197,8 @@ public:
     cv::Mat get_visualization_depth(bool overlay_events = true);
     cv::Mat get_visualization_mask(bool overlay_events = true);
 
-protected:
-    template<class T> void project_point(T p, int &u, int &v) {
+public:
+    template<class T> static void project_point(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
@@ -218,6 +218,14 @@ protected:
         v = Dataset::fy * y__ + Dataset::cy;
     }
 
+    template<class T> static void unproject_point(T &p, float u, float v) {
+        // Ignores the spherical distortion!
+        p.x = (u - Dataset::cx) / Dataset::fx;
+        p.y = (v - Dataset::cy) / Dataset::fy;
+        p.z = 1.0;
+    }
+
+protected:
     template<class T> void project_cloud(T cl, int oid) {
         if (cl->size() == 0)
             return;
@@ -238,7 +246,7 @@ protected:
             if (u < 0 || v < 0 || v >= cols || u >= rows)
                 continue;
 
-            int patch_size = int(1.0 / rng);
+            int patch_size = 1;//int(1.0 / rng);
 
             if (oid == 0)
                 patch_size = int(5.0 / rng);

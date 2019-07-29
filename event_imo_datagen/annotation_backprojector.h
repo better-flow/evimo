@@ -3,6 +3,7 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/registration/transformation_estimation_svd.h>
 
 #include <dataset.h>
 #include <dataset_frame.h>
@@ -134,6 +135,44 @@ public:
         return (cnt < 1) ? 0 : rng / cnt;
     }
 
+    void minimization_step() {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr source(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr target(new pcl::PointCloud<pcl::PointXYZ>);
+
+        pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+        kdtree.setInputCloud(this->mask_pc);
+
+        std::vector<int> pointIdxRadiusSearch(1);
+        std::vector<float> pointRadiusSquaredDistance(1);
+
+        for (auto &p : *this->event_pc_roi) {
+            kdtree.nearestKSearch(p, 1, pointIdxRadiusSearch, pointRadiusSquaredDistance);
+            if (pointRadiusSquaredDistance[0] > 4.0 / 200.0) continue;
+            auto &p_mask = this->mask_pc->at(pointIdxRadiusSearch[0]);
+
+            pcl::PointXYZ p_src, p_tgt;
+            DatasetFrame::unproject_point(p_src, p.x * 200, p.y * 200);
+            DatasetFrame::unproject_point(p_tgt, p_mask.x * 200, p_mask.y * 200);
+
+            //std::cout << "(" << p_src.x << ";\t" << p_src.y << ")\t->\t"
+            //          << "(" << p_tgt.x << ";\t" << p_tgt.y << ")\n";
+
+            source->push_back(p_src);
+            target->push_back(p_tgt);
+        }
+
+        Eigen::Matrix4f SVD;
+        const pcl::registration::TransformationEstimationSVD<pcl::PointXYZ, pcl::PointXYZ> trans_est_svd;
+        trans_est_svd.estimateRigidTransformation(*source, *target, SVD);
+        auto pose = Pose(ros::Time(0), ViObject::mat2tf(SVD));
+
+        auto T = pose.getT();
+        auto R = pose.getR();
+
+        std::cout << "T = " << T[0] << "\t" << T[1] << "\t" << T[2] << "\n";
+        std::cout << "R = " << R[0] << "\t" << R[1] << "\t" << R[2] << "\n\n";
+    }
+
     void generate() {
         this->mask_pc->clear();
 
@@ -254,6 +293,10 @@ public:
             } else {
                 viewer->removePointCloud("event cloud roi");
             }
+        }
+
+        if (key == "z") {
+            this->minimization_step();
         }
 
         if (event.getKeyCode() == 27) {
