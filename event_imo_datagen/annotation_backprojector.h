@@ -142,6 +142,45 @@ public:
         pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
         kdtree.setInputCloud(this->mask_pc);
 
+        std::cout << "Score (before): " << this->score() << "\t" << this->inverse_score() << "\n";
+        auto initial = this->inverse_score();
+
+        //std::valarray<float> T = {0, 0, 0};
+        //std::valarray<float> R = {0, 0, 0};
+
+        Dataset::set_sliders(0.001, 0, 0, 0, 0, 0);
+        generate();
+
+        if (this->inverse_score() > initial) {
+            Dataset::set_sliders(-0.002, 0, 0, 0, 0, 0);
+            generate();
+        }
+
+        if (this->inverse_score() > initial) {
+            Dataset::set_sliders(0.001, 0, 0, 0, 0, 0);
+            generate();
+        }
+
+        Dataset::set_sliders(0, 0.001, 0, 0, 0, 0);
+        generate();
+
+        if (this->inverse_score() > initial) {
+            Dataset::set_sliders(0, -0.002, 0, 0, 0, 0);
+            generate();
+        }
+
+        if (this->inverse_score() > initial) {
+            Dataset::set_sliders(0, 0.001, 0, 0, 0, 0);
+            generate();
+        }
+
+        std::cout << "Score (after): " << this->score() << "\t" << this->inverse_score() << "\n";
+
+//        Dataset::set_sliders(0.0, 0.001, 0, 0, 0, 0);
+//        if (this->inverse_score() < initial)
+//            Dataset::set_sliders(0.0, -0.002, 0, 0, 0, 0);
+
+/*
         std::vector<int> pointIdxRadiusSearch(1);
         std::vector<float> pointRadiusSquaredDistance(1);
 
@@ -173,6 +212,7 @@ public:
         std::cout << "R = " << R[0] << "\t" << R[1] << "\t" << R[2] << "\n\n";
 
         Dataset::set_sliders(T[0], T[1], T[2], R[0], R[1], R[2]);
+        */
     }
 
     void generate() {
@@ -195,7 +235,6 @@ public:
             viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "mask cloud");
         }
 
-        std::cout << "Score: " << this->score() << "\t" << this->inverse_score() << "\n";
     }
 
     std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> mask_to_cloud(cv::Mat mask, double z) {

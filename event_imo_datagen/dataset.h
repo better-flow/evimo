@@ -58,7 +58,7 @@ public:
     static constexpr float MAXVAL = 1000;
     static constexpr float INT_LIN_SC = 10;
     static constexpr float INT_ANG_SC = 10;
-    static constexpr float INT_TIM_SC = 10;
+    static constexpr float INT_TIM_SC = 5;
 
     static int value_rr, value_rp, value_ry;
     static int value_tx, value_ty, value_tz;
@@ -371,10 +371,9 @@ private:
                      0,      0,     0,     1;
 
             tf::Transform E_;
-            tf::Vector3 T_;
+            tf::Vector3 T_(tx0, ty0, tz0);
             tf::Quaternion q_;
             q_.setRPY(rr0, rp0, ry0);
-            T_.setValue(tx0, ty0, tz0);
             E_.setRotation(q_);
             E_.setOrigin(T_);
 
@@ -409,7 +408,6 @@ public:
         tf::Vector3 T0(tx0, ty0, tz0);
         tf::Quaternion q0;
         q0.setRPY(rr0, rp0, ry0);
-        //T0.setValue(tx0, ty0, tz0);
         E0.setRotation(q0);
         E0.setOrigin(T0);
 

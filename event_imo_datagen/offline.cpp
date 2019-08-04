@@ -58,9 +58,16 @@ protected:
 
 public:
     FrameSequenceVisualizer(std::vector<DatasetFrame> &frames)
-        : frame_id(115) {
+        : frame_id(0) {
         this->frames = &frames;
         this->spin();
+    }
+
+    void set_slider(int id) {
+        this->frame_id = id < this->frames->size() - 1 ? id : this->frames->size() - 1;
+        this->frame_id = this->frame_id < 0 ? 0 : this->frame_id;
+        cv::setTrackbarPos("frame", "Frames", this->frame_id);
+        Dataset::modified = true;
     }
 
     void spin() {
@@ -75,8 +82,6 @@ public:
         bool enable_3D = false;
         std::shared_ptr<Backprojector> bp;
 
-
-
         int code = 0; // Key code
         while (code != 27) {
             code = cv::waitKey(1);
@@ -84,7 +89,15 @@ public:
 
             Dataset::handle_keys(code, vis_mode, nmodes);
 
-/*
+            if (code == 39) { // '''
+                this->set_slider(this->frame_id + 1);
+            }
+
+            if (code == 59) { // ';'
+                this->set_slider(this->frame_id - 1);
+            }
+
+            /*
             if (code == 99) { // 'c'
                 Dataset::modified = true;
             }
@@ -108,8 +121,8 @@ public:
             cv::imshow("Frames", img);
 
             if (!bp) {
-                bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.1, 100);
-                bp->initViewer();
+                //bp = std::make_shared<Backprojector>(f.get_timestamp(), 5, 10);
+                //bp->initViewer();
             }
 
 /*
