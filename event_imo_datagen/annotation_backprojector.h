@@ -171,6 +171,8 @@ public:
 
         std::cout << "T = " << T[0] << "\t" << T[1] << "\t" << T[2] << "\n";
         std::cout << "R = " << R[0] << "\t" << R[1] << "\t" << R[2] << "\n\n";
+
+        Dataset::set_sliders(T[0], T[1], T[2], R[0], R[1], R[2]);
     }
 
     void generate() {

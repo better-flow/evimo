@@ -95,14 +95,43 @@ public:
     }
 
     static void apply_Intr_Calib() {
-        rr0 = rr0 + normval(value_rr, MAXVAL, MAXVAL * INT_LIN_SC);
-        rp0 = rp0 + normval(value_rp, MAXVAL, MAXVAL * INT_LIN_SC);
-        ry0 = ry0 + normval(value_ry, MAXVAL, MAXVAL * INT_LIN_SC);
-        tx0 = tx0 + normval(value_tx, MAXVAL, MAXVAL * INT_ANG_SC);
-        ty0 = ty0 + normval(value_ty, MAXVAL, MAXVAL * INT_ANG_SC);
-        tz0 = tz0 + normval(value_tz, MAXVAL, MAXVAL * INT_ANG_SC);
+        auto pose = Pose(ros::Time(0), Dataset::cam_E);
+        auto T = pose.getT();
+        auto R = pose.getR();
+
+        tx0 = T[0]; ty0 = T[1]; tz0 = T[2];
+        rr0 = R[0]; rp0 = R[1]; ry0 = R[2];
+
         Dataset::reset_Intr_Sliders();
         Dataset::printCalib();
+    }
+
+    static void set_sliders(float Tx, float Ty, float Tz,
+                            float Rx, float Ry, float Rz) {
+        Dataset::modified = true;
+
+        value_rr = normval_inv(normval(value_rr, MAXVAL, MAXVAL * INT_ANG_SC) + Rx,
+                               MAXVAL, MAXVAL * INT_ANG_SC);
+        value_rp = normval_inv(normval(value_rp, MAXVAL, MAXVAL * INT_ANG_SC) + Ry,
+                               MAXVAL, MAXVAL * INT_ANG_SC);
+        value_ry = normval_inv(normval(value_ry, MAXVAL, MAXVAL * INT_ANG_SC) + Rz,
+                               MAXVAL, MAXVAL * INT_ANG_SC);
+
+        value_tx = normval_inv(normval(value_tx, MAXVAL, MAXVAL * INT_LIN_SC) + Tx,
+                               MAXVAL, MAXVAL * INT_LIN_SC);
+        value_ty = normval_inv(normval(value_ty, MAXVAL, MAXVAL * INT_LIN_SC) + Ty,
+                               MAXVAL, MAXVAL * INT_LIN_SC);
+        value_tz = normval_inv(normval(value_tz, MAXVAL, MAXVAL * INT_LIN_SC) + Tz,
+                               MAXVAL, MAXVAL * INT_LIN_SC);
+
+        cv::setTrackbarPos("R", Dataset::window_name, value_rr);
+        cv::setTrackbarPos("P", Dataset::window_name, value_rp);
+        cv::setTrackbarPos("Y", Dataset::window_name, value_ry);
+        cv::setTrackbarPos("x", Dataset::window_name, value_tx);
+        cv::setTrackbarPos("y", Dataset::window_name, value_ty);
+        cv::setTrackbarPos("z", Dataset::window_name, value_tz);
+
+        Dataset::update_cam_calib();
     }
 
     static void handle_keys(int code, uint8_t &vis_mode, const uint8_t nmodes) {
@@ -279,6 +308,10 @@ private:
         return float(val - maxval / 2) / float(normval);
     }
 
+    static float normval_inv(float val, int maxval, int normval) {
+        return val * float(normval) + float(maxval / 2);
+    }
+
     static bool read_extr(std::string path) {
         std::ifstream ifs;
         ifs.open(path, std::ifstream::in);
@@ -321,43 +354,66 @@ private:
 
         bg_E.setRotation(Q);
         bg_E.setOrigin(T);
+
+        // Old extrinsic format
+        bool old_ext_format = true;
+        if (old_ext_format) {
+            Eigen::Matrix4f T1;
+            T1 <<  0.0,   -1.0,   0.0,  0.00,
+                   1.0,    0.0,   0.0,  0.00,
+                   0.0,    0.0,   1.0,  0.00,
+                     0,      0,     0,     1;
+
+            Eigen::Matrix4f T2;
+            T2 <<  0.0,    0.0,  -1.0,  0.00,
+                   0.0,    1.0,   0.0,  0.00,
+                   1.0,    0.0,   0.0,  0.00,
+                     0,      0,     0,     1;
+
+            tf::Transform E_;
+            tf::Vector3 T_;
+            tf::Quaternion q_;
+            q_.setRPY(rr0, rp0, ry0);
+            T_.setValue(tx0, ty0, tz0);
+            E_.setRotation(q_);
+            E_.setOrigin(T_);
+
+            Dataset::cam_E = ViObject::mat2tf(T1) * E_ * ViObject::mat2tf(T2);
+
+            auto pose = Pose(ros::Time(0), Dataset::cam_E);
+            auto T = pose.getT();
+            auto R = pose.getR();
+
+            tx0 = T[0]; ty0 = T[1]; tz0 = T[2];
+            rr0 = R[0]; rp0 = R[1]; ry0 = R[2];
+        }
+
         return true;
     }
 
 public:
     static void update_cam_calib() {
-        Eigen::Matrix4f T1;
-        T1 <<  0.0,   -1.0,   0.0,  0.00,
-               1.0,    0.0,   0.0,  0.00,
-               0.0,    0.0,   1.0,  0.00,
-                 0,      0,     0,     1;
+        tf::Transform E_;
+        tf::Vector3 T_;
+        tf::Quaternion q_;
+        q_.setRPY(normval(value_rr, MAXVAL, MAXVAL * INT_ANG_SC),
+                  normval(value_rp, MAXVAL, MAXVAL * INT_ANG_SC),
+                  normval(value_ry, MAXVAL, MAXVAL * INT_ANG_SC));
+        T_.setValue(normval(value_tx, MAXVAL, MAXVAL * INT_LIN_SC),
+                    normval(value_ty, MAXVAL, MAXVAL * INT_LIN_SC),
+                    normval(value_tz, MAXVAL, MAXVAL * INT_LIN_SC));
+        E_.setRotation(q_);
+        E_.setOrigin(T_);
 
-        Eigen::Matrix4f T2;
-        T2 <<  0.0,    0.0,  -1.0,  0.00,
-               0.0,    1.0,   0.0,  0.00,
-               1.0,    0.0,   0.0,  0.00,
-                 0,      0,     0,     1;
+        tf::Transform E0;
+        tf::Vector3 T0(tx0, ty0, tz0);
+        tf::Quaternion q0;
+        q0.setRPY(rr0, rp0, ry0);
+        //T0.setValue(tx0, ty0, tz0);
+        E0.setRotation(q0);
+        E0.setOrigin(T0);
 
-        float rr = rr0 + normval(value_rr, MAXVAL, MAXVAL * INT_LIN_SC);
-        float rp = rp0 + normval(value_rp, MAXVAL, MAXVAL * INT_LIN_SC);
-        float ry = ry0 + normval(value_ry, MAXVAL, MAXVAL * INT_LIN_SC);
-        float tx = tx0 + normval(value_tx, MAXVAL, MAXVAL * INT_ANG_SC);
-        float ty = ty0 + normval(value_ty, MAXVAL, MAXVAL * INT_ANG_SC);
-        float tz = tz0 + normval(value_tz, MAXVAL, MAXVAL * INT_ANG_SC);
-
-        Eigen::Matrix4f E_eig;
-        tf::Transform E;
-        tf::Vector3 T;
-        tf::Quaternion q;
-        q.setRPY(rr, rp, ry);
-        T.setValue(tx, ty, tz);
-        E.setRotation(q);
-        E.setOrigin(T);
-        pcl_ros::transformAsMatrix(E, E_eig);
-
-        cam_E = ViObject::mat2tf(T1) * E * ViObject::mat2tf(T2);
-        //Eigen::Matrix4f full_extr_calib = T1 * E_eig * T2;
-        //cam_E = ViObject::mat2tf(full_extr_calib);
+        Dataset::cam_E = E0 * E_;
     }
 };
 
