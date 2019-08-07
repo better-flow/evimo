@@ -356,7 +356,7 @@ private:
         bg_E.setOrigin(T);
 
         // Old extrinsic format
-        bool old_ext_format = true;
+        bool old_ext_format = false;
         if (old_ext_format) {
             Eigen::Matrix4f T1;
             T1 <<  0.0,   -1.0,   0.0,  0.00,
