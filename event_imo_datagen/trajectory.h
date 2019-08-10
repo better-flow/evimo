@@ -169,6 +169,46 @@ public:
     double get_ts_sec() {return this->ts.toSec(); }
 
     operator tf::Transform() const {return this->pq; }
+
+    Pose operator-(const Pose &p) {
+        Pose ret(this->ts, this->pq);
+        ret.occlusion = std::max(this->occlusion, p.occlusion);
+        ret.pq = p.pq.inverse() * this->pq;
+        return ret;
+    }
+
+    Pose operator*(const float &s) {
+        auto t = this->getT();
+        auto r = this->getR();
+
+        Pose ret(this->ts, this->pq);
+        ret.occlusion = this->occlusion;
+
+        ret.setT(t * s);
+        ret.setR(r * s);
+
+        return ret;
+    }
+
+    std::string as_dict() {
+        auto T = this->getT();
+        auto RPY = this->getR();
+        auto Q = this->pq.getRotation();
+
+        std::string ret = "{";
+        ret += "'t': {'x': " + std::to_string(T[0])
+            + ", 'y': " + std::to_string(T[1])
+            + ", 'z': " + std::to_string(T[2]) + "}";
+        ret += ", 'rpy': {'r': " + std::to_string(RPY[0])
+            + ", 'p': " + std::to_string(RPY[1])
+            + ", 'y': " + std::to_string(RPY[2]) + "}";
+        ret += ", 'q': {'w': " + std::to_string(Q.getW())
+            + ", 'x': " + std::to_string(Q.getX())
+            + ", 'y': " + std::to_string(Q.getY())
+            + ", 'z': " + std::to_string(Q.getZ()) + "}}";
+        return ret;
+    }
+
     friend std::ostream &operator<< (std::ostream &output, const Pose &P) {
         auto loc = P.pq.getOrigin();
         auto rot = P.pq.getRotation();
@@ -216,6 +256,20 @@ public:
         for (auto &p : this->poses) p.ts = ros::Time((p.ts - t).toSec());
     }
 
+    Pose get_velocity(size_t idx) {
+        if (idx >= this->poses.size()) {
+            std::cerr << "get_velocity: index out of range!\n";
+            std::terminate();
+        }
+
+        auto p0 = idx >= this->size() - 1 ? (*this)[idx] : (*this)[idx + 1];
+        auto p1 = idx == 0 ? (*this)[idx] : (*this)[idx - 1];
+        auto dt = (p0.ts > p1.ts ? p0.ts - p1.ts : p1.ts - p0.ts).toSec();
+        dt *= (p0.ts > p1.ts) ? 1.0 : -1.0;
+        auto v = (p0 - p1) * (1.0 / static_cast<float>(dt));
+        return v;
+    }
+
 protected:
     auto begin() {return this->poses.begin(); }
     auto end()   {return this->poses.end(); }
@@ -242,16 +296,14 @@ protected:
         filtered_p.setR(rot);
         filtered_p.setT(tr);
 
-        if (poses_in_window.size() > 1)
-            std::cout << "Filtering pose with\t" << poses_in_window.size() << "\tneighbours\n";
+        //if (poses_in_window.size() > 1)
+        //    std::cout << "Filtering pose with\t" << poses_in_window.size() << "\tneighbours\n";
         return filtered_p;
     }
 
     friend class Slice<Trajectory>;
     friend class TimeSlice<Trajectory>;
 };
-
-
 
 
 #endif // TRAJECTORY_H

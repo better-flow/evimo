@@ -55,6 +55,9 @@ public:
     static std::string window_name;
     static bool modified;
 
+    // Folder names
+    static std::string dataset_folder, gt_folder;
+
     static constexpr float MAXVAL = 1000;
     static constexpr float INT_LIN_SC = 10;
     static constexpr float INT_ANG_SC = 10;
@@ -64,11 +67,12 @@ public:
     static int value_tx, value_ty, value_tz;
 
     static bool init(std::string dataset_folder, unsigned int rx, unsigned int ry) {
+        Dataset::dataset_folder = dataset_folder;
         Dataset::res_x = rx;
         Dataset::res_y = ry;
-        bool ret = Dataset::parse_config(dataset_folder + "/config.txt");
-        ret &= Dataset::read_cam_intr(dataset_folder + "/calib.txt");
-        ret &= Dataset::read_extr(dataset_folder + "/extrinsics.txt");
+        bool ret = Dataset::parse_config(Dataset::dataset_folder + "/config.txt");
+        ret &= Dataset::read_cam_intr(Dataset::dataset_folder + "/calib.txt");
+        ret &= Dataset::read_extr(Dataset::dataset_folder + "/extrinsics.txt");
         return ret;
     }
 
@@ -202,6 +206,37 @@ public:
         //          << "\t" << Q.getW() <<"\t" << Q.getX() << "\t" << Q.getY() << "\t" << Q.getZ() << std::endl << std::endl;
         std::cout << "time offset pose to events:  " << get_time_offset_pose_to_event() << std::endl;
         std::cout << "time offset image to events: " << get_time_offset_image_to_event() << std::endl;
+    }
+
+    static void create_ground_truth_folder() {
+        auto gt_dir_path = boost::filesystem::path(Dataset::dataset_folder);
+        gt_dir_path /= "ground_truth";
+        Dataset::gt_folder = gt_dir_path.string();
+
+        std::cout << _blue("Removing old: " + gt_dir_path.string()) << std::endl;
+        boost::filesystem::remove_all(gt_dir_path);
+        std::cout << "Creating: " << _green(gt_dir_path.string()) << std::endl;
+        boost::filesystem::create_directory(gt_dir_path);
+    }
+
+    static void write_eventstxt(std::string efname) {
+        std::cout << std::endl << _yellow("Writing events.txt") << std::endl;
+        std::stringstream ss;
+        for (uint64_t i = 0; i < event_array.size(); ++i) {
+            if (i % 10000 == 0 || i == event_array.size() - 1) {
+                std::cout << "\tPreparing\t" << i + 1 << "\t/\t" << event_array.size() << "\t\r" << std::flush;
+            }
+
+            ss << std::fixed << std::setprecision(9)
+               << event_array[i].get_ts_sec()
+               << " " << event_array[i].fr_y << " " << event_array[i].fr_x
+               << " " << int(event_array[i].polarity) << std::endl;
+        }
+        std::cout << std::endl;
+        std::cout << std::endl << _yellow("Writing to file...") << std::endl;
+        std::ofstream event_file(efname, std::ofstream::out);
+        event_file << ss.str();
+        event_file.close();
     }
 
     // Time offset getters

@@ -147,7 +147,6 @@ protected:
 
     //Eigen::Matrix4f LAST_SVD;
     vicon::Subject last_pos;
-    tf::Transform s_transform;
     long int poses_received;
 
     PoseManager pose_manager;
@@ -189,7 +188,6 @@ public:
         this->obj_cloud_camera_frame->header.frame_id = "/camera_center";
         this->obj_cloud_transformed->header.frame_id = "/camera_center";
         this->obj_cloud->header.frame_id = "/vicon";
-        this->s_transform.setIdentity();
         //this->LAST_SVD = Eigen::MatrixXf::Identity(4, 4);
 
         std::ifstream cfg(this->config_fname, std::ifstream::in);
@@ -219,7 +217,7 @@ public:
         this->last_pos = subject;
 
         if (this->poses_received == 0)
-            this->init_cloud_to_vicon_tf(subject);
+            this->convert_to_vicon_tf(subject);
 
         this->poses_received ++;
         this->pose_manager.push_back(subject, subject);
@@ -242,7 +240,7 @@ public:
         this->vis_pub.publish(vis_markers);
     }
 
-    void init_cloud_to_vicon_tf(const vicon::Subject& subject) {
+    void convert_to_vicon_tf(const vicon::Subject& subject) {
         if (subject.occluded)
             std::cout << "Computing cloud_to_vicon_tf on occluded vicon track!" << std::endl;
 
@@ -269,7 +267,7 @@ public:
         auto p = ViObject::subject2tf(subject);
         auto inv_p = p.inverse();
 
-        this->s_transform = inv_p * svd_tf;
+        pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud), inv_p * svd_tf);
     }
 
     // Camera pose update
@@ -281,9 +279,9 @@ public:
             return false;
 
         auto to_cs_inv = to_camcenter.inverse();
-        auto full_tf = to_cs_inv * subject2tf(last_pos) * this->s_transform;
+        auto full_tf = to_cs_inv * subject2tf(last_pos);
 
-        pcl_ros::transformPointCloud (*(this->obj_cloud), *(this->obj_cloud_transformed), subject2tf(last_pos) * this->s_transform);
+        pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud_transformed), subject2tf(last_pos));
         obj_pub.publish(this->obj_cloud_transformed->makeShared());
 
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud_camera_frame), full_tf);
@@ -301,7 +299,7 @@ public:
 
     tf::Transform get_tf_in_camera_frame(const tf::Transform &cam_tf, const tf::Transform &obj_tf) {
         auto inv_cam = cam_tf.inverse();
-        auto full_tf = inv_cam * obj_tf * this->s_transform;
+        auto full_tf = inv_cam * obj_tf;
         return full_tf;
     }
 

@@ -32,6 +32,9 @@ public:
     cv::Mat depth;
     cv::Mat mask;
 
+    std::string gt_img_name;
+    std::string rgb_img_name;
+
 public:
     static void on_trackbar(int, void*) {
         for (auto &frame_ptr : DatasetFrame::visualization_list) {
@@ -92,6 +95,8 @@ public:
           depth(Dataset::res_x, Dataset::res_y, CV_32F, cv::Scalar(0)),
           mask(Dataset::res_x, Dataset::res_y, CV_8U, cv::Scalar(0)) {
         this->cam_pose_id = TimeSlice(Dataset::cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
+        this->gt_img_name  = "depth_mask_" + std::to_string(this->frame_id) + ".png";
+        this->rgb_img_name = "img_" + std::to_string(this->frame_id) + ".png";
     }
 
     void add_object_pos_id(int id, uint64_t obj_p_id) {
@@ -121,10 +126,17 @@ public:
         return Pose(cam_pose.ts, cam_tf);
     }
 
-    Pose get_true_object_pose(int id) {
+    Pose get_camera_velocity() {
+        auto vel = Dataset::cam_tj.get_velocity(this->cam_pose_id);
+        vel.pq = Dataset::cam_E.inverse() * vel.pq * Dataset::cam_E;
+        return vel;
+    }
+
+    Pose get_object_pose_cam_frame(int id) {
         if (this->obj_pose_ids.find(id) == this->obj_pose_ids.end()) {
             std::cout << _yellow("Warning! ") << "No pose for object "
                       << id << ", frame id = " << this->frame_id << std::endl;
+            std::terminate();
         }
 
         auto obj_pose = this->_get_raw_object_pose(id);
@@ -132,6 +144,16 @@ public:
         auto obj_tf   = Dataset::clouds.at(id)->get_tf_in_camera_frame(
                                                       cam_tf, obj_pose.pq);
         return Pose(cam_tf.ts, obj_tf);
+    }
+
+    Pose get_object_velocity(int id) {
+        auto vel = Dataset::obj_tjs.at(id).get_velocity(this->obj_pose_ids.at(id));
+        auto cam_pose = get_true_camera_pose();
+        cam_pose.setT({0, 0, 0});
+        auto l = get_object_pose_cam_frame(id).pq.inverse() * cam_pose.pq;
+
+        vel.pq = l.inverse() * vel.pq * l;
+        return vel;
     }
 
     float get_timestamp() {
@@ -196,6 +218,48 @@ public:
     cv::Mat get_visualization_event_projection(bool timg = false);
     cv::Mat get_visualization_depth(bool overlay_events = true);
     cv::Mat get_visualization_mask(bool overlay_events = true);
+
+    // Writeout functions
+    std::string as_dict() {
+        std::string ret = "{\n";
+        ret += "'id': " + std::to_string(this->frame_id) + ",\t\t";
+        ret += "'ts': " + std::to_string(this->get_timestamp()) + ",\n";
+        ret += "'cam': {\n";
+        ret += "\t'vel': " + this->get_camera_velocity().as_dict() + ",\n";
+        ret += "\t'pos': " + this->get_true_camera_pose().as_dict() + "},\n";
+
+        // object poses
+        for (auto &pair : this->obj_pose_ids) {
+            ret += "'" + std::to_string(pair.first) + "': {\n";
+            ret += "\t'vel': " + this->get_object_velocity(pair.first).as_dict() + ",\n";
+            ret += "\t'pos': " + this->get_object_pose_cam_frame(pair.first).as_dict() + "},\n";
+        }
+
+        // image paths
+        ret += "'gt_frame': '" + this->gt_img_name + "'";
+        if (this->img.rows == this->mask.rows && this->img.cols == this->mask.cols) {
+            ret += ",\n'classical_frame': '" + this->rgb_img_name + "'";
+        }
+
+        ret += "\n}";
+        return ret;
+    }
+
+    void save_gt_images() {
+        cv::Mat _depth, _mask;
+        this->depth.convertTo(_depth, CV_16UC1, 1000);
+        this->mask.convertTo(_mask, CV_16UC1, 1000);
+        std::vector<cv::Mat> ch = {_depth, _depth, _mask};
+        cv::Mat gt_frame_i16(this->mask.rows, this->mask.cols, CV_16UC3, cv::Scalar(0, 0, 0));
+        cv::merge(ch, gt_frame_i16);
+
+        gt_frame_i16.convertTo(gt_frame_i16, CV_16UC3);
+        cv::imwrite(Dataset::gt_folder + "/" + this->gt_img_name, gt_frame_i16);
+
+        if (this->img.rows == this->mask.rows && this->img.cols == this->mask.cols) {
+            cv::imwrite(Dataset::gt_folder + "/" + this->rgb_img_name, this->img);
+        }
+    }
 
 public:
     template<class T> static void project_point(T p, int &u, int &v) {

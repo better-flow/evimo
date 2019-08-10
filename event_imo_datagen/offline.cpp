@@ -163,10 +163,9 @@ int main (int argc, char** argv) {
     }
 
     float FPS = 40.0;
-    bool through_mode = false, generate = true;
+    bool generate = true;
     int show = -1;
     if (!nh.getParam(node_name + "/fps", FPS)) FPS = 40;
-    if (!nh.getParam(node_name + "/numbering", through_mode)) through_mode = false;
     if (!nh.getParam(node_name + "/generate", generate)) generate = true;
     if (!nh.getParam(node_name + "/show", show)) show = -1;
 
@@ -362,7 +361,7 @@ int main (int argc, char** argv) {
             std::cout << "\t\t" << _red("No pointcloud for trajectory! ") << "oid = " << obj_tj.first << std::endl;
             continue;
         }
-        Dataset::clouds[obj_tj.first]->init_cloud_to_vicon_tf(obj_cloud_to_vicon_tf[obj_tj.first]);
+        Dataset::clouds[obj_tj.first]->convert_to_vicon_tf(obj_cloud_to_vicon_tf[obj_tj.first]);
     }
 
     // Force the first timestamp of the event cloud to be 0
@@ -387,7 +386,7 @@ int main (int argc, char** argv) {
 
     // Align the timestamps
     double start_ts = 0.2;
-    unsigned long int frame_id_through = 0, frame_id_real = 0;
+    unsigned long int frame_id_real = 0;
     double dt = 1.0 / FPS;
     long int cam_tj_id = 0;
     std::map<int, long int> obj_tj_ids;
@@ -431,12 +430,12 @@ int main (int argc, char** argv) {
             continue;
         }
 
-        frames.emplace_back(cam_tj_id, ref_ts, through_mode ? frame_id_through : frame_id_real);
+        frames.emplace_back(cam_tj_id, ref_ts, frame_id_real);
         auto &frame = frames.back();
 
         frame.add_event_slice_ids(event_low, event_high);
         if (with_images) frame.add_img(images[frame_id_real]);
-        std::cout << (through_mode ? frame_id_through : frame_id_real) << ": " << cam_tj[cam_tj_id].ts
+        std::cout << frame_id_real << ": " << cam_tj[cam_tj_id].ts
                   << " (" << cam_tj_id << "[" << cam_tj[cam_tj_id].occlusion * 100 << "%])";
         for (auto &obj_tj : obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
@@ -447,7 +446,6 @@ int main (int argc, char** argv) {
         std::cout << std::endl;
 
         frame_id_real ++;
-        frame_id_through ++;
     }
 
     std::cout << _blue("\nTimestamp alignment done") << std::endl;
@@ -479,104 +477,34 @@ int main (int argc, char** argv) {
     for (int i = 0; i < frames.size(); ++i) {
         frames[i].join();
         if (i % 10 == 0) {
-            std::cout << "\tFrame " << i + 1 << " / " << frames.size() <<  std::endl;
+            std::cout << "\r\tFrame\t" << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
         }
     }
+    std::cout << std::endl;
 
-    // Save the data
-    auto gt_dir_path = boost::filesystem::path(dataset_folder);
-    gt_dir_path /= "gt";
+    // Create / clear ground truth folder
+    Dataset::create_ground_truth_folder();
 
-    auto img_dir_path = boost::filesystem::path(dataset_folder);
-    img_dir_path /= "img";
-
-    std::string tsfname = dataset_folder + "/ts.txt";
-    std::ofstream ts_file(tsfname, std::ofstream::out);
-
-    std::string rgbtsfname = dataset_folder + "/images.txt";
-    std::ofstream rgb_ts_file(rgbtsfname, std::ofstream::out);
-
-    std::string obj_fname = dataset_folder + "/objects.txt";
-    std::ofstream obj_file(obj_fname, std::ofstream::out);
-
-    std::string cam_fname = dataset_folder + "/trajectory.txt";
-    std::ofstream cam_file(cam_fname, std::ofstream::out);
-
-    std::string efname = dataset_folder + "/events.txt";
-    std::ofstream event_file(efname, std::ofstream::out);
-
-    std::cout << _blue("Removing old: " + gt_dir_path.string()) << std::endl;
-    boost::filesystem::remove_all(gt_dir_path);
-    std::cout << "Creating: " << _green(gt_dir_path.string()) << std::endl;
-    boost::filesystem::create_directory(gt_dir_path);
-
-    if (with_images) {
-        std::cout << _blue("Removing old: " + img_dir_path.string()) << std::endl;
-        boost::filesystem::remove_all(img_dir_path);
-        std::cout << "Creating: " << _green(img_dir_path.string()) << std::endl;
-        boost::filesystem::create_directory(img_dir_path);
-    }
-
+    // Save ground truth
     std::cout << std::endl << _yellow("Writing depth and mask ground truth") << std::endl;
+    std::string meta_fname = Dataset::gt_folder + "/meta.txt";
+    std::ofstream meta_file(meta_fname, std::ofstream::out);
+    meta_file << "[\n";
     for (int i = 0; i < frames.size(); ++i) {
-
-        // camera pose
-        auto cam_pose = frames[i].get_true_camera_pose();
-        cam_file << frames[i].frame_id << " " << cam_pose << std::endl;
-
-        // object poses
-        for (auto &pair : frames[i].obj_pose_ids) {
-            auto obj_pose = frames[i].get_true_object_pose(pair.first);
-            obj_file << frames[i].frame_id << " " << pair.first << " " << obj_pose << std::endl;
-        }
-
-        // masks and depth
-        std::string img_name = "/frame_" + std::to_string(frames[i].frame_id) + ".png";
-        std::string gtfname = gt_dir_path.string() + img_name;
-        cv::Mat depth, mask;
-        frames[i].depth.convertTo(depth, CV_16UC1, 1000);
-        frames[i].mask.convertTo(mask, CV_16UC1, 1000);
-        std::vector<cv::Mat> ch = {depth, depth, mask};
-
-        cv::Mat gt_frame_i16(depth.rows, depth.cols, CV_16UC3, cv::Scalar(0, 0, 0));
-        cv::merge(ch, gt_frame_i16);
-
-        gt_frame_i16.convertTo(gt_frame_i16, CV_16UC3);
-        cv::imwrite(gtfname, gt_frame_i16);
-
-        if (with_images) {
-            cv::imwrite(img_dir_path.string() + img_name, frames[i].img);
-            rgb_ts_file << frames[i].get_timestamp() << " " << "img" + img_name << std::endl;
-        }
-
-        // timestamps
-        ts_file << "gt" + img_name << " " << frames[i].get_timestamp() << std::endl;
+        frames[i].save_gt_images();
+        meta_file << frames[i].as_dict() << ",\n\n";
 
         if (i % 10 == 0) {
-            std::cout << "\tWritten " << i + 1 << " / " << frames.size() <<  std::endl;
+            std::cout << "\r\tWritten " << i + 1 << " / " << frames.size() << std::flush;
         }
     }
-    ts_file.close();
-    rgb_ts_file.close();
-    obj_file.close();
-    cam_file.close();
+    std::cout << std::endl;
 
-    std::cout << std::endl << _yellow("Writing events.txt") << std::endl;
-    std::stringstream ss;
-    for (uint64_t i = 0; i < event_array.size(); ++i) {
-        if (i % 100000 == 0) {
-            std::cout << "\tFormatting " << i + 1 << " / " << event_array.size() << std::endl;
-        }
+    meta_file << "]\n";
+    meta_file.close();
 
-        ss << std::fixed << std::setprecision(9)
-           << event_array[i].get_ts_sec()
-           << " " << event_array[i].fr_y << " " << event_array[i].fr_x
-           << " " << int(event_array[i].polarity) << std::endl;
-    }
-
-    event_file << ss.str();
-    event_file.close();
-    std::cout << std::endl << _green("Done!") << std::endl;
-
+    // Save events.txt
+    Dataset::write_eventstxt(Dataset::gt_folder + "/events.txt");
+    std::cout << _green("Done!") << std::endl;
     return 0;
 }
