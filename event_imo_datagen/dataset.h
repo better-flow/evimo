@@ -239,6 +239,20 @@ public:
         event_file.close();
     }
 
+    static std::string meta_as_dict() {
+        return "'meta': {'fx': " + std::to_string(Dataset::fx)
+                    + ", 'fy': " + std::to_string(Dataset::fy)
+                    + ", 'cx': " + std::to_string(Dataset::cx)
+                    + ", 'cy': " + std::to_string(Dataset::cy)
+                    + ", 'k1': " + std::to_string(Dataset::k1)
+                    + ", 'k2': " + std::to_string(Dataset::k2)
+                    + ", 'k3': " + std::to_string(Dataset::k3)
+                    + ", 'k4': " + std::to_string(Dataset::k4)
+                    + ", 'res_x': " + std::to_string(Dataset::res_x)
+                    + ", 'res_y': " + std::to_string(Dataset::res_y)
+                    + "}";
+    }
+
     // Time offset getters
     static float get_time_offset_image_to_host() {
         return 0.0;

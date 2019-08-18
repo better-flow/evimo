@@ -489,7 +489,9 @@ int main (int argc, char** argv) {
     std::cout << std::endl << _yellow("Writing depth and mask ground truth") << std::endl;
     std::string meta_fname = Dataset::gt_folder + "/meta.txt";
     std::ofstream meta_file(meta_fname, std::ofstream::out);
-    meta_file << "[\n";
+    meta_file << "{\n";
+    meta_file << Dataset::meta_as_dict() + "\n";
+    meta_file << ", 'frames': [\n";
     for (int i = 0; i < frames.size(); ++i) {
         frames[i].save_gt_images();
         meta_file << frames[i].as_dict() << ",\n\n";
@@ -498,9 +500,10 @@ int main (int argc, char** argv) {
             std::cout << "\r\tWritten " << i + 1 << " / " << frames.size() << std::flush;
         }
     }
+    meta_file << "]\n";
     std::cout << std::endl;
 
-    meta_file << "]\n";
+    meta_file << "\n}\n";
     meta_file.close();
 
     // Save events.txt
