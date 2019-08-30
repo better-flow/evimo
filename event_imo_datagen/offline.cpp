@@ -492,12 +492,31 @@ int main (int argc, char** argv) {
     meta_file << "{\n";
     meta_file << Dataset::meta_as_dict() + "\n";
     meta_file << ", 'frames': [\n";
-    for (int i = 0; i < frames.size(); ++i) {
+    for (uint64_t i = 0; i < frames.size(); ++i) {
         frames[i].save_gt_images();
         meta_file << frames[i].as_dict() << ",\n\n";
 
         if (i % 10 == 0) {
             std::cout << "\r\tWritten " << i + 1 << " / " << frames.size() << std::flush;
+        }
+    }
+    meta_file << "]\n";
+    std::cout << std::endl;
+
+    std::cout << std::endl << _yellow("Writing full trajectory") << std::endl;
+    meta_file << ", 'full_trajectory': [\n";
+    for (uint64_t i = 0; i < Dataset::cam_tj.size(); ++i) {
+        DatasetFrame frame(i, Dataset::cam_tj[i].ts.toSec(), -1);
+
+        for (auto &obj_tj : Dataset::obj_tjs) {
+            if (obj_tj.second.size() == 0) continue;
+            frame.add_object_pos_id(obj_tj.first, std::min(i, obj_tj.second.size() - 1));
+        }
+
+        meta_file << frame.as_dict() << ",\n\n";
+
+        if (i % 10 == 0) {
+            std::cout << "\r\tWritten " << i + 1 << " / " << Dataset::cam_tj.size() << std::flush;
         }
     }
     meta_file << "]\n";

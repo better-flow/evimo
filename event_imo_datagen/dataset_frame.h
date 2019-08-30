@@ -226,13 +226,15 @@ public:
         ret += "'ts': " + std::to_string(this->get_timestamp()) + ",\n";
         ret += "'cam': {\n";
         ret += "\t'vel': " + this->get_camera_velocity().as_dict() + ",\n";
-        ret += "\t'pos': " + this->get_true_camera_pose().as_dict() + "},\n";
+        ret += "\t'pos': " + this->get_true_camera_pose().as_dict() + ",\n";
+        ret += "\t'ts': " + std::to_string(this->get_true_camera_pose().ts.toSec()) + "},\n";
 
         // object poses
         for (auto &pair : this->obj_pose_ids) {
             ret += "'" + std::to_string(pair.first) + "': {\n";
             ret += "\t'vel': " + this->get_object_velocity(pair.first).as_dict() + ",\n";
-            ret += "\t'pos': " + this->get_object_pose_cam_frame(pair.first).as_dict() + "},\n";
+            ret += "\t'pos': " + this->get_object_pose_cam_frame(pair.first).as_dict() + ",\n";
+            ret += "\t'ts': " + std::to_string(this->get_object_pose_cam_frame(pair.first).ts.toSec()) + "},\n";
         }
 
         // image paths
