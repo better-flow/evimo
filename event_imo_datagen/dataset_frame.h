@@ -146,15 +146,18 @@ public:
         return Pose(cam_tf.ts, obj_tf);
     }
 
+/*
+    TODO: Need to define a frame in which to report!
     Pose get_object_velocity(int id) {
         auto vel = Dataset::obj_tjs.at(id).get_velocity(this->obj_pose_ids.at(id));
-        auto cam_pose = get_true_camera_pose();
-        cam_pose.setT({0, 0, 0});
-        auto l = get_object_pose_cam_frame(id).pq.inverse() * cam_pose.pq;
-
-        vel.pq = l.inverse() * vel.pq * l;
+        //auto cam_pose = get_true_camera_pose();
+        //cam_pose.setT({0, 0, 0});
+        //auto l = get_object_pose_cam_frame(id).pq.inverse() * cam_pose.pq;
+        //vel.pq = l.inverse() * vel.pq * l;
+        vel.pq = get_object_pose_cam_frame(id).pq.inverse() * vel.pq;
         return vel;
     }
+*/
 
     float get_timestamp() {
         return this->timestamp - Dataset::get_time_offset_pose_to_host_correction();
@@ -226,13 +229,18 @@ public:
         ret += "'ts': " + std::to_string(this->get_timestamp()) + ",\n";
         ret += "'cam': {\n";
         ret += "\t'vel': " + this->get_camera_velocity().as_dict() + ",\n";
-        ret += "\t'pos': " + this->get_true_camera_pose().as_dict() + ",\n";
+
+        // Represent camera poses in the frame of the initial camera pose (p0)
+        auto p0 = Dataset::cam_tj[0];
+        auto cam_pose = this->_get_raw_camera_pose();
+        auto cam_tf = Dataset::cam_E.inverse() * (cam_pose - p0).pq * Dataset::cam_E;
+        ret += "\t'pos': " + Pose(cam_pose.ts, cam_tf).as_dict() + ",\n";
         ret += "\t'ts': " + std::to_string(this->get_true_camera_pose().ts.toSec()) + "},\n";
 
         // object poses
         for (auto &pair : this->obj_pose_ids) {
             ret += "'" + std::to_string(pair.first) + "': {\n";
-            ret += "\t'vel': " + this->get_object_velocity(pair.first).as_dict() + ",\n";
+            //ret += "\t'vel': " + this->get_object_velocity(pair.first).as_dict() + ",\n";
             ret += "\t'pos': " + this->get_object_pose_cam_frame(pair.first).as_dict() + ",\n";
             ret += "\t'ts': " + std::to_string(this->get_object_pose_cam_frame(pair.first).ts.toSec()) + "},\n";
         }
