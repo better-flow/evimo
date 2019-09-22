@@ -41,8 +41,8 @@
 #include <dvs_msgs/EventArray.h>
 
 // PROPHESEE
-#include <prophesee_event_msgs/PropheseeEvent.h>
-#include <prophesee_event_msgs/PropheseeEventBuffer.h>
+#include <prophesee_event_msgs/Event.h>
+#include <prophesee_event_msgs/EventArray.h>
 
 // Local includes
 #include <dataset.h>
@@ -269,7 +269,7 @@ int main (int argc, char** argv) {
             }
 
             // PROPHESEE event messages
-            auto msg_prs = m.instantiate<prophesee_event_msgs::PropheseeEventBuffer>();
+            auto msg_prs = m.instantiate<prophesee_event_msgs::EventArray>();
             if (msg_prs != NULL) {
                 n_events += msg_prs->events.size();
             }
@@ -301,7 +301,7 @@ int main (int argc, char** argv) {
             continue;
 
         auto msg_dvs = m.instantiate<dvs_msgs::EventArray>();
-        auto msg_prs = m.instantiate<prophesee_event_msgs::PropheseeEventBuffer>();
+        auto msg_prs = m.instantiate<prophesee_event_msgs::EventArray>();
 
         auto msize = 0;
         if (msg_dvs != NULL) msize = msg_dvs->events.size();
@@ -323,10 +323,10 @@ int main (int argc, char** argv) {
 
             // PROPHESEE
             if (msg_prs != NULL) {
-                auto &e = msg_prs->events[i];
-                current_event_ts = ros::Time(double(e.t) / 1000000.0);
+                auto &e = msg_dvs->events[i];
+                current_event_ts = e.ts;
                 x = e.x; y = e.y;
-                polarity = e.p ? 1 : 0;
+                polarity = e.polarity ? 1 : 0;
             }
 
             if (id == 0) {
@@ -497,7 +497,7 @@ int main (int argc, char** argv) {
         meta_file << frames[i].as_dict() << ",\n\n";
 
         if (i % 10 == 0) {
-            std::cout << "\r\tWritten " << i + 1 << " / " << frames.size() << std::flush;
+            std::cout << "\r\tWritten " << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
         }
     }
     meta_file << "]\n";
@@ -516,7 +516,7 @@ int main (int argc, char** argv) {
         meta_file << frame.as_dict() << ",\n\n";
 
         if (i % 10 == 0) {
-            std::cout << "\r\tWritten " << i + 1 << " / " << Dataset::cam_tj.size() << std::flush;
+            std::cout << "\r\tWritten " << i + 1 << "\t/\t" << Dataset::cam_tj.size() << "\t" << std::flush;
         }
     }
     meta_file << "]\n";
