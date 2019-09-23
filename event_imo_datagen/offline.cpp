@@ -262,16 +262,9 @@ int main (int argc, char** argv) {
         }
 
         if (m.getTopic() == event_topic) {
-            // DVS / DAVIS event messages
-            auto msg_dvs = m.instantiate<dvs_msgs::EventArray>();
-            if (msg_dvs != NULL) {
-                n_events += msg_dvs->events.size();
-            }
-
-            // PROPHESEE event messages
-            auto msg_prs = m.instantiate<prophesee_event_msgs::EventArray>();
-            if (msg_prs != NULL) {
-                n_events += msg_prs->events.size();
+            auto msg = m.instantiate<dvs_msgs::EventArray>();
+            if (msg != NULL) {
+                n_events += msg->events.size();
             }
 
             continue;
@@ -300,30 +293,17 @@ int main (int argc, char** argv) {
         if (m.getTopic() != event_topic)
             continue;
 
-        auto msg_dvs = m.instantiate<dvs_msgs::EventArray>();
-        auto msg_prs = m.instantiate<prophesee_event_msgs::EventArray>();
-
         auto msize = 0;
-        if (msg_dvs != NULL) msize = msg_dvs->events.size();
-        if (msg_prs != NULL) msize = msg_prs->events.size();
+        auto msg = m.instantiate<dvs_msgs::EventArray>();
+        if (msg != NULL) msize = msg->events.size();
 
         for (uint64_t i = 0; i < msize; ++i) {
             int32_t x = 0, y = 0;
             ros::Time current_event_ts = ros::Time(0);
             int polarity = 0;
 
-            // Sensor-specific switch:
-            // DVS / DAVIS
-            if (msg_dvs != NULL) {
-                auto &e = msg_dvs->events[i];
-                current_event_ts = e.ts;
-                x = e.x; y = e.y;
-                polarity = e.polarity ? 1 : 0;
-            }
-
-            // PROPHESEE
-            if (msg_prs != NULL) {
-                auto &e = msg_dvs->events[i];
+            if (msg != NULL) {
+                auto &e = msg->events[i];
                 current_event_ts = e.ts;
                 x = e.x; y = e.y;
                 polarity = e.polarity ? 1 : 0;
@@ -344,6 +324,7 @@ int main (int argc, char** argv) {
 
             auto ts = (first_event_message_ts + (current_event_ts - first_event_ts) +
                        ros::Duration(Dataset::get_time_offset_event_to_host())).toNSec();
+
             event_array[id] = Event(y, x, ts, polarity);
             id ++;
         }
@@ -370,11 +351,13 @@ int main (int argc, char** argv) {
     cam_tj.subtract_time(time_offset);
     for (auto &obj_tj : obj_tjs)
         obj_tj.second.subtract_time(time_offset);
+
     // images
     while(image_ts.size() > 0 && *image_ts.begin() < time_offset) {
         image_ts.erase(image_ts.begin());
         images.erase(images.begin());
     }
+
     for (uint64_t i = 0; i < image_ts.size(); ++i)
         image_ts[i] = ros::Time((image_ts[i] - time_offset).toSec() < 0 ? 0 : (image_ts[i] - time_offset).toSec());
     // events

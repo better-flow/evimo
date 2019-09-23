@@ -253,6 +253,8 @@ public:
     }
 
     virtual void subtract_time(ros::Time t) final {
+        while (this->poses.begin()->ts < t)
+            this->poses.erase(this->poses.begin());
         for (auto &p : this->poses) p.ts = ros::Time((p.ts - t).toSec());
     }
 
