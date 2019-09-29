@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>vicon_reconstructor</name>
+  <name>evimo</name>
   <version>0.1.0</version>
-  <description>The vicon reconstructor</description>
+  <description>The postprocessing package for evimo</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -17,8 +17,6 @@
 
 
   <buildtool_depend>catkin</buildtool_depend>
- 
-
 
   <depend>OpenCV</depend>
   <depend>cv_bridge</depend>
@@ -36,6 +34,8 @@
   <depend>laser_geometry</depend>
   <depend>libpcl-all-dev</depend>
   <depend>message_runtime</depend>
+  <depend>dvs_msgs</depend>
+  <depend>prophesee_event_msgs</depend>
 
   <exec_depend>libpcl-all</exec_depend>
 

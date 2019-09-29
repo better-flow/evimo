@@ -1,1 +1,0 @@
-event_imo_datagen/objects/room/model.ply filter=lfs diff=lfs merge=lfs -text

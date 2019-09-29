@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(event_imo_datagen)
+project(evimo)
 
 #set(CMAKE_C_COMPILER "/usr/bin/clang-6.0")
 #set(CMAKE_CXX_COMPILER "/usr/bin/clang++-6.0")

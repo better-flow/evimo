@@ -81,7 +81,7 @@ std::string dataset_folder;
 #define EVENT_WIDTH 30000
 #define TIME_WIDTH 0.02
 static ull start_timestamp = 0;
-CircularArray<Event, EVENT_WIDTH, FROM_SEC(TIME_WIDTH)> ev_buffer;  
+CircularArray<Event, EVENT_WIDTH, FROM_SEC(TIME_WIDTH)> ev_buffer;
 std::list<Event> all_events;
 std::list<std::pair<cv::Mat, double>> all_depthmaps;
 
@@ -93,7 +93,7 @@ tf::Transform world2camcenter(const vicon::Subject& p) {
     tf::Quaternion q(p.orientation.x,
                      p.orientation.y,
                      p.orientation.z,
-                     p.orientation.w); 
+                     p.orientation.w);
     transform.setRotation(q);
     static tf::TransformBroadcaster tf_br;
     tf_br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/vicon", "/camera_markers"));
@@ -103,7 +103,7 @@ tf::Transform world2camcenter(const vicon::Subject& p) {
           -1.0,    0.0,   0.0,  0.00,
            0.0,    0.0,   1.0,  0.00,
              0,      0,     0,     1;
-    Tm = Tm.inverse().eval();   
+    Tm = Tm.inverse().eval();
 
     tf::Transform to_camcenter = transform * ViObject::mat2tf(Tm) * E;
     tf_br.sendTransform(tf::StampedTransform(to_camcenter, ros::Time::now(), "/vicon", "/camera_center"));
@@ -199,9 +199,9 @@ void project_cloud(cv::Mat &img, pcl::PointCloud<pcl::PointXYZRGB> *cl, int oid)
         project_point(p, u, v);
         if (u < 0 || v < 0 || v >= img.cols || u >= img.rows)
             continue;
- 
+
         int patch_size = int(1.0 / rng);
-        
+
         if (oid == 0)
             patch_size = int(5.0 / rng);
 
@@ -266,8 +266,8 @@ void update_vis_img(cv::Mat &projected) {
         }
     }
 
-    cv::putText(vis_img, "Cam:" + std::to_string(int(cam_visibility)), 
-                cv::Point(10, 30), cv::FONT_HERSHEY_DUPLEX, 0.5, 
+    cv::putText(vis_img, "Cam:" + std::to_string(int(cam_visibility)),
+                cv::Point(10, 30), cv::FONT_HERSHEY_DUPLEX, 0.5,
                 cv::Scalar(255,255,255), 1, cv::LINE_AA, false);
 }
 
@@ -277,7 +277,7 @@ void process_camera(tf::Transform to_camcenter) {
         return;
 
     visualization_msgs::MarkerArray vis_markers;
-      
+
     auto vis_marker = get_generic_marker();
     vis_marker.ns = "dvs_camera";
     vis_marker.pose.position = last_cam_pos.position;
@@ -333,12 +333,12 @@ void process_camera(tf::Transform to_camcenter) {
     for (auto &obj : objects) {
         int id = obj->get_id();
         float visibility = obj->get_visibility();
-        cv::putText(vis_img, "O" + std::to_string(id) + ": " + std::to_string(int(visibility)), 
-                    cv::Point(10, 36 + 12 * id), cv::FONT_HERSHEY_DUPLEX, 0.5, 
+        cv::putText(vis_img, "O" + std::to_string(id) + ": " + std::to_string(int(visibility)),
+                    cv::Point(10, 36 + 12 * id), cv::FONT_HERSHEY_DUPLEX, 0.5,
                     cv::Scalar(255,255,255), 1, cv::LINE_AA, false);
     }
 
-    sensor_msgs::ImagePtr img_depth_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", vis_img).toImageMsg();                
+    sensor_msgs::ImagePtr img_depth_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", vis_img).toImageMsg();
     image_pub.publish(img_depth_msg);
 }
 
@@ -347,7 +347,7 @@ void camera_pos_cb(const vicon::Subject& subject) {
     auto tf_to_camcenter = world2camcenter(subject);
     cam_pos_manager.push_back(ViObject::tf2subject(tf_to_camcenter), ViObject::tf2subject(tf_to_camcenter));
 
-    if (subject.occluded) 
+    if (subject.occluded)
         return;
 
     if (numreceived == 0)
@@ -415,8 +415,8 @@ void save_data(std::string dir) {
     for (auto &oid : oids) {
         uint32_t local_size = pose_managers.at(oid).get_obj_poses().size();
         if (local_size != nframes) {
-            std::cout << "ERROR!!! : object id " << oid << " has " 
-                      << local_size << " pose data points (vs " 
+            std::cout << "ERROR!!! : object id " << oid << " has "
+                      << local_size << " pose data points (vs "
                       << nframes << " frames)" << std::endl;
         }
     }
@@ -457,7 +457,7 @@ void save_data(std::string dir) {
         projected_i16.convertTo(projected_i16, CV_16UC3);
 
 
-        cv::imwrite(dir + '/' + gtfname, projected_i16);        
+        cv::imwrite(dir + '/' + gtfname, projected_i16);
         i ++;
     }
     ts_file.close();
@@ -473,10 +473,10 @@ void save_data(std::string dir) {
         if (i % 100000 == 0) {
             std::cout << "Formatting " << i << " / " << all_events.size() <<  std::endl;
         }
-        
-        ss << std::fixed << std::setprecision(9) 
-           << double(e.timestamp / 1000) / 1000000.0 
-           << " " << e.fr_y << " " << e.fr_x 
+
+        ss << std::fixed << std::setprecision(9)
+           << double(e.timestamp / 1000) / 1000000.0
+           << " " << e.fr_y << " " << e.fr_x
            << " " << int(e.polarity) << std::endl;
         i ++;
     }
@@ -501,7 +501,7 @@ bool parse_config(std::string path, std::string &conf) {
     std::ifstream ifs;
     ifs.open(path, std::ifstream::in);
     if (!ifs.is_open()) {
-        std::cout << "Could not open configuration file at " 
+        std::cout << "Could not open configuration file at "
                   << path << "!" << std::endl;
         return false;
     }
@@ -524,7 +524,7 @@ bool read_cam_intr(std::string path) {
     std::ifstream ifs;
     ifs.open(path, std::ifstream::in);
     if (!ifs.is_open()) {
-        std::cout << "Could not open camera intrinsic calibration file at " 
+        std::cout << "Could not open camera intrinsic calibration file at "
                   << path << "!" << std::endl;
         return false;
     }
@@ -535,14 +535,14 @@ bool read_cam_intr(std::string path) {
                   << "fx fy cx cy {k1 k2 k3 k4} ({} are optional)" << std::endl;
         return false;
     }
-    
+
     k1 = k2 = k3 = k4 = 0;
     ifs >> k1 >> k2 >> k3 >> k4;
-    
+
     std::cout << "Read camera calibration: (fx fy cx cy {k1 k2 k3 k4}): "
               << fx << " " << fy << " " << cx << " " << cy << " "
               << k1 << " " << k2 << " " << k3 << " " << k4 << std::endl;
-          
+
     ifs.close();
     return true;
 }
@@ -552,7 +552,7 @@ bool read_extr(std::string path) {
     std::ifstream ifs;
     ifs.open(path, std::ifstream::in);
     if (!ifs.is_open()) {
-        std::cout << "Could not open extrinsic calibration file at " 
+        std::cout << "Could not open extrinsic calibration file at "
                   << path << "!" << std::endl;
         return false;
     }
@@ -576,7 +576,7 @@ bool read_extr(std::string path) {
     tf::Vector3 T;
     tf::Quaternion Q(bg_qx, bg_qy, bg_qz, bg_qw);
     T.setValue(bg_tx, bg_ty, bg_tz);
-    
+
     tf::Transform E_bg;
     E_bg.setRotation(Q);
     E_bg.setOrigin(T);
@@ -592,7 +592,7 @@ int main (int argc, char** argv) {
     ros::init (argc, argv, "event_imo_online");
     ros::NodeHandle nh;
     image_transport::ImageTransport it_(nh);
-  
+
     // Create ROS subscribers / publishers
     vis_pub = nh.advertise<visualization_msgs::MarkerArray>("/ev_imo/markers", 0);
     vis_pub_range = nh.advertise<sensor_msgs::Range>("/ev_imo/markers_range",  0);
@@ -600,7 +600,7 @@ int main (int argc, char** argv) {
     // One of the cameras
     ros::Subscriber cam_sub_1 = nh.subscribe("/vicon/DVS346", 0, camera_pos_cb);
     ros::Subscriber cam_sub_2 = nh.subscribe("/vicon/DAVIS240C", 0, camera_pos_cb);
-    
+
     ros::Subscriber event_sub = nh.subscribe("/dvs/events", 0, event_cb);
     image_pub = it_.advertise("/ev_imo/depth_raw", 1);
 
@@ -608,7 +608,7 @@ int main (int argc, char** argv) {
     if (!nh.getParam("event_imo_online/fps", FPS)) FPS = 40;
     if (!nh.getParam("event_imo_online/smoothing", traj_smoothing)) traj_smoothing = 1;
 
-    std::string path_to_self = ros::package::getPath("event_imo_datagen");
+    std::string path_to_self = ros::package::getPath("evimo");
 
     last_cam_pos.header.stamp = ros::Time(0);
     last_event_msg_ts         = ros::Time(0);
@@ -707,7 +707,7 @@ int main (int argc, char** argv) {
         cv::imshow(cv_window_name, vis_img * scale);
         cv::imshow(cv_window_name_bg, undistort(vis_img) * scale);
         code = cv::waitKey(1);
-        
+
         if (code == 99) { // 'c'
             cv::setTrackbarPos("R", cv_window_name, maxval / 2);
             cv::setTrackbarPos("P", cv_window_name, maxval / 2);
@@ -776,7 +776,7 @@ int main (int argc, char** argv) {
             std::cout << "ROS first message time (offset): " << ros_start_time << std::endl;
             std::cout << "Last camera pos ts: " << last_cam_pos.header.stamp - ros_start_time << std::endl;
             std::cout << "Last event pack ts: " << last_event_msg_ts - ros_start_time << std::endl;
-            
+
             double et_sec = double(all_events.back().timestamp / 1000) / 1000000.0;
             std::cout << "Last event ts: " << et_sec << "\t|\t" << all_events.back().timestamp << std::endl;
             std::cout << "Event pack - event: " << (last_event_msg_ts - ros_start_time).toSec() - et_sec << std::endl;

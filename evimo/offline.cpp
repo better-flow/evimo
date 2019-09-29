@@ -213,7 +213,7 @@ int main (int argc, char** argv) {
         return -1;
 
     // Load 3D models
-    std::string path_to_self = ros::package::getPath("event_imo_datagen");
+    std::string path_to_self = ros::package::getPath("evimo");
 
     if (!no_background) {
         Dataset::background = std::make_shared<StaticObject>(path_to_self + "/objects/room");
