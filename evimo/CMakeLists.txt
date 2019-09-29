@@ -49,21 +49,21 @@ add_definitions(${PCL_DEFINITIONS})
 ###########
 ## Build ##
 ###########
-add_executable(event_imo_online online.cpp)
+add_executable(datagen_online online.cpp)
 
-target_link_libraries(event_imo_online
+target_link_libraries(datagen_online
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
     ${PCL_LIBRARIES}
 )
 
 
-add_executable(event_imo_offline annotation_backprojector.h
+add_executable(datagen_offline annotation_backprojector.h
                                  offline.cpp
                                  dataset.cpp
                                  dataset_frame.cpp)
 
-target_link_libraries(event_imo_offline
+target_link_libraries(datagen_offline
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
     ${PCL_LIBRARIES}
