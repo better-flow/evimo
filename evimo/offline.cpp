@@ -40,10 +40,6 @@
 #include <dvs_msgs/Event.h>
 #include <dvs_msgs/EventArray.h>
 
-// PROPHESEE
-#include <prophesee_event_msgs/Event.h>
-#include <prophesee_event_msgs/EventArray.h>
-
 // Local includes
 #include <dataset.h>
 #include <object.h>
@@ -176,10 +172,6 @@ int main (int argc, char** argv) {
     if (!nh.getParam(node_name + "/with_images", with_images)) with_images = false;
     else std::cout << _yellow("With 'with_images' option, the datased will be generated at image framerate.") << std::endl;
 
-    int res_x = 260, res_y = 346;
-    if (!nh.getParam(node_name + "/res_x", res_x)) res_x = 260;
-    if (!nh.getParam(node_name + "/res_y", res_y)) res_y = 346;
-
     // -- camera topics
     std::string cam_pose_topic = "", event_topic = "", img_topic = "";
     std::map<int, std::string> obj_pose_topics;
@@ -209,7 +201,7 @@ int main (int argc, char** argv) {
     }
 
     // Read datasset configuration files
-    if (!Dataset::init(dataset_folder, (unsigned int)res_x, (unsigned int)res_y))
+    if (!Dataset::init(dataset_folder))
         return -1;
 
     // Load 3D models
@@ -265,6 +257,8 @@ int main (int argc, char** argv) {
             auto msg = m.instantiate<dvs_msgs::EventArray>();
             if (msg != NULL) {
                 n_events += msg->events.size();
+                Dataset::res_x = msg->height;
+                Dataset::res_y = msg->width;
             }
 
             continue;

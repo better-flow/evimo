@@ -6,9 +6,9 @@
 
 class EventFile {
 public:
-    template<class T> static cv::Mat color_time_img     (T *events, int scale = 0);
-    template<class T> static cv::Mat projection_img     (T *events, int scale = 1);
-    template<class T> static cv::Mat projection_img_unopt (T *events, int scale);
+    template<class T> static cv::Mat color_time_img     (T *events, int scale = 0, int res_x = RES_X, int res_y = RES_Y);
+    template<class T> static cv::Mat projection_img     (T *events, int scale = 1, int res_x = RES_X, int res_y = RES_Y);
+    template<class T> static cv::Mat projection_img_unopt (T *events, int scale, int res_x = RES_X, int res_y = RES_Y);
     static double nonzero_average (cv::Mat img);
     static void nonzero_norm (cv::Mat img);
 
@@ -16,10 +16,10 @@ public:
 };
 
 
-template<class T> cv::Mat EventFile::projection_img (T *events, int scale) {
+template<class T> cv::Mat EventFile::projection_img (T *events, int scale, int res_x, int res_y) {
 
-    int scale_img_x = RES_X * scale;
-    int scale_img_y = RES_Y * scale;
+    int scale_img_x = res_x * scale;
+    int scale_img_y = res_y * scale;
 
     int cnt = 0;
     cv::Mat best_project_hires_img = cv::Mat::zeros(scale_img_x, scale_img_y, CV_8UC1);
@@ -27,7 +27,7 @@ template<class T> cv::Mat EventFile::projection_img (T *events, int scale) {
         int x = e.fr_x * scale;
         int y = e.fr_y * scale;
 
-        if ((x >= scale * (RES_X - 1)) || (x < 0) || (y >= scale * (RES_Y - 1)) || (y < 0))
+        if ((x >= scale * (res_x - 1)) || (x < 0) || (y >= scale * (res_y - 1)) || (y < 0))
             continue;
 
         x += scale / 2;
@@ -55,10 +55,10 @@ template<class T> cv::Mat EventFile::projection_img (T *events, int scale) {
 }
 
 
-template<class T> cv::Mat EventFile::projection_img_unopt (T *events, int scale) {
+template<class T> cv::Mat EventFile::projection_img_unopt (T *events, int scale, int res_x, int res_y) {
 
-    int scale_img_x = RES_X * scale;
-    int scale_img_y = RES_Y * scale;
+    int scale_img_x = res_x * scale;
+    int scale_img_y = res_y * scale;
 
     int cnt = 0;
     cv::Mat best_project_hires_img = cv::Mat::zeros(scale_img_x, scale_img_y, CV_8UC1);
@@ -66,7 +66,7 @@ template<class T> cv::Mat EventFile::projection_img_unopt (T *events, int scale)
         int x = e.fr_x * scale;
         int y = e.fr_y * scale;
 
-        if ((x >= scale * (RES_X - 1)) || (x < 0) || (y >= scale * (RES_Y - 1)) || (y < 0))
+        if ((x >= scale * (res_x - 1)) || (x < 0) || (y >= scale * (res_y - 1)) || (y < 0))
             continue;
 
         x += scale / 2;
@@ -94,11 +94,11 @@ template<class T> cv::Mat EventFile::projection_img_unopt (T *events, int scale)
 }
 
 
-template<class T> cv::Mat EventFile::color_time_img (T *events, int scale) {
+template<class T> cv::Mat EventFile::color_time_img (T *events, int scale, int res_x, int res_y) {
     if (scale == 0) scale = 11;
 
     ull t_min = LLONG_MAX, t_max = 0;
-    uint x_min = RES_X, y_min = RES_Y, x_max = 0, y_max = 0;
+    uint x_min = res_x, y_min = res_y, x_max = 0, y_max = 0;
     for (auto &e : *events) {
         if (e.get_x() > x_max) x_max = e.get_x();
         if (e.get_y() > y_max) y_max = e.get_y();
@@ -111,10 +111,10 @@ template<class T> cv::Mat EventFile::color_time_img (T *events, int scale) {
         if (e.timestamp > (sll)t_max) t_max = e.timestamp;
     }
 
-    x_max = std::min(x_max, (uint)RES_X);
-    y_max = std::min(y_max, (uint)RES_Y);
+    x_max = std::min(x_max, (uint)res_x);
+    y_max = std::min(y_max, (uint)res_y);
 
-    x_min = 0; y_min = 0; x_max = RES_X; y_max = RES_Y;
+    x_min = 0; y_min = 0; x_max = res_x; y_max = res_y;
 
     if ((x_min > x_max) || (y_min > y_max)) {
         return cv::Mat(0, 0, CV_8UC3, cv::Scalar(0, 0, 0));

@@ -66,10 +66,8 @@ public:
     static int value_rr, value_rp, value_ry;
     static int value_tx, value_ty, value_tz;
 
-    static bool init(std::string dataset_folder, unsigned int rx, unsigned int ry) {
+    static bool init(std::string dataset_folder) {
         Dataset::dataset_folder = dataset_folder;
-        Dataset::res_x = rx;
-        Dataset::res_y = ry;
         bool ret = Dataset::parse_config(Dataset::dataset_folder + "/config.txt");
         ret &= Dataset::read_cam_intr(Dataset::dataset_folder + "/calib.txt");
         ret &= Dataset::read_extr(Dataset::dataset_folder + "/extrinsics.txt");

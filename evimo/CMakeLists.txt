@@ -29,13 +29,12 @@ find_package(catkin REQUIRED COMPONENTS
              std_msgs
              vicon
              dvs_msgs
-             prophesee_event_msgs
 )
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(OpenCV REQUIRED)
 
-catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs vicon dvs_msgs prophesee_event_msgs)
+catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs vicon dvs_msgs)
 
 include_directories(.
                     ${catkin_INCLUDE_DIRS}
@@ -59,9 +58,9 @@ target_link_libraries(datagen_online
 
 
 add_executable(datagen_offline annotation_backprojector.h
-                                 offline.cpp
-                                 dataset.cpp
-                                 dataset_frame.cpp)
+                               offline.cpp
+                               dataset.cpp
+                               dataset_frame.cpp)
 
 target_link_libraries(datagen_offline
     ${catkin_LIBRARIES}

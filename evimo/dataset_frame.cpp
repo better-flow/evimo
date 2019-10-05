@@ -1,5 +1,6 @@
 #include <dataset_frame.h>
 #include <event_vis.h>
+#include <dataset.h>
 
 cv::Mat DatasetFrame::get_visualization_event_projection(bool timg) {
     cv::Mat img;
@@ -7,9 +8,9 @@ cv::Mat DatasetFrame::get_visualization_event_projection(bool timg) {
         auto ev_slice = Slice<std::vector<Event>>(Dataset::event_array,
                                                   this->event_slice_ids);
         if (timg) {
-            img = EventFile::color_time_img(&ev_slice, 1);
+            img = EventFile::color_time_img(&ev_slice, 1, Dataset::res_x, Dataset::res_y);
         } else {
-            img = EventFile::projection_img(&ev_slice, 1);
+            img = EventFile::projection_img(&ev_slice, 1, Dataset::res_x, Dataset::res_y);
         }
     }
     return img;
