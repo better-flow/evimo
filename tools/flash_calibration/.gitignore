@@ -1,0 +1,15 @@
+*.swp
+*.o
+
+CMakeCache.txt
+CMakeFiles
+Makefile
+*.cmake
+.ninja_deps
+.ninja_log
+build.ninja
+rules.ninja
+nvvp.cfg
+*.log
+
+img_extract
