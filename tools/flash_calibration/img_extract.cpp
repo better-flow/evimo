@@ -40,6 +40,7 @@ int resolution_x = 240;
 int resolution_y = 180;
 
 bool verbose = false;
+static float fps = -1;
 
 std::vector<uint> x_arr;
 std::vector<uint> y_arr;
@@ -245,6 +246,12 @@ double nonzero_average (cv::Mat img) {
 
 std::vector<ull> get_ts_array(float wsize = 0.5) {
     std::vector<ull> ret;
+    if (fps > 0) {
+        ull dt = 1000000000.0 / fps;
+        for (ull t_ = min_actual_time + dt; t_ < max_actual_time; t_ += dt)
+            ret.push_back(t_);
+        return ret;
+    }
 
     ull nbins = ull(wsize * 1000000000) / discretization;
     for (ull i = nbins / 2; i < idx.size() - nbins / 2; ++i) {
@@ -255,7 +262,7 @@ std::vector<ull> get_ts_array(float wsize = 0.5) {
             total += idx[j] - idx[j - 1];
         }
 
-        if (ecount * nbins > total * 8)
+        if (ecount * nbins > total * 7)
             ret.push_back(t_arr[idx[i]]);
     }
 
@@ -266,17 +273,28 @@ std::vector<ull> get_ts_array(float wsize = 0.5) {
 void save_images(std::string folder, std::vector<ull> ts_arr, float toffset = 0.0) {
     ull i = 0;
     for (auto &ts : ts_arr) {
-        i += 1;
 
         min_slice_time = llint(ts - width_slice_time / 2) + llint(toffset * 1000000000.0);
+
+        if (min_actual_time > min_slice_time || max_actual_time < min_slice_time)
+            continue;
+
         auto img = project_events();
 
         double img_scale = 127.0 / nonzero_average(img);
         cv::convertScaleAbs(img, img, img_scale, 0);
-        cv::imwrite(folder + "/00" + std::to_string(ts) + ".png", img);
+
+        if (fps > 0) {
+            cv::imwrite(folder + "/" + std::to_string(i) + ".png", img);
+        }
+        else {
+            cv::imwrite(folder + "/00" + std::to_string(ts) + ".png", img);
+        }
 
         if (i % 10 == 0)
             std::cout << "Saving " << i << " / " << ts_arr.size() << "\t\t\t\r";
+
+        i += 1;
     }
     std::cout << "\n";
 }
@@ -309,6 +327,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // fixed framerate mode
+    //fps = 200;
+    width_slice_time = 0.01 * 1000000000;
+
     std::string bag_name = argv[1];
     std::string out_folder = argv[2];
 
@@ -323,16 +345,13 @@ int main(int argc, char *argv[]) {
     if (start_time >= 0 && end_time >= 0 && end_time < start_time)
         std::swap(start_time, end_time);
 
-    width_slice_time = 0.01 * 1000000000;
-
     std::vector<std::pair<std::string, std::string>> topic_db {
         {"/prophesee/left/cd_events_buffer", "cam_2"},
         {"/prophesee/right/cd_events_buffer", "cam_1"},
-        {"/prophesee/hvga/cd_events_buffer", "cam_0"}
+        {"/prophesee/hvga/cd_events_buffer", "cam_0"},
+        {"/samsung/camera/events", "cam_3"}
     };
     std::vector<std::pair<std::string, std::string>> available_topics;
-
-
     std::vector<const rosbag::ConnectionInfo *> connection_infos;
 
     rosbag::Bag bag;
