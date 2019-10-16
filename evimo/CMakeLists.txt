@@ -48,7 +48,10 @@ add_definitions(${PCL_DEFINITIONS})
 ###########
 ## Build ##
 ###########
-add_executable(datagen_online online.cpp)
+add_executable(datagen_online online.cpp
+                              dataset.cpp
+                              dataset_frame.cpp
+)
 
 target_link_libraries(datagen_online
     ${catkin_LIBRARIES}

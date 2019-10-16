@@ -94,7 +94,8 @@ public:
         : cam_pose_id(cam_p_id), timestamp(ref_ts), frame_id(fid), event_slice_ids(0, 0),
           depth(Dataset::res_x, Dataset::res_y, CV_32F, cv::Scalar(0)),
           mask(Dataset::res_x, Dataset::res_y, CV_8U, cv::Scalar(0)) {
-        this->cam_pose_id = TimeSlice(Dataset::cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
+        if (Dataset::cam_tj.size() > 0)
+            this->cam_pose_id = TimeSlice(Dataset::cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
         this->gt_img_name  = "depth_mask_" + std::to_string(this->frame_id) + ".png";
         this->rgb_img_name = "img_" + std::to_string(this->frame_id) + ".png";
     }
@@ -114,6 +115,8 @@ public:
 
     void add_img(cv::Mat &img_) {
         this->img = img_;
+        this->depth = cv::Mat(this->img.rows, this->img.cols, CV_32F, cv::Scalar(0));
+        this->mask  = cv::Mat(this->img.rows, this->img.cols, CV_8U, cv::Scalar(0));
     }
 
     void show() {
@@ -181,10 +184,12 @@ public:
         Dataset::update_cam_calib();
         Dataset::cam_tj.set_filtering_window_size(Dataset::pose_filtering_window);
         this->cam_pose_id = TimeSlice(Dataset::cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
-        this->event_slice_ids = TimeSlice(Dataset::event_array,
-            std::make_pair(this->timestamp - Dataset::get_time_offset_event_to_host_correction() - Dataset::slice_width / 2.0,
-                           this->timestamp - Dataset::get_time_offset_event_to_host_correction() + Dataset::slice_width / 2.0),
-            this->event_slice_ids).get_indices();
+
+        if (Dataset::event_array.size() > 0)
+            this->event_slice_ids = TimeSlice(Dataset::event_array,
+                std::make_pair(this->timestamp - Dataset::get_time_offset_event_to_host_correction() - Dataset::slice_width / 2.0,
+                               this->timestamp - Dataset::get_time_offset_event_to_host_correction() + Dataset::slice_width / 2.0),
+                this->event_slice_ids).get_indices();
 
         auto cam_tf = this->get_true_camera_pose();
         if (Dataset::background != nullptr) {

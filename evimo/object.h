@@ -149,8 +149,6 @@ protected:
     vicon::Subject last_pos;
     long int poses_received;
 
-    PoseManager pose_manager;
-
 public:
     ViObject (ros::NodeHandle n_, std::string folder_, int id_) :
         n_(n_), it_(n_), folder(folder_), id(id_),
@@ -191,10 +189,10 @@ public:
         //this->LAST_SVD = Eigen::MatrixXf::Identity(4, 4);
 
         std::ifstream cfg(this->config_fname, std::ifstream::in);
-        int id = -1;
+        int marker_id = -1;
         double x = 0, y = 0, z = 0;
         while (!cfg.eof()) {
-            if (!(cfg >> id >> x >> y >> z))
+            if (!(cfg >> marker_id >> x >> y >> z))
                 continue;
             pcl::PointXYZRGB p;
             p.x = x; p.y = y; p.z = z;
@@ -204,10 +202,10 @@ public:
 
         std::cout << this->name << " initialized with " << this->obj_markerpos->size() << " markers:" << std::endl;
         std::cout << " ID\t|\t\tcoordinate" << std::endl;
-        id = 0;
+        marker_id = 0;
         for (auto &p : *(this->obj_markerpos)) {
-            std::cout << " " << id << "\t|\t" << p.x << "\t" << p.y << "\t" << p.z << std::endl;
-            id ++;
+            std::cout << " " << marker_id << "\t|\t" << p.x << "\t" << p.y << "\t" << p.z << std::endl;
+            marker_id ++;
         }
         std::cout << "=====================================" << std::endl << std::endl;
     }
@@ -216,12 +214,10 @@ public:
     void vicon_pos_cb(const vicon::Subject& subject) {
         this->last_pos = subject;
 
-        if (this->poses_received == 0)
+        if (this->poses_received % 200 == 0)
             this->convert_to_vicon_tf(subject);
 
         this->poses_received ++;
-        this->pose_manager.push_back(subject, subject);
-
         if (this->poses_received % 20 != 0)
             return;
 
@@ -313,7 +309,7 @@ public:
     }
 
     // Helpers
-    visualization_msgs::Marker get_generic_marker(int id = 0) {
+    visualization_msgs::Marker get_generic_marker(int id_ = 0) {
         visualization_msgs::Marker marker;
         marker.header.frame_id = "/vicon";
         marker.header.stamp = ros::Time();
@@ -333,9 +329,9 @@ public:
         marker.scale.z = 0.02;
         marker.color.a = 1.0;
 
-        marker.color.r = float((id + 0) % 3) / 2.0;
-        marker.color.g = float((id + 1) % 3) / 2.0;
-        marker.color.b = float((id + 2) % 3) / 2.0;
+        marker.color.r = float((id_ + 0) % 3) / 2.0;
+        marker.color.g = float((id_ + 1) % 3) / 2.0;
+        marker.color.b = float((id_ + 2) % 3) / 2.0;
 
         return marker;
     }
@@ -350,10 +346,6 @@ public:
 
     vicon::Subject get_last_pos() {
         return this->last_pos;
-    }
-
-    auto &get_pm() {
-        return this->pose_manager;
     }
 
     static vicon::Subject tf2subject(tf::Transform &transform) {

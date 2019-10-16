@@ -239,6 +239,10 @@ public:
         this->poses.push_back(Pose(ts_, pq_));
     }
 
+    void clear() {
+        this->poses.clear();
+    }
+
     size_t size() {return this->poses.size(); }
     auto operator [] (size_t idx) {return this->get_filtered(idx); }
 
