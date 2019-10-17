@@ -28,7 +28,7 @@ public:
     static std::map<int, Trajectory> obj_tjs;
 
     // Calibration matrix
-    static float fx, fy, cx, cy, k1, k2, k3, k4;
+    static float fx, fy, cx, cy, k1, k2, k3, k4, p1, p2;
 
     // Camera resolution
     static unsigned int res_x, res_y;
@@ -246,6 +246,8 @@ public:
                     + ", 'k2': " + std::to_string(Dataset::k2)
                     + ", 'k3': " + std::to_string(Dataset::k3)
                     + ", 'k4': " + std::to_string(Dataset::k4)
+                    + ", 'p1': " + std::to_string(Dataset::p1)
+                    + ", 'p2': " + std::to_string(Dataset::p2)
                     + ", 'res_x': " + std::to_string(Dataset::res_x)
                     + ", 'res_y': " + std::to_string(Dataset::res_y)
                     + "}";
@@ -331,16 +333,16 @@ private:
         ifs >> fx >> fy >> cx >> cy;
         if (!ifs.good()) {
             std::cout << _red("Camera calibration read error:") << " Expected a file with a single line, containing "
-                      << "fx fy cx cy {k1 k2 k3 k4} ({} are optional)" << std::endl;
+                      << "fx fy cx cy {k1 k2 p1 p2} ({} are optional)" << std::endl;
             return false;
         }
 
-        k1 = k2 = k3 = k4 = 0;
-        ifs >> k1 >> k2 >> k3 >> k4;
+        k1 = k2 = k3 = k4 = p1 = p2 = 0;
+        ifs >> k1 >> k2 >> p1 >> p2;
 
-        std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 k3 k4}): ")
+        std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 p1 p2}): ")
                   << fx << " " << fy << " " << cx << " " << cy << " "
-                  << k1 << " " << k2 << " " << k3 << " " << k4 << std::endl;
+                  << k1 << " " << k2 << " " << p1 << " " << p2 << std::endl;
         ifs.close();
         Dataset::update_cam_calib();
         return true;
