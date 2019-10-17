@@ -166,9 +166,9 @@ int main (int argc, char** argv) {
     // -- camera topics
     std::string cam_pose_topic = "", event_topic = "", img_topic = "";
     std::map<int, std::string> obj_pose_topics;
-    if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/DVS346";
+    if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
     if (!nh.getParam("event_topic", event_topic)) event_topic = "/dvs/events";
-    if (!nh.getParam("img_topic", img_topic)) img_topic = "/dvs/image_raw";
+    if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
 
     // Read datasset configuration files
     if (!Dataset::init(dataset_folder))
