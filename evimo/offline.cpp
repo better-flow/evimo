@@ -159,25 +159,25 @@ int main (int argc, char** argv) {
     }
 
     float FPS = 40.0;
-    bool generate = true;
+    bool generate = false;
     int show = -1;
     if (!nh.getParam(node_name + "/fps", FPS)) FPS = 40;
-    if (!nh.getParam(node_name + "/generate", generate)) generate = true;
+    if (!nh.getParam(node_name + "/generate", generate)) generate = false;
     if (!nh.getParam(node_name + "/show", show)) show = -1;
 
-    bool no_background = false;
-    if (!nh.getParam(node_name + "/no_bg", no_background)) no_background = false;
+    bool no_background = true;
+    if (!nh.getParam(node_name + "/no_bg", no_background)) no_background = true;
 
-    bool with_images = false;
-    if (!nh.getParam(node_name + "/with_images", with_images)) with_images = false;
+    bool with_images = true;
+    if (!nh.getParam(node_name + "/with_images", with_images)) with_images = true;
     else std::cout << _yellow("With 'with_images' option, the datased will be generated at image framerate.") << std::endl;
 
     // -- camera topics
     std::string cam_pose_topic = "", event_topic = "", img_topic = "";
     std::map<int, std::string> obj_pose_topics;
-    if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/DVS346";
+    if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
     if (!nh.getParam(node_name + "/event_topic", event_topic)) event_topic = "/dvs/events";
-    if (!nh.getParam(node_name + "/img_topic", img_topic)) img_topic = "/dvs/image_raw";
+    if (!nh.getParam(node_name + "/img_topic", img_topic)) img_topic = "/sc/rgb/image";
 
     // -- parse the dataset folder
     std::string bag_name = boost::filesystem::path(dataset_folder).stem().string();
@@ -391,8 +391,11 @@ int main (int argc, char** argv) {
         auto ref_ts = (with_images ? image_ts[frame_id_real].toSec() : cam_tj[cam_tj_id].ts.toSec());
         uint64_t ts_low  = (ref_ts < Dataset::slice_width) ? 0 : (ref_ts - Dataset::slice_width / 2.0) * 1000000000;
         uint64_t ts_high = (ref_ts + Dataset::slice_width / 2.0) * 1000000000;
-        while (event_low  < event_array.size() - 1 && event_array[event_low].timestamp  < ts_low)  event_low ++;
-        while (event_high < event_array.size() - 1 && event_array[event_high].timestamp < ts_high) event_high ++;
+
+        if (event_array.size() > 0) {
+            while (event_low  < event_array.size() - 1 && event_array[event_low].timestamp  < ts_low)  event_low ++;
+            while (event_high < event_array.size() - 1 && event_array[event_high].timestamp < ts_high) event_high ++;
+        }
 
         double max_ts_err = 0.0;
         for (auto &obj_tj : obj_tjs) {
@@ -410,7 +413,10 @@ int main (int argc, char** argv) {
         frames.emplace_back(cam_tj_id, ref_ts, frame_id_real);
         auto &frame = frames.back();
 
-        frame.add_event_slice_ids(event_low, event_high);
+        if (event_array.size() > 0) {
+            frame.add_event_slice_ids(event_low, event_high);
+        }
+
         if (with_images) frame.add_img(images[frame_id_real]);
         std::cout << frame_id_real << ": " << cam_tj[cam_tj_id].ts
                   << " (" << cam_tj_id << "[" << cam_tj[cam_tj_id].occlusion * 100 << "%])";

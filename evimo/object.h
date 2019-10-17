@@ -263,6 +263,7 @@ public:
         auto p = ViObject::subject2tf(subject);
         auto inv_p = p.inverse();
 
+        pcl_ros::transformPointCloud(*(this->obj_markerpos), *(this->obj_markerpos), inv_p * svd_tf);
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud), inv_p * svd_tf);
     }
 

@@ -59,8 +59,8 @@ public:
     static std::string dataset_folder, gt_folder;
 
     static constexpr float MAXVAL = 1000;
-    static constexpr float INT_LIN_SC = 10;
-    static constexpr float INT_ANG_SC = 10;
+    static constexpr float INT_LIN_SC = 1.0;
+    static constexpr float INT_ANG_SC = 1.0;
     static constexpr float INT_TIM_SC = 5;
 
     static int value_rr, value_rp, value_ry;
