@@ -290,8 +290,8 @@ public:
         float r6 = r2 * r2 * r2;
         float dist = (1.0 + Dataset::k1 * r2 + Dataset::k2 * r4 +
                             Dataset::k3 * r6) / (1 + Dataset::k4 * r2);
-        float x__ = x_ * dist;
-        float y__ = y_ * dist;
+        float x__ = x_ * dist + 2.0 * Dataset::p1 * x_ * y_ + Dataset::p2 * (r2 + 2.0 * x_ * x_);
+        float y__ = y_ * dist + 2.0 * Dataset::p2 * x_ * y_ + Dataset::p1 * (r2 + 2.0 * y_ * y_);
 
         u = Dataset::fx * x__ + Dataset::cx;
         v = Dataset::fy * y__ + Dataset::cy;

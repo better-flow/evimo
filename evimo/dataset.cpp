@@ -10,7 +10,8 @@ std::map<int, Trajectory> Dataset::obj_tjs;
 
 float Dataset::fx, Dataset::fy, Dataset::cx, Dataset::cy;
 unsigned int Dataset::res_x, Dataset::res_y;
-float Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4;
+float Dataset::k1 = 0, Dataset::k2 = 0, Dataset::k3 = 0, Dataset::k4 = 0;
+float Dataset::p1 = 0, Dataset::p2 = 0;
 float Dataset::rr0, Dataset::rp0, Dataset::ry0;
 float Dataset::tx0, Dataset::ty0, Dataset::tz0;
 tf::Transform Dataset::bg_E;
