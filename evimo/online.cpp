@@ -69,7 +69,14 @@ public:
 
     void sub_cb(const sensor_msgs::ImageConstPtr& msg) {
         Dataset::images.resize(1);
-        Dataset::images[0] = cv_bridge::toCvShare(msg, "bgr8")->image;
+        if (msg->encoding == "8UC1") {
+            sensor_msgs::Image img = *msg;
+            img.encoding = "mono8";
+
+            Dataset::images[0] = cv_bridge::toCvCopy(img, "bgr8")->image;
+        } else {
+            Dataset::images[0] = cv_bridge::toCvShare(msg, "bgr8")->image;
+        }
         this->images_received ++;
     }
 
@@ -168,7 +175,8 @@ int main (int argc, char** argv) {
     std::map<int, std::string> obj_pose_topics;
     if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
     if (!nh.getParam("event_topic", event_topic)) event_topic = "/dvs/events";
-    if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
+    //if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
+    if (!nh.getParam("img_topic", img_topic)) img_topic = "/prophesee/hvga/graylevel_image";
 
     // Read datasset configuration files
     if (!Dataset::init(dataset_folder))

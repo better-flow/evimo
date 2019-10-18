@@ -59,8 +59,8 @@ public:
     static std::string dataset_folder, gt_folder;
 
     static constexpr float MAXVAL = 1000;
-    static constexpr float INT_LIN_SC = 1.0;
-    static constexpr float INT_ANG_SC = 1.0;
+    static constexpr float INT_LIN_SC = 10.0;
+    static constexpr float INT_ANG_SC = 10.0;
     static constexpr float INT_TIM_SC = 5;
 
     static int value_rr, value_rp, value_ry;
@@ -338,7 +338,9 @@ private:
         }
 
         k1 = k2 = k3 = k4 = p1 = p2 = 0;
-        ifs >> k1 >> k2 >> k3 >> k4;
+        //ifs >> k1 >> k2 >> k3 >> k4;
+
+        ifs >> k1 >> k2 >> p1 >> p2;
 
         std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 k3 k4}): ")
                   << fx << " " << fy << " " << cx << " " << cy << " "
