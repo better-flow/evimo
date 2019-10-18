@@ -333,16 +333,16 @@ private:
         ifs >> fx >> fy >> cx >> cy;
         if (!ifs.good()) {
             std::cout << _red("Camera calibration read error:") << " Expected a file with a single line, containing "
-                      << "fx fy cx cy {k1 k2 p1 p2} ({} are optional)" << std::endl;
+                      << "fx fy cx cy {k1 k2 k3 k4} ({} are optional)" << std::endl;
             return false;
         }
 
         k1 = k2 = k3 = k4 = p1 = p2 = 0;
-        ifs >> k1 >> k2 >> p1 >> p2;
+        ifs >> k1 >> k2 >> k3 >> k4;
 
-        std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 p1 p2}): ")
+        std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 k3 k4}): ")
                   << fx << " " << fy << " " << cx << " " << cy << " "
-                  << k1 << " " << k2 << " " << p1 << " " << p2 << std::endl;
+                  << k1 << " " << k2 << " " << k3 << " " << k4 << std::endl;
         ifs.close();
         Dataset::update_cam_calib();
         return true;

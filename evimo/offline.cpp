@@ -342,6 +342,9 @@ int main (int argc, char** argv) {
     // Force the first timestamp of the event cloud to be 0
     // trajectories
     auto time_offset = first_event_message_ts + ros::Duration(Dataset::get_time_offset_event_to_host());
+    if (n_events == 0)
+        time_offset = cam_tj[0].ts;
+
     cam_tj.subtract_time(time_offset);
     for (auto &obj_tj : obj_tjs)
         obj_tj.second.subtract_time(time_offset);

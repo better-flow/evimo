@@ -277,7 +277,7 @@ public:
     }
 
 public:
-    template<class T> static void project_point(T p, int &u, int &v) {
+    template<class T> static void project_point_(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
@@ -297,6 +297,33 @@ public:
         v = Dataset::fy * y__ + Dataset::cy;
     }
 
+    template<class T> static void project_point(T p, int &u, int &v) {
+        u = -1; v = -1;
+        if (p.z < 0.00001)
+            return;
+
+        float x_ = p.x / p.z;
+        float y_ = p.y / p.z;
+        float r = std::sqrt(x_ * x_ + y_ * y_);
+        float th = std::atan(r);
+
+        float th2 = th * th;
+        float th4 = th2 * th2;
+        float th6 = th2 * th2 * th2;
+        float th8 = th4 * th4;
+        float th_d = th * (1 + Dataset::k1 * th2 + Dataset::k2 * th4 + Dataset::k3 * th6 + Dataset::k4 * th8);
+
+        float x__ = x_;
+        float y__ = y_;
+        if (r > 0.001) {
+            x__ = (th_d / r) * x_;
+            y__ = (th_d / r) * y_;
+        }
+
+        u = Dataset::fx * x__ + Dataset::cx;
+        v = Dataset::fy * y__ + Dataset::cy;
+    }
+
     template<class T> static void unproject_point(T &p, float u, float v) {
         // Ignores the spherical distortion!
         p.x = (u - Dataset::cx) / Dataset::fx;
@@ -305,6 +332,15 @@ public:
     }
 
 protected:
+
+    cv::Mat undistort(cv::Mat &img) {
+        cv::Mat ret;
+        cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
+        cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
+        cv::fisheye::undistortImage(img, ret, K, D, 0.87 * K);
+        return ret;
+    }
+
     template<class T> void project_cloud(T cl, int oid) {
         if (cl->size() == 0)
             return;
