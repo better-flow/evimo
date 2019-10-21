@@ -93,11 +93,11 @@ public:
                 this->set_slider(this->frame_id - 1);
             }
 
-            /*
+
             if (code == 99) { // 'c'
                 Dataset::modified = true;
             }
-            */
+
 
             if (!Dataset::modified) continue;
             Dataset::modified = false;
@@ -116,12 +116,13 @@ public:
 
             cv::imshow("Frames", img);
 
+            
             if (!bp) {
-                //bp = std::make_shared<Backprojector>(f.get_timestamp(), 5, 10);
-                //bp->initViewer();
+                bp = std::make_shared<Backprojector>(f.get_timestamp(), 5, 10);
+                bp->initViewer();
             }
 
-/*
+
             if (code == 99) { // 'c'
                 enable_3D = !enable_3D;
                 if (enable_3D) {
@@ -129,11 +130,9 @@ public:
                     bp->initViewer();
                 }
             }
-            */
-
-            //bp.visualize_parallel();
 
             if (bp) bp->generate();
+            
         }
 
         cv::destroyAllWindows();
@@ -161,9 +160,11 @@ int main (int argc, char** argv) {
     float FPS = 40.0;
     bool generate = false;
     int show = -1;
+    bool save_3d = false;
     if (!nh.getParam(node_name + "/fps", FPS)) FPS = 40;
     if (!nh.getParam(node_name + "/generate", generate)) generate = false;
     if (!nh.getParam(node_name + "/show", show)) show = -1;
+    if (!nh.getParam(node_name + "/save_3d", save_3d)) save_3d = false;
 
     bool no_background = true;
     if (!nh.getParam(node_name + "/no_bg", no_background)) no_background = true;
@@ -175,7 +176,8 @@ int main (int argc, char** argv) {
     // -- camera topics
     std::string cam_pose_topic = "", event_topic = "", img_topic = "";
     std::map<int, std::string> obj_pose_topics;
-    if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
+    //if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
+    if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/DVS346";
     if (!nh.getParam(node_name + "/event_topic", event_topic)) event_topic = "/dvs/events";
     if (!nh.getParam(node_name + "/img_topic", img_topic)) img_topic = "/sc/rgb/image";
 
@@ -449,10 +451,15 @@ int main (int argc, char** argv) {
     if (show == -2)
         FrameSequenceVisualizer fsv(frames);
 
+    if (save_3d) {
+        Backprojector bp(-1, -1, -1);
+        bp.save_clouds(dataset_folder);
+    }
+
     // Exit if we are running in the visualization mode
     if (!generate) {
         return 0;
-    }
+     }
 
     // Projecting the clouds and generating masks / depth maps
     std::cout << std::endl << _yellow("Generating ground truth") << std::endl;

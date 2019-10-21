@@ -1,9 +1,14 @@
 #include <thread>
 
+#include <pcl/io/pcd_io.h>
 #include <pcl/common/common_headers.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/registration/transformation_estimation_svd.h>
+#include <unordered_map>
 
 #include <dataset.h>
 #include <dataset_frame.h>
@@ -21,6 +26,9 @@ protected:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr event_pc, event_pc_roi, mask_pc;
     pcl::KdTreeFLANN<pcl::PointXYZRGB> epc_kdtree;
 
+    std::unordered_map<int, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> mask_pointclouds;
+    std::unordered_map<int, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> roi_pointclouds;
+
 public:
     Backprojector(double timestamp, double window_size, double framerate)
         : timestamp(timestamp), window_size(window_size)
@@ -28,11 +36,29 @@ public:
         , event_pc_roi(new pcl::PointCloud<pcl::PointXYZRGB>)
         , mask_pc(new pcl::PointCloud<pcl::PointXYZRGB>) {
 
+        if (this->timestamp < 0 || this->window_size < 0) {
+            this->timestamp = (Dataset::event_array[Dataset::event_array.size() - 1].get_ts_sec() + Dataset::event_array[0].get_ts_sec()) / 2.0;
+            this->window_size = (Dataset::event_array[Dataset::event_array.size() - 1].get_ts_sec() - Dataset::event_array[0].get_ts_sec());
+        }
+
+        std::vector<double> ts_arr;
+        if (framerate > 0) {
+            ts_arr.reserve(1.2 * this->window_size / framerate);
+            for (double ts = std::max(0.0, timestamp - window_size / 2.0);
+                ts < timestamp + window_size / 2.0; ts += 1.0 / framerate) {
+                ts_arr.push_back(ts);
+            }
+        } else {
+            ts_arr.reserve(Dataset::cam_tj.size());
+            for (uint64_t i = 0; i < Dataset::cam_tj.size(); ++i) {
+                ts_arr.push_back(Dataset::cam_tj[i].ts.toSec());
+            }
+        }
+
         uint32_t i = 0;
         uint64_t last_cam_pos_id = 0;
         std::pair<uint64_t, uint64_t> last_event_slice_ids(0, 0);
-        for (double ts = std::max(0.0, timestamp - window_size / 2.0);
-            ts < timestamp + window_size / 2.0; ts += 1.0 / framerate) {
+        for (auto &ts : ts_arr) {
             frames.emplace_back(last_cam_pos_id, ts, i);
             auto &frame = frames.back();
             last_cam_pos_id = frame.cam_pose_id;
@@ -48,9 +74,51 @@ public:
         }
     }
 
+    pcl::PCLPointCloud2 with_normals(pcl::PointCloud<pcl::PointXYZRGB> &in_, float k=0, float r=0.025) {
+        pcl::PCLPointCloud2 output_cloud;
+        pcl::toPCLPointCloud2 (in_, output_cloud);
+
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr in (new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::fromPCLPointCloud2 (output_cloud, *in);
+
+        pcl::PointCloud<pcl::Normal> normals;
+        pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+        ne.setInputCloud(in);
+        ne.setSearchMethod(pcl::search::KdTree<pcl::PointXYZRGB>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGB>));
+        ne.setKSearch(k);
+        ne.setRadiusSearch(r);
+        ne.compute(normals);
+
+        pcl::PCLPointCloud2 output_cloud2;
+        pcl::PCLPointCloud2 output_normals;
+        pcl::toPCLPointCloud2 (normals, output_normals);
+        pcl::concatenateFields (output_cloud, output_normals, output_cloud2);
+        return output_cloud2;
+    }
+
+    void save_clouds(std::string dir) {
+        std::cout << "Saving clouds in " << dir << std::endl;
+
+        std::cout << "Generating cloud" << std::endl;
+        this->refresh_ec();
+
+        std::cout << "Generating gt" << std::endl;
+        this->generate();
+
+        pcl::PLYWriter w;
+        w.writeBinary(dir + "/raw_cloud.ply", this->with_normals(*this->event_pc));
+
+        for (auto &oid : this->mask_pointclouds) {
+            w.writeBinary(dir + "/mask_cloud_" + std::to_string(oid.first) + ".ply", this->with_normals(*oid.second));
+        }
+        for (auto &oid : this->roi_pointclouds) {
+            w.writeBinary(dir + "/roi_cloud_" + std::to_string(oid.first) + ".ply", this->with_normals(*oid.second));
+        }
+    }
+
     // Conver timestamp to z coordinate
     double ts_to_z(double ts) {
-        return (ts - (this->timestamp - this->window_size / 2.0)) * 3.0;
+        return (ts - (this->timestamp - this->window_size / 2.0)) * 2.0;
     }
 
     void refresh_ec() {
@@ -68,6 +136,12 @@ public:
             this->event_pc->push_back(p);
         }
 
+        pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> outrem;
+        outrem.setInputCloud(this->event_pc);
+        outrem.setRadiusSearch(5.0 / 200.0);
+        outrem.setMinNeighborsInRadius(10);
+        outrem.filter (*this->event_pc);
+
         this->epc_kdtree.setInputCloud(this->event_pc);
 
         if (this->viewer) {
@@ -80,13 +154,26 @@ public:
 
     void refresh_ec_roi() {
         this->event_pc_roi->clear();
+        this->roi_pointclouds.clear();
+
         std::vector<int> pointIdxRadiusSearch;
         std::vector<float> pointRadiusSquaredDistance;
 
-        for (auto &p : *this->mask_pc) {
-            this->epc_kdtree.radiusSearch(p, 6.0 / 200.0, pointIdxRadiusSearch, pointRadiusSquaredDistance);
-            for (auto &idx : pointIdxRadiusSearch) {
-                this->event_pc_roi->push_back(this->event_pc->points[idx]);
+        for (auto &oid : this->mask_pointclouds) {
+            std::set<int> idxes;
+            this->roi_pointclouds[oid.first] = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+            for (auto &p : *oid.second) {
+                this->epc_kdtree.radiusSearch(p, 3.0 / 200.0, pointIdxRadiusSearch, pointRadiusSquaredDistance);
+                for (auto &idx : pointIdxRadiusSearch) {
+                    if (idxes.find(idx) != idxes.end())
+                        continue;
+
+                    idxes.insert(idx);
+                    auto p_ = this->event_pc->points[idx];
+                    p_.rgb = p.rgb;
+                    this->roi_pointclouds[oid.first]->push_back(p_);
+                    this->event_pc_roi->push_back(p_);
+                }
             }
         }
 
@@ -217,6 +304,7 @@ public:
 
     void generate() {
         this->mask_pc->clear();
+        this->mask_pointclouds.clear();
 
         // Mask trace cloud
         for (auto &f : this->frames) f.generate_async();
@@ -224,7 +312,11 @@ public:
 
         for (auto &f : this->frames) {
             auto cl = this->mask_to_cloud(f.mask, this->ts_to_z(f.get_timestamp()));
-            *this->mask_pc += *cl;
+            for (auto &oid : cl) {
+                if (!this->mask_pointclouds[oid.first]) this->mask_pointclouds[oid.first] = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+                *this->mask_pointclouds[oid.first] += *oid.second;
+                *this->mask_pc += *oid.second;
+            }
         }
 
         refresh_ec_roi();
@@ -234,12 +326,14 @@ public:
             viewer->addPointCloud<pcl::PointXYZRGB>(this->mask_pc, m_rgb, "mask cloud");
             viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "mask cloud");
         }
-
     }
 
-    std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>> mask_to_cloud(cv::Mat mask, double z) {
-        auto cl = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+    std::unordered_map<int, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>>
+    mask_to_cloud(cv::Mat mask, double z) {
+        std::unordered_map<int, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> ret;
+
         auto kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+        std::vector<std::vector<uint8_t>> colors {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}};
 
         cv::Mat boundary, dil;
         cv::dilate(mask, dil, kernel);
@@ -251,18 +345,21 @@ public:
         for (uint32_t i = 0; i < rows; ++i) {
             for (uint32_t j = 0; j < cols; ++j) {
                 if (boundary.at<uint8_t>(i, j) == 0) continue;
+                auto oid = boundary.at<uint8_t>(i, j);
 
                 pcl::PointXYZRGB p;
                 p.x = float(i) / 200; p.y = float(j) / 200; p.z = z;
-                uint32_t rgb = (static_cast<uint32_t>(255) << 16 |
-                                static_cast<uint32_t>(0) << 8    |
-                                static_cast<uint32_t>(0));
+                auto clr = colors[oid % colors.size()];
+                uint32_t rgb = (static_cast<uint32_t>(clr[0]) << 16 |
+                                static_cast<uint32_t>(clr[1]) << 8    |
+                                static_cast<uint32_t>(clr[2]));
                 p.rgb = *reinterpret_cast<float*>(&rgb);
-                cl->push_back(p);
+                if (!ret[oid]) ret[oid] = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+                ret[oid]->push_back(p);
             }
         }
 
-        return cl;
+        return ret;
     }
 
     // Visualization
