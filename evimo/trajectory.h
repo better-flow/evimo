@@ -22,10 +22,10 @@ protected:
         this->current_size = p.second - p.first + 1;
 
         if (p.first > p.second)
-            throw std::string("Attempt to create a Slice with first index bigger than the second! (" +
+            throw std::runtime_error("Attempt to create a Slice with first index bigger than the second! (" +
                               std::to_string(p.first) + " > " + std::to_string(p.second) + ")");
         if (p.second >= this->data->size())
-            throw std::string("the second index in Slice is bigger than input vector size! (" +
+            throw std::runtime_error("the second index in Slice is bigger than input vector size! (" +
                               std::to_string(p.second) + " >= " + std::to_string(this->data->size()) + ")");
     }
 
@@ -57,7 +57,7 @@ public:
     TimeSlice(T &vec)
         : Slice<T>(vec) {
         if (this->data->size() == 0)
-            throw std::string("TimeSlice: cannot construct on an empty container!");
+            throw std::runtime_error("TimeSlice: cannot construct on an empty container!");
 
         this->time_bounds.first  = this->get_ts(0);
         this->time_bounds.second = this->get_ts(this->data->size() - 1);
@@ -78,10 +78,12 @@ public:
     size_t find_nearest(double ts, size_t hint = 0) const {
         // Assuming data is sorted according to timestamps, in ascending order
         if (this->data->size() == 0)
-            throw std::string("find_nearest: data container is empty!");
+            throw std::runtime_error("find_nearest: data container is empty!");
 
-        if (hint >= this->data->size())
-            throw std::string("find_nearest: hint specified is out of bounds!");
+        if (hint >= this->data->size()) {
+            hint = this->data->size() - 1;
+            std::cerr << "find_nearest: hint specified is out of bounds!" << std::endl;
+        }
 
         size_t best_idx = hint;
         auto initial_ts = this->get_ts(best_idx);

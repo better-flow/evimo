@@ -6,6 +6,7 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/features/normal_3d.h>
+#include <pcl/features/normal_3d_omp.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/registration/transformation_estimation_svd.h>
 #include <unordered_map>
@@ -82,7 +83,7 @@ public:
         pcl::fromPCLPointCloud2 (output_cloud, *in);
 
         pcl::PointCloud<pcl::Normal> normals;
-        pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+        pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne;
         ne.setInputCloud(in);
         ne.setSearchMethod(pcl::search::KdTree<pcl::PointXYZRGB>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGB>));
         ne.setKSearch(k);
@@ -106,12 +107,15 @@ public:
         this->generate();
 
         pcl::PLYWriter w;
+        std::cout << "Estimating normals for raw cloud" << std::endl;
         w.writeBinary(dir + "/raw_cloud.ply", this->with_normals(*this->event_pc));
 
         for (auto &oid : this->mask_pointclouds) {
+            std::cout << "Estimating normals for mask cloud " << oid.first << std::endl;
             w.writeBinary(dir + "/mask_cloud_" + std::to_string(oid.first) + ".ply", this->with_normals(*oid.second));
         }
         for (auto &oid : this->roi_pointclouds) {
+            std::cout << "Estimating normals for roi cloud " << oid.first << std::endl;
             w.writeBinary(dir + "/roi_cloud_" + std::to_string(oid.first) + ".ply", this->with_normals(*oid.second));
         }
     }
