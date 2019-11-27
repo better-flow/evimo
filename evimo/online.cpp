@@ -175,10 +175,10 @@ int main (int argc, char** argv) {
     std::map<int, std::string> obj_pose_topics;
     if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
     if (!nh.getParam("event_topic", event_topic)) event_topic = "/dvs/events";
-    //if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
-    if (!nh.getParam("img_topic", img_topic)) img_topic = "/prophesee/hvga/graylevel_image";
+    if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
+    //if (!nh.getParam("img_topic", img_topic)) img_topic = "/prophesee/hvga/graylevel_image";
 
-    // Read datasset configuration files
+    // Read dataset configuration files
     if (!Dataset::init(dataset_folder))
         return -1;
 
@@ -202,8 +202,10 @@ int main (int argc, char** argv) {
         Dataset::clouds[3] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cup", 3);
     }
 
-    Dataset::res_x = 100;
-    Dataset::res_y = 100;
+    Dataset::res_x = 480;
+    Dataset::res_y = 640;
+//Dataset::cx = 240; Dataset::cy = 320;
+
     ros::Subscriber cam_sub = nh.subscribe(cam_pose_topic, 0, camera_pos_cb);
 
     RGBCameraVisualizer(nh, FPS, img_topic);

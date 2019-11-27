@@ -115,6 +115,7 @@ public:
 
     void add_img(cv::Mat &img_) {
         this->img = img_;
+        this->img = this->undistort(img_);
         this->depth = cv::Mat(this->img.rows, this->img.cols, CV_32F, cv::Scalar(0));
         this->mask  = cv::Mat(this->img.rows, this->img.cols, CV_8U, cv::Scalar(0));
     }
@@ -277,7 +278,7 @@ public:
     }
 
 public:
-    template<class T> static void project_point(T p, int &u, int &v) {
+    template<class T> static void project_point_(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
@@ -295,9 +296,13 @@ public:
 
         u = Dataset::fx * x__ + Dataset::cx;
         v = Dataset::fy * y__ + Dataset::cy;
+
+        // Fixme
+        u = Dataset::fx * x_ + Dataset::cx;
+        v = Dataset::fy * y_ + Dataset::cy;
     }
 
-    template<class T> static void project_point_(T p, int &u, int &v) {
+    template<class T> static void project_point(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
@@ -320,8 +325,12 @@ public:
             y__ = (th_d / r) * y_;
         }
 
-        u = Dataset::fx * x__ + Dataset::cx;
-        v = Dataset::fy * y__ + Dataset::cy;
+        v = Dataset::fx * x__ + (640 - Dataset::cx);
+        u = Dataset::fy * y__ + (480 - Dataset::cy);
+
+
+        v = Dataset::fx * x_ + Dataset::cx;
+        u = Dataset::fy * y_ + Dataset::cy;
     }
 
     template<class T> static void unproject_point(T &p, float u, float v) {
@@ -337,7 +346,8 @@ protected:
         cv::Mat ret;
         cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
         cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
-        cv::fisheye::undistortImage(img, ret, K, D, 0.87 * K);
+        cv::fisheye::undistortImage(img, ret, K, D, 1.0 * K);
+        //cv::undistort(img, ret, K, D, 1.0 * K);
         return ret;
     }
 
@@ -346,7 +356,7 @@ protected:
             return;
 
         for (auto &p: *cl) {
-            p.z = -p.z;
+            //p.z = -p.z;
 
             float rng = p.z;
             if (rng < 0.001)

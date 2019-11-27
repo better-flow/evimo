@@ -85,7 +85,7 @@ public:
         std::cout << "Read " << obj_cloud->size() << " points\n";
 
         obj_cloud_camera_frame->header.frame_id = "/camera_center";
-        obj_cloud->header.frame_id = "/vicon";
+        obj_cloud->header.frame_id = "/map";
 
         std::cout << "=====================================" << std::endl << std::endl;
     }
@@ -185,7 +185,7 @@ public:
 
         this->obj_cloud_camera_frame->header.frame_id = "/camera_center";
         this->obj_cloud_transformed->header.frame_id = "/camera_center";
-        this->obj_cloud->header.frame_id = "/vicon";
+        this->obj_cloud->header.frame_id = "/map";
         //this->LAST_SVD = Eigen::MatrixXf::Identity(4, 4);
 
         std::ifstream cfg(this->config_fname, std::ifstream::in);
@@ -312,7 +312,7 @@ public:
     // Helpers
     visualization_msgs::Marker get_generic_marker(int id_ = 0) {
         visualization_msgs::Marker marker;
-        marker.header.frame_id = "/vicon";
+        marker.header.frame_id = "/map";
         marker.header.stamp = ros::Time();
         marker.ns = "vicon_markers";
         marker.id = 0;
