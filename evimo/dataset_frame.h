@@ -286,7 +286,7 @@ public:
     }
 
 public:
-    template<class T> static void project_point_(T p, int &u, int &v) {
+    template<class T> static void project_point(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
@@ -306,11 +306,11 @@ public:
         u = Dataset::fy * y__ + Dataset::cy;
 
         // Fixme
-        v = Dataset::fx * x_ + Dataset::cx;
-        u = Dataset::fy * y_ + Dataset::cy;
+        //v = Dataset::fx * x_ + Dataset::cx;
+        //u = Dataset::fy * y_ + Dataset::cy;
     }
 
-    template<class T> static void project_point(T p, int &u, int &v) {
+    template<class T> static void project_point_(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;

@@ -183,10 +183,9 @@ int main (int argc, char** argv) {
     std::string cam_pose_topic = "", event_topic = "", img_topic = "";
     std::map<int, std::string> obj_pose_topics;
     if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
-    //if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/laptop";
     if (!nh.getParam("event_topic", event_topic)) event_topic = "/prophesee/hvga/cd_events_buffer";
-    if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
-    //if (!nh.getParam("img_topic", img_topic)) img_topic = "/prophesee/hvga/graylevel_image";
+    //if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
+    if (!nh.getParam("img_topic", img_topic)) img_topic = "/prophesee/hvga/graylevel_image";
     //if (!nh.getParam("img_topic", img_topic)) img_topic = "/usb_cam/image_raw";
 
     // Read dataset configuration files
@@ -219,11 +218,11 @@ int main (int argc, char** argv) {
     //Dataset::clouds[4] = std::make_shared<ViObject>(nh, path_to_self + "/objects/Wand", 4, "Wand", true);
     Dataset::clouds[4] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cb", 4, "test_cb", true);
 
-    //Dataset::res_x = 360;
-    //Dataset::res_y = 480;
+    Dataset::res_x = 360;
+    Dataset::res_y = 480;
 
-    Dataset::res_x = 480;
-    Dataset::res_y = 640;
+    //Dataset::res_x = 480;
+    //Dataset::res_y = 640;
 
 
     ros::Subscriber cam_sub = nh.subscribe(cam_pose_topic, 0, camera_pos_cb);

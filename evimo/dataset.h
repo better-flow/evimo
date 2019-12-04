@@ -338,9 +338,8 @@ private:
         }
 
         k1 = k2 = k3 = k4 = p1 = p2 = 0;
-        ifs >> k1 >> k2 >> k3 >> k4;
-
-        //ifs >> k1 >> k2 >> p1 >> p2;
+        //ifs >> k1 >> k2 >> k3 >> k4;
+        ifs >> k1 >> k2 >> p1 >> p2;
 
         std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 k3 k4}): ")
                   << fx << " " << fy << " " << cx << " " << cy << " "
