@@ -228,6 +228,9 @@ cv::Vec3b EventFile::id2rgb(unsigned int id) {
     cv::Vec3b ret;
     int COLORS[6][3] = {{255, 255, 0}, {255, 0, 255}, {0, 255, 255},
                         {255, 0, 0},   {0, 255, 0},   {0, 0, 255}};
+    if (id == 255)
+        return {255,0,255};
+
     int len = sizeof(COLORS) / sizeof(*COLORS);
     ret[0] = COLORS[id % len][0];
     ret[1] = COLORS[id % len][1];

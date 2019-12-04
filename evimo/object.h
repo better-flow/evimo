@@ -137,6 +137,8 @@ protected:
     std::string folder, name, cloud_fname, config_fname;
     int id;
 
+    bool no_mesh; // This object has no pointcloud
+
     ros::Publisher obj_pub, vis_pub;
     ros::Subscriber obj_sub;
 
@@ -145,26 +147,32 @@ protected:
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud_camera_frame;
     pcl::PointCloud<pcl::PointXYZRGB> *obj_markerpos;
 
-    //Eigen::Matrix4f LAST_SVD;
     vicon::Subject last_pos;
     long int poses_received;
 
 public:
-    ViObject (ros::NodeHandle n_, std::string folder_, int id_) :
-        n_(n_), it_(n_), folder(folder_), id(id_),
+    ViObject (ros::NodeHandle n_, std::string folder_, int id_, std::string name_="", bool no_mesh_=false) :
+        n_(n_), it_(n_), folder(folder_), name(name_), id(id_), no_mesh(no_mesh_),
         obj_cloud(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_transformed(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_camera_frame(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_markerpos(new pcl::PointCloud<pcl::PointXYZRGB>),
         poses_received(0) {
 
-        this->name = "Object_" + std::to_string(this->id);
+        if (this->name == "")
+            this->name = "Object_" + std::to_string(this->id);
         std::cout << "Initializing " << this->name << std::endl;
 
-        this->obj_pub = n_.advertise<pcl::PointCloud<pcl::PointXYZRGB>> ("/ev_imo/" + this->name, 100);
         this->vis_pub = n_.advertise<visualization_msgs::MarkerArray>("/ev_imo/markers", 0);
         this->obj_sub = n_.subscribe("/vicon/" + this->name, 0, &ViObject::vicon_pos_cb, this);
 
+        if (no_mesh) {
+            std::cout << "\tconfigured as 'no mesh'" << std::endl;
+            std::cout << "=====================================" << std::endl << std::endl;
+            return;
+        }
+
+        this->obj_pub = n_.advertise<pcl::PointCloud<pcl::PointXYZRGB>> ("/ev_imo/" + this->name, 100);
         this->cloud_fname  = this->folder + "/model.ply";
         this->config_fname = this->folder + "/config.txt";
 
@@ -186,7 +194,6 @@ public:
         this->obj_cloud_camera_frame->header.frame_id = "/camera_center";
         this->obj_cloud_transformed->header.frame_id = "/camera_center";
         this->obj_cloud->header.frame_id = "/map";
-        //this->LAST_SVD = Eigen::MatrixXf::Identity(4, 4);
 
         std::ifstream cfg(this->config_fname, std::ifstream::in);
         int marker_id = -1;
@@ -240,6 +247,9 @@ public:
         if (subject.occluded)
             std::cout << "Computing cloud_to_vicon_tf on occluded vicon track!" << std::endl;
 
+        if (this->no_mesh)
+            return;
+
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr target(new pcl::PointCloud<pcl::PointXYZRGB>);
         auto &markers = subject.markers;
         for (auto &marker : markers) {
@@ -275,6 +285,9 @@ public:
         if (this->last_pos.occluded)
             return false;
 
+        if (this->no_mesh)
+            return true;
+
         auto to_cs_inv = to_camcenter.inverse();
         auto full_tf = to_cs_inv * subject2tf(last_pos);
 
@@ -282,15 +295,31 @@ public:
         obj_pub.publish(this->obj_cloud_transformed->makeShared());
 
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud_camera_frame), full_tf);
-
         return true;
     }
 
-    // A separate method, for offline prcessing
+    // A separate method, for offline processing
     auto transform_to_camframe(const tf::Transform &cam_tf, const tf::Transform &obj_tf) {
         auto full_tf = this->get_tf_in_camera_frame(cam_tf, obj_tf);
         auto out_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(out_cloud), full_tf);
+        return out_cloud;
+    }
+
+    auto marker_cl_in_camframe(const tf::Transform &cam_tf) {
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr target(new pcl::PointCloud<pcl::PointXYZRGB>);
+        auto &markers = this->last_pos.markers;
+        for (auto &marker : markers) {
+            pcl::PointXYZRGB p;
+            p.x = marker.position.x;
+            p.y = marker.position.y;
+            p.z = marker.position.z;
+            target->push_back(p);
+        }
+
+        auto full_tf = cam_tf.inverse();
+        auto out_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+        pcl_ros::transformPointCloud(*(target), *(out_cloud), full_tf);
         return out_cloud;
     }
 
@@ -347,6 +376,10 @@ public:
 
     vicon::Subject get_last_pos() {
         return this->last_pos;
+    }
+
+    bool has_no_mesh() {
+        return this->no_mesh;
     }
 
     static vicon::Subject tf2subject(tf::Transform &transform) {

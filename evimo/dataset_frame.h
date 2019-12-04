@@ -115,7 +115,7 @@ public:
 
     void add_img(cv::Mat &img_) {
         this->img = img_;
-        this->img = this->undistort(img_);
+        //this->img = this->undistort(img_);
         this->depth = cv::Mat(this->img.rows, this->img.cols, CV_32F, cv::Scalar(0));
         this->mask  = cv::Mat(this->img.rows, this->img.cols, CV_8U, cv::Scalar(0));
     }
@@ -198,7 +198,9 @@ public:
             this->project_cloud(cl, 0);
         }
 
+        // Generate mask and depth
         for (auto &obj : Dataset::clouds) {
+            if (obj.second->has_no_mesh()) continue;
             auto id = obj.first;
             Dataset::obj_tjs.at(id).set_filtering_window_size(Dataset::pose_filtering_window);
             this->obj_pose_ids[id] = TimeSlice(Dataset::obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
@@ -212,6 +214,12 @@ public:
             auto obj_pose = this->_get_raw_object_pose(id);
             auto cl = obj.second->transform_to_camframe(cam_tf, obj_pose.pq);
             this->project_cloud(cl, id);
+        }
+
+        // Add marker labels
+        for (auto &obj : Dataset::clouds) {
+            auto markerpos = obj.second->marker_cl_in_camframe(cam_tf);
+            this->add_marker_labels(markerpos);
         }
     }
 
@@ -294,18 +302,32 @@ public:
         float x__ = x_ * dist + 2.0 * Dataset::p1 * x_ * y_ + Dataset::p2 * (r2 + 2.0 * x_ * x_);
         float y__ = y_ * dist + 2.0 * Dataset::p2 * x_ * y_ + Dataset::p1 * (r2 + 2.0 * y_ * y_);
 
-        u = Dataset::fx * x__ + Dataset::cx;
-        v = Dataset::fy * y__ + Dataset::cy;
+        v = Dataset::fx * x__ + Dataset::cx;
+        u = Dataset::fy * y__ + Dataset::cy;
 
         // Fixme
-        u = Dataset::fx * x_ + Dataset::cx;
-        v = Dataset::fy * y_ + Dataset::cy;
+        v = Dataset::fx * x_ + Dataset::cx;
+        u = Dataset::fy * y_ + Dataset::cy;
     }
 
     template<class T> static void project_point(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
+
+        if (false) {
+        cv::Mat mat_p = (cv::Mat3d(1, 1) << cv::Vec3d(p.x, p.y, p.z));
+        cv::Mat zero_vec = (cv::Mat1d(3, 1) << 0.0, 0.0, 0.0);
+        cv::Mat ret;
+        cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
+        cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
+        cv::fisheye::projectPoints(mat_p, ret, zero_vec, zero_vec, K, D, 0, cv::noArray());
+        //std::cout << ret.at<cv::Vec3d>(0,0)[0] << " " << ret.at<cv::Vec3d>(0,0)[1] << "\n";
+        v = ret.at<cv::Vec3d>(0,0)[0];
+        u = ret.at<cv::Vec3d>(0,0)[1];
+        //std::cout << ret.at(0) << "\n";
+        return;
+        }
 
         float x_ = p.x / p.z;
         float y_ = p.y / p.z;
@@ -325,18 +347,17 @@ public:
             y__ = (th_d / r) * y_;
         }
 
-        v = Dataset::fx * x__ + (640 - Dataset::cx);
-        u = Dataset::fy * y__ + (480 - Dataset::cy);
+        v = Dataset::fx * x__ + Dataset::cx;
+        u = Dataset::fy * y__ + Dataset::cy;
 
-
-        v = Dataset::fx * x_ + Dataset::cx;
-        u = Dataset::fy * y_ + Dataset::cy;
+        //v = Dataset::fx * x_ + Dataset::cx;
+        //u = Dataset::fy * y_ + Dataset::cy;
     }
 
     template<class T> static void unproject_point(T &p, float u, float v) {
         // Ignores the spherical distortion!
-        p.x = (u - Dataset::cx) / Dataset::fx;
-        p.y = (v - Dataset::cy) / Dataset::fy;
+        p.x = (v - Dataset::cx) / Dataset::fx;
+        p.y = (u - Dataset::cy) / Dataset::fy;
         p.z = 1.0;
     }
 
@@ -351,13 +372,49 @@ protected:
         return ret;
     }
 
+
+    template<class T> void add_marker_labels(T cl) {
+        if (cl->size() == 0)
+            return;
+
+        //std::cout << "\n================\n";
+        for (auto &p: *cl) {
+            //std::cout << "\t" << p.x << "\t" << p.y << "\t" << p.z << "\t";
+
+            float rng = p.z;
+            if (rng < 0.001) {
+                //std::cout << "???\n";
+                continue;
+            }
+
+            auto cols = this->depth.cols;
+            auto rows = this->depth.rows;
+
+            int u = -1, v = -1;
+            this->project_point(p, u, v);
+
+            if (u < 0 || v < 0 || v >= cols || u >= rows) {
+                //std::cout << "???\n";
+                continue;
+            }
+
+            //std::cout << "->\t" << u << "\t" << v << "\n";
+
+            //this->depth.at<float>(rows - u - 1, cols - v - 1) = 255;
+            //if (rng - 0.01 < this->depth.at<float>(rows - u - 1, cols - v - 1))
+                //this->mask.at<uint8_t>(rows - u - 1, cols - v - 1) = 255;
+
+                this->mask.at<uint8_t>(u, v) = 255;
+            //this->img.at<cv::Vec3b>(rows - u - 1, cols - v - 1)[1] = 255;
+        }
+    }
+
+
     template<class T> void project_cloud(T cl, int oid) {
         if (cl->size() == 0)
             return;
 
         for (auto &p: *cl) {
-            //p.z = -p.z;
-
             float rng = p.z;
             if (rng < 0.001)
                 continue;
@@ -385,8 +442,10 @@ protected:
                 for (int jj = v_lo; jj <= v_hi; ++jj) {
                     float base_rng = this->depth.at<float>(rows - ii - 1, cols - jj - 1);
                     if (base_rng > rng || base_rng < 0.001) {
-                        this->depth.at<float>(rows - ii - 1, cols - jj - 1) = rng;
-                        this->mask.at<uint8_t>(rows - ii - 1, cols - jj - 1) = oid;
+                        //this->depth.at<float>(rows - ii - 1, cols - jj - 1) = rng;
+                        //this->mask.at<uint8_t>(rows - ii - 1, cols - jj - 1) = oid;
+                        this->depth.at<float>(ii, jj) = rng;
+                        this->mask.at<uint8_t>(ii, jj) = oid;
                     }
                 }
             }

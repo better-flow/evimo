@@ -52,7 +52,10 @@ cv::Mat DatasetFrame::get_visualization_mask(bool overlay_events) {
             if (rgb_img.rows == mask_img.rows && rgb_img.cols == mask_img.cols) {
                 ret.at<cv::Vec3b>(i, j) = rgb_img.at<cv::Vec3b>(i, j);
                 if (id > 0) {
-                    ret.at<cv::Vec3b>(i, j) = rgb_img.at<cv::Vec3b>(i, j) * 0.5 + color * 0.5;
+                    ret.at<cv::Vec3b>(i, j) = rgb_img.at<cv::Vec3b>(i, j) * 0.8 + color * 0.2;
+                }
+                if (id == 255) {
+                    ret.at<cv::Vec3b>(i, j) = color;
                 }
             } else {
                 ret.at<cv::Vec3b>(i, j) = color;

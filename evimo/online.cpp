@@ -47,6 +47,10 @@
 #include <dataset_frame.h>
 
 
+
+image_transport::Publisher res_img_pub;
+
+
 class RGBCameraVisualizer {
 protected:
     DatasetFrame frame;
@@ -62,6 +66,7 @@ public:
         : frame(0, 0, 0), r(FPS), topic(topic_), images_received(0) {
         this->window_name = "RGBFrames_" + std::to_string(uid);
         uid += 1;
+
 
         this->sub = nh.subscribe(this->topic, 0, &RGBCameraVisualizer::sub_cb, this);
         this->spin();
@@ -130,6 +135,10 @@ public:
 
             cv::imshow(this->window_name, img);
 
+            // Publish image
+            sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->frame.img).toImageMsg();
+            res_img_pub.publish(msg);
+
             ros::spinOnce();
             r.sleep();
         }
@@ -174,13 +183,18 @@ int main (int argc, char** argv) {
     std::string cam_pose_topic = "", event_topic = "", img_topic = "";
     std::map<int, std::string> obj_pose_topics;
     if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
-    if (!nh.getParam("event_topic", event_topic)) event_topic = "/dvs/events";
+    //if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/laptop";
+    if (!nh.getParam("event_topic", event_topic)) event_topic = "/prophesee/hvga/cd_events_buffer";
     if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
     //if (!nh.getParam("img_topic", img_topic)) img_topic = "/prophesee/hvga/graylevel_image";
+    //if (!nh.getParam("img_topic", img_topic)) img_topic = "/usb_cam/image_raw";
 
     // Read dataset configuration files
     if (!Dataset::init(dataset_folder))
         return -1;
+
+    image_transport::ImageTransport it(nh);
+    res_img_pub = it.advertise("projector/image", 1);
 
     // Load 3D models
     std::string path_to_self = ros::package::getPath("evimo");
@@ -202,9 +216,15 @@ int main (int argc, char** argv) {
         Dataset::clouds[3] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cup", 3);
     }
 
+    //Dataset::clouds[4] = std::make_shared<ViObject>(nh, path_to_self + "/objects/Wand", 4, "Wand", true);
+    Dataset::clouds[4] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cb", 4, "test_cb", true);
+
+    //Dataset::res_x = 360;
+    //Dataset::res_y = 480;
+
     Dataset::res_x = 480;
     Dataset::res_y = 640;
-//Dataset::cx = 240; Dataset::cy = 320;
+
 
     ros::Subscriber cam_sub = nh.subscribe(cam_pose_topic, 0, camera_pos_cb);
 
