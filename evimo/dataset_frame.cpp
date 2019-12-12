@@ -5,7 +5,7 @@
 cv::Mat DatasetFrame::get_visualization_event_projection(bool timg) {
     cv::Mat img;
     if (Dataset::event_array.size() == 0)
-        return img;
+        return cv::Mat(this->depth.rows, this->depth.cols, CV_8U, cv::Scalar(0));
 
     if (Dataset::event_array.size() > 0) {
         auto ev_slice = Slice<std::vector<Event>>(Dataset::event_array,

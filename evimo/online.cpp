@@ -179,17 +179,12 @@ int main (int argc, char** argv) {
     if (!nh.getParam("with_images", with_images)) with_images = true;
     else std::cout << _yellow("With 'with_images' option, the datased will be visualized at image framerate.") << std::endl;
 
-    // -- camera topics
-    std::string cam_pose_topic = "", event_topic = "", img_topic = "";
-    std::map<int, std::string> obj_pose_topics;
-    if (!nh.getParam("cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
-    if (!nh.getParam("event_topic", event_topic)) event_topic = "/prophesee/hvga/cd_events_buffer";
-    //if (!nh.getParam("img_topic", img_topic)) img_topic = "/sc/rgb/image";
-    if (!nh.getParam("img_topic", img_topic)) img_topic = "/prophesee/hvga/graylevel_image";
-    //if (!nh.getParam("img_topic", img_topic)) img_topic = "/usb_cam/image_raw";
+    // Camera name
+    std::string camera_name = "";
+    if (!nh.getParam("camera_name", camera_name)) camera_name = "main_camera";
 
     // Read dataset configuration files
-    if (!Dataset::init(dataset_folder))
+    if (!Dataset::init(nh, dataset_folder, camera_name))
         return -1;
 
     image_transport::ImageTransport it(nh);
@@ -203,6 +198,7 @@ int main (int argc, char** argv) {
         Dataset::background->transform(Dataset::bg_E);
     }
 
+    /*
     if (Dataset::enabled_objects.find(1) != Dataset::enabled_objects.end()) {
         Dataset::clouds[1] = std::make_shared<ViObject>(nh, path_to_self + "/objects/toy_car", 1);
     }
@@ -214,20 +210,11 @@ int main (int argc, char** argv) {
     if (Dataset::enabled_objects.find(3) != Dataset::enabled_objects.end()) {
         Dataset::clouds[3] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cup", 3);
     }
-
+    */
     //Dataset::clouds[4] = std::make_shared<ViObject>(nh, path_to_self + "/objects/Wand", 4, "Wand", true);
-    Dataset::clouds[4] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cb", 4, "test_cb", true);
 
-    Dataset::res_x = 360;
-    Dataset::res_y = 480;
-
-    //Dataset::res_x = 480;
-    //Dataset::res_y = 640;
-
-
-    ros::Subscriber cam_sub = nh.subscribe(cam_pose_topic, 0, camera_pos_cb);
-
-    RGBCameraVisualizer(nh, FPS, img_topic);
+    ros::Subscriber cam_sub = nh.subscribe(Dataset::cam_pos_topic, 0, camera_pos_cb);
+    RGBCameraVisualizer(nh, FPS, Dataset::image_topic);
 
     ros::shutdown();
     return 0;

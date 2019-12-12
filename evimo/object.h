@@ -134,7 +134,7 @@ protected:
     ros::NodeHandle n_;
     image_transport::ImageTransport it_;
 
-    std::string folder, name, cloud_fname, config_fname;
+    std::string folder, name, pos_topic = "";
     int id;
 
     bool no_mesh; // This object has no pointcloud
@@ -151,20 +151,79 @@ protected:
     long int poses_received;
 
 public:
-    ViObject (ros::NodeHandle n_, std::string folder_, int id_, std::string name_="", bool no_mesh_=false) :
-        n_(n_), it_(n_), folder(folder_), name(name_), id(id_), no_mesh(no_mesh_),
+    ViObject (ros::NodeHandle n_, std::string folder_) :
+        n_(n_), it_(n_), folder(folder_), name(""), id(255), no_mesh(true),
         obj_cloud(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_transformed(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_camera_frame(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_markerpos(new pcl::PointCloud<pcl::PointXYZRGB>),
         poses_received(0) {
 
-        if (this->name == "")
-            this->name = "Object_" + std::to_string(this->id);
-        std::cout << "Initializing " << this->name << std::endl;
+        auto config_fname   = this->folder + "/config.txt";
+        auto settings_fname = this->folder + "/settings.txt";
+        auto cloud_fname    = std::string("");
+
+        std::ifstream settings;
+        settings.open(settings_fname, std::ifstream::in);
+        if (!settings.is_open()) {
+            std::cout << _red("Could not open object setitngs file file at ")
+                      << settings_fname << "!" << std::endl;
+            this->id = -1;
+            return;
+        }
+
+        // Read settings file
+        const std::string& delims = ":";
+        while (settings.good()) {
+            std::string line;
+            std::getline(settings, line);
+            line = trim(line);
+            auto sep = line.find_first_of(delims);
+
+            std::string key   = line.substr(0, sep);
+            std::string value = line.substr(sep + 1);
+            key = trim(key);
+            value = trim(value);
+
+            if (key == "id")
+                this->id = std::stoi(value);
+
+            if (key == "name")
+                this->name = value;
+
+            if (key == "mesh" && value != "none" && value != "")
+                cloud_fname = this->folder + "/" + value;
+
+            if (key == "ros_pos_topic")
+                this->pos_topic = value;
+        }
+
+        if (this->pos_topic == "") {
+            std::cout << _red("No ros pose topic specified for object in ")
+                      << settings_fname << "!" << std::endl;
+            this->id = -1;
+            return;
+        }
+
+        if (this->id <= 0 || this->id >= 255) {
+            std::cout << _red("No object id (in range 1..254) specified for object in ")
+                      << settings_fname << "!" << std::endl;
+            this->id = -1;
+            return;
+        }
+
+        if (this->name == "") {
+            this->name = "noname_" + std::to_string(this->id);
+        }
+
+        if (cloud_fname != "") {
+            this->no_mesh = false;
+        }
+
+        std::cout << "Initializing " << this->name << "; id = " << this->id << std::endl;
 
         this->vis_pub = n_.advertise<visualization_msgs::MarkerArray>("/ev_imo/markers", 0);
-        this->obj_sub = n_.subscribe("/vicon/" + this->name, 0, &ViObject::vicon_pos_cb, this);
+        this->obj_sub = n_.subscribe(this->pos_topic, 0, &ViObject::vicon_pos_cb, this);
 
         if (no_mesh) {
             std::cout << "\tconfigured as 'no mesh'" << std::endl;
@@ -173,32 +232,37 @@ public:
         }
 
         this->obj_pub = n_.advertise<pcl::PointCloud<pcl::PointXYZRGB>> ("/ev_imo/" + this->name, 100);
-        this->cloud_fname  = this->folder + "/model.ply";
-        this->config_fname = this->folder + "/config.txt";
 
-        std::string fname = this->cloud_fname.substr(0, this->cloud_fname.find_last_of("."));
-        std::string fext  = this->cloud_fname.substr(this->cloud_fname.find_last_of(".") + 1);
+        std::string fname = cloud_fname.substr(0, cloud_fname.find_last_of("."));
+        std::string fext  = cloud_fname.substr(cloud_fname.find_last_of(".") + 1);
 
         if (fext == "pcd") {
             std::cout << "Reading as .pcd...\n";
-            pcl::io::loadPCDFile(this->cloud_fname, *(this->obj_cloud));
+            pcl::io::loadPCDFile(cloud_fname, *(this->obj_cloud));
         } else if (fext == "ply") {
             std::cout << "Reading as .ply...\n";
-            pcl::io::loadPLYFile(this->cloud_fname, *(this->obj_cloud));
+            pcl::io::loadPLYFile(cloud_fname, *(this->obj_cloud));
         } else {
-            std::cout << "Unsupported file format: " << fext << "\n";
+            std::cout << _red("Unsupported file format: ") << fext << "!" << std::endl;
+            this->id = -1;
             return;
         }
         std::cout << "Read " << obj_cloud->size() << " points\n";
+        if (obj_cloud->size() == 0) {
+            std::cout << _red("Read zero points from ") << cloud_fname << "!" << std::endl;
+            this->id = -1;
+            return;
+        }
 
         this->obj_cloud_camera_frame->header.frame_id = "/camera_center";
         this->obj_cloud_transformed->header.frame_id = "/camera_center";
         this->obj_cloud->header.frame_id = "/map";
 
-        std::ifstream cfg(this->config_fname, std::ifstream::in);
+        // Read marker config file
+        std::ifstream cfg(config_fname, std::ifstream::in);
         int marker_id = -1;
         double x = 0, y = 0, z = 0;
-        while (!cfg.eof()) {
+        while (cfg.good()) {
             if (!(cfg >> marker_id >> x >> y >> z))
                 continue;
             pcl::PointXYZRGB p;
@@ -215,6 +279,9 @@ public:
             marker_id ++;
         }
         std::cout << "=====================================" << std::endl << std::endl;
+
+        cfg.close();
+        settings.close();
     }
 
     // Callbacks
@@ -372,6 +439,10 @@ public:
 
     int get_id() {
         return this->id;
+    }
+
+    std::string get_pose_topic() {
+        return this->pos_topic;
     }
 
     vicon::Subject get_last_pos() {

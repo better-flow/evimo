@@ -1,0 +1,4 @@
+id: 3
+name: cup
+mesh: model.ply
+ros_pos_topic: /vicon/Object_3

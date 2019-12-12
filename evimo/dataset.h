@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include <ros/package.h>
+
 #include <event.h>
 #include <object.h>
 #include <trajectory.h>
@@ -15,6 +17,7 @@ public:
     // The 3D scanned objects
     static std::shared_ptr<StaticObject> background;
     static std::map<int, std::shared_ptr<ViObject>> clouds;
+    static std::map<int, std::string> obj_pose_topics;
 
     // Event cloud
     static std::vector<Event> event_array;
@@ -26,6 +29,10 @@ public:
     // Trajectories for camera and objects
     static Trajectory cam_tj;
     static std::map<int, Trajectory> obj_tjs;
+
+    // Camera params
+    static std::string dist_model;
+    static std::string image_topic, event_topic, cam_pos_topic;
 
     // Calibration matrix
     static float fx, fy, cx, cy, k1, k2, k3, k4, p1, p2;
@@ -51,7 +58,6 @@ public:
     static float pose_filtering_window;
 
     // Other parameters
-    static std::map<int, bool> enabled_objects;
     static std::string window_name;
     static bool modified;
 
@@ -66,11 +72,18 @@ public:
     static int value_rr, value_rp, value_ry;
     static int value_tx, value_ty, value_tz;
 
-    static bool init(std::string dataset_folder) {
+    static bool init(ros::NodeHandle &n_, std::string dataset_folder, std::string camera_name) {
         Dataset::dataset_folder = dataset_folder;
-        bool ret = Dataset::parse_config(Dataset::dataset_folder + "/config.txt");
-        ret &= Dataset::read_cam_intr(Dataset::dataset_folder + "/calib.txt");
-        ret &= Dataset::read_extr(Dataset::dataset_folder + "/extrinsics.txt");
+
+        auto gt_dir_path = boost::filesystem::path(Dataset::dataset_folder);
+        gt_dir_path /= camera_name;
+        gt_dir_path /= "ground_truth";
+        Dataset::gt_folder = gt_dir_path.string();
+
+        bool ret = Dataset::read_params(Dataset::dataset_folder + "/" + camera_name + "/params.txt");
+        ret &= Dataset::read_cam_intr(Dataset::dataset_folder + "/" + camera_name + "/calib.txt");
+        ret &= Dataset::read_extr(Dataset::dataset_folder + "/" + camera_name + "/extrinsics.txt");
+        ret &= Dataset::load_objects(n_, Dataset::dataset_folder + "/objects.txt");
         return ret;
     }
 
@@ -207,10 +220,7 @@ public:
     }
 
     static void create_ground_truth_folder() {
-        auto gt_dir_path = boost::filesystem::path(Dataset::dataset_folder);
-        gt_dir_path /= "ground_truth";
-        Dataset::gt_folder = gt_dir_path.string();
-
+        auto gt_dir_path = boost::filesystem::path(Dataset::gt_folder);
         std::cout << _blue("Removing old: " + gt_dir_path.string()) << std::endl;
         boost::filesystem::remove_all(gt_dir_path);
         std::cout << "Creating: " << _green(gt_dir_path.string()) << std::endl;
@@ -250,6 +260,7 @@ public:
                     + ", 'p2': " + std::to_string(Dataset::p2)
                     + ", 'res_x': " + std::to_string(Dataset::res_x)
                     + ", 'res_y': " + std::to_string(Dataset::res_y)
+                    + ", 'dist_model': " + Dataset::dist_model
                     + "}";
     }
 
@@ -297,27 +308,53 @@ private:
     }
 
 private:
-    static bool parse_config(std::string path) {
+    static bool read_params (std::string path) {
         std::ifstream ifs;
         ifs.open(path, std::ifstream::in);
         if (!ifs.is_open()) {
-            std::cout << _red("Could not open configuration file at ")
+            std::cout << _red("Could not open camera parameter file file at ")
                       << path << "!" << std::endl;
             return false;
         }
 
-        std::cout << _blue("Opening configuration file: ")
-                  << path  << std::endl;
-        for (int i = 0; i < 3; ++i) {
+        const std::string& delims = ":";
+        while (ifs.good()) {
             std::string line;
             std::getline(ifs, line);
-            if (line.find("true") != std::string::npos) {
-                std::cout << _blue("\tEnabling object ") << i + 1 << std::endl;
-                enabled_objects[i + 1] = true;
-            }
-        }
+            line = trim(line);
+            auto sep = line.find_first_of(delims);
 
+            std::string key   = line.substr(0, sep);
+            std::string value = line.substr(sep + 1);
+            key = trim(key);
+            value = trim(value);
+
+            if (key == "res_x")
+                Dataset::res_x = std::stoi(value);
+
+            if (key == "res_y")
+                Dataset::res_y = std::stoi(value);
+
+            if (key == "dist_model")
+                Dataset::dist_model = value;
+
+            if (key == "ros_image_topic")
+                Dataset::image_topic = value;
+
+            if (key == "ros_event_topic")
+                Dataset::event_topic = value;
+
+            if (key == "ros_pos_topic")
+                Dataset::cam_pos_topic = value;
+        }
         ifs.close();
+
+        std::cout << _green("Read camera parameters: \n")
+                  << "\tres:\t" << Dataset::res_y << " x " << Dataset::res_x << "\n"
+                  << "\tdistortion model:\t" << Dataset::dist_model << "\n"
+                  << "\tros image topic:\t" << Dataset::image_topic << "\n"
+                  << "\tros event topic:\t" << Dataset::event_topic << "\n"
+                  << "\tros camera pose topic:\t" << Dataset::cam_pos_topic << "\n";
         return true;
     }
 
@@ -338,12 +375,19 @@ private:
         }
 
         k1 = k2 = k3 = k4 = p1 = p2 = 0;
-        //ifs >> k1 >> k2 >> k3 >> k4;
-        ifs >> k1 >> k2 >> p1 >> p2;
 
-        std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 k3 k4}): ")
+        if (Dataset::dist_model == "radtan") {
+            ifs >> k1 >> k2 >> p1 >> p2;
+        } else if (Dataset::dist_model == "equidistant") {
+            ifs >> k1 >> k2 >> k3 >> k4;
+        } else {
+            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+        }
+
+        std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 k3 k4} {p1 p2}): ")
                   << fx << " " << fy << " " << cx << " " << cy << " "
-                  << k1 << " " << k2 << " " << k3 << " " << k4 << std::endl;
+                  << k1 << " " << k2 << " " << k3 << " " << k4 << " "
+                  << p1 << " " << p2 << std::endl;
         ifs.close();
         Dataset::update_cam_calib();
         return true;
@@ -440,6 +484,37 @@ private:
         return true;
     }
 
+    static bool load_objects(ros::NodeHandle &nh_, std::string path) {
+        std::string path_to_self = ros::package::getPath("evimo");
+
+        std::ifstream ifs;
+        ifs.open(path, std::ifstream::in);
+        if (!ifs.is_open()) {
+            std::cout << _red("Could not open object configuration file file at ")
+                      << path << "!" << std::endl;
+            return false;
+        }
+
+        const std::string& delims = "#";
+        while (ifs.good()) {
+            std::string line;
+            std::getline(ifs, line);
+            auto sep = line.find_first_of(delims);
+
+            std::string object_name = line.substr(0, sep);
+            object_name = trim(object_name);
+            if (object_name == "") continue;
+
+            auto object_ = std::make_shared<ViObject>(nh_, path_to_self + "/" + object_name);
+            if (object_->get_id() < 0) return false;
+
+            Dataset::clouds[object_->get_id()] = object_;
+            Dataset::obj_pose_topics[object_->get_id()] = object_->get_pose_topic();
+        }
+        ifs.close();
+        return true;
+    }
+
 public:
     static void update_cam_calib() {
         tf::Transform E_;
@@ -462,6 +537,81 @@ public:
         E0.setOrigin(T0);
 
         Dataset::cam_E = E0 * E_;
+    }
+
+    // Project 3D point in camera frame to pixel
+    template<class T> static void project_point(T p, int &u, int &v) {
+        if (Dataset::dist_model == "radtan") {
+            Dataset::project_point_radtan(p, u, v);
+        } else if (Dataset::dist_model == "equidistant") {
+            Dataset::project_point_equi(p, u, v);
+        } else {
+            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+        }
+    }
+
+    template<class T> static void project_point_radtan(T p, int &u, int &v) {
+        u = -1; v = -1;
+        if (p.z < 0.00001)
+            return;
+
+        float x_ = p.x / p.z;
+        float y_ = p.y / p.z;
+
+        float r2 = x_ * x_ + y_ * y_;
+        float r4 = r2 * r2;
+        float r6 = r2 * r2 * r2;
+        float dist = (1.0 + Dataset::k1 * r2 + Dataset::k2 * r4 +
+                            Dataset::k3 * r6) / (1 + Dataset::k4 * r2);
+        float x__ = x_ * dist + 2.0 * Dataset::p1 * x_ * y_ + Dataset::p2 * (r2 + 2.0 * x_ * x_);
+        float y__ = y_ * dist + 2.0 * Dataset::p2 * x_ * y_ + Dataset::p1 * (r2 + 2.0 * y_ * y_);
+
+        v = Dataset::fx * x__ + Dataset::cx;
+        u = Dataset::fy * y__ + Dataset::cy;
+    }
+
+    template<class T> static void project_point_equi(T p, int &u, int &v) {
+        u = -1; v = -1;
+        if (p.z < 0.00001)
+            return;
+
+        float x_ = p.x / p.z;
+        float y_ = p.y / p.z;
+        float r = std::sqrt(x_ * x_ + y_ * y_);
+        float th = std::atan(r);
+
+        float th2 = th * th;
+        float th4 = th2 * th2;
+        float th6 = th2 * th2 * th2;
+        float th8 = th4 * th4;
+        float th_d = th * (1 + Dataset::k1 * th2 + Dataset::k2 * th4 + Dataset::k3 * th6 + Dataset::k4 * th8);
+
+        float x__ = x_;
+        float y__ = y_;
+        if (r > 0.001) {
+            x__ = (th_d / r) * x_;
+            y__ = (th_d / r) * y_;
+        }
+
+        v = Dataset::fx * x__ + Dataset::cx;
+        u = Dataset::fy * y__ + Dataset::cy;
+    }
+
+    static cv::Mat undistort(cv::Mat &img) {
+        cv::Mat ret;
+        cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
+
+        if (Dataset::dist_model == "radtan") {
+            cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::p1, Dataset::p2);
+            cv::undistort(img, ret, K, D, 1.0 * K);
+        } else if (Dataset::dist_model == "equidistant") {
+            cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
+            cv::fisheye::undistortImage(img, ret, K, D, 1.0 * K);
+        } else {
+            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+        }
+
+        return ret;
     }
 };
 

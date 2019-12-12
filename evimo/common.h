@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <cmath>
 #include <random>
+#include <algorithm>
 #include <functional>
 #include <fstream>
 #include <vector>
@@ -62,12 +63,11 @@ typedef EventCloudTemplate<CircularArray<Event, MAX_EVENT_PER_PX, FROM_MS(MAX_TI
 #define NZ 127
 
 // The event timestamp will be divided by T_DIVIDER in integer,
-// converted to double and then additionally divided by 10000 
+// converted to double and then additionally divided by 10000
 #define T_DIVIDER 1
 
 
 // Pretty print
-
 #define _header(str) std::string("\033[95m" + std::string(str) + "\033[0m")
 #define _plain(str) std::string("\033[37m" + std::string(str) + "\033[0m")
 #define _blue(str) std::string("\033[94m" + std::string(str) + "\033[0m")
@@ -84,6 +84,7 @@ public:
 };
 
 
+// String manipulation
 template <typename T>
 std::string to_string_p(const T a_value, const int n = 6)
 {
@@ -91,5 +92,25 @@ std::string to_string_p(const T a_value, const int n = 6)
     out << std::setprecision(n) << a_value;
     return out.str();
 }
+
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+    return ltrim(rtrim(s));
+}
+
 
 #endif // COMMON_H

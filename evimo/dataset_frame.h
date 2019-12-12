@@ -115,7 +115,7 @@ public:
 
     void add_img(cv::Mat &img_) {
         this->img = img_;
-        //this->img = this->undistort(img_);
+        //this->img = Dataset::undistort(img_);
         this->depth = cv::Mat(this->img.rows, this->img.cols, CV_32F, cv::Scalar(0));
         this->mask  = cv::Mat(this->img.rows, this->img.cols, CV_8U, cv::Scalar(0));
     }
@@ -285,94 +285,8 @@ public:
         }
     }
 
-public:
-    template<class T> static void project_point(T p, int &u, int &v) {
-        u = -1; v = -1;
-        if (p.z < 0.00001)
-            return;
-
-        float x_ = p.x / p.z;
-        float y_ = p.y / p.z;
-
-        float r2 = x_ * x_ + y_ * y_;
-        float r4 = r2 * r2;
-        float r6 = r2 * r2 * r2;
-        float dist = (1.0 + Dataset::k1 * r2 + Dataset::k2 * r4 +
-                            Dataset::k3 * r6) / (1 + Dataset::k4 * r2);
-        float x__ = x_ * dist + 2.0 * Dataset::p1 * x_ * y_ + Dataset::p2 * (r2 + 2.0 * x_ * x_);
-        float y__ = y_ * dist + 2.0 * Dataset::p2 * x_ * y_ + Dataset::p1 * (r2 + 2.0 * y_ * y_);
-
-        v = Dataset::fx * x__ + Dataset::cx;
-        u = Dataset::fy * y__ + Dataset::cy;
-
-        // Fixme
-        //v = Dataset::fx * x_ + Dataset::cx;
-        //u = Dataset::fy * y_ + Dataset::cy;
-    }
-
-    template<class T> static void project_point_(T p, int &u, int &v) {
-        u = -1; v = -1;
-        if (p.z < 0.00001)
-            return;
-
-        if (false) {
-        cv::Mat mat_p = (cv::Mat3d(1, 1) << cv::Vec3d(p.x, p.y, p.z));
-        cv::Mat zero_vec = (cv::Mat1d(3, 1) << 0.0, 0.0, 0.0);
-        cv::Mat ret;
-        cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
-        cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
-        cv::fisheye::projectPoints(mat_p, ret, zero_vec, zero_vec, K, D, 0, cv::noArray());
-        //std::cout << ret.at<cv::Vec3d>(0,0)[0] << " " << ret.at<cv::Vec3d>(0,0)[1] << "\n";
-        v = ret.at<cv::Vec3d>(0,0)[0];
-        u = ret.at<cv::Vec3d>(0,0)[1];
-        //std::cout << ret.at(0) << "\n";
-        return;
-        }
-
-        float x_ = p.x / p.z;
-        float y_ = p.y / p.z;
-        float r = std::sqrt(x_ * x_ + y_ * y_);
-        float th = std::atan(r);
-
-        float th2 = th * th;
-        float th4 = th2 * th2;
-        float th6 = th2 * th2 * th2;
-        float th8 = th4 * th4;
-        float th_d = th * (1 + Dataset::k1 * th2 + Dataset::k2 * th4 + Dataset::k3 * th6 + Dataset::k4 * th8);
-
-        float x__ = x_;
-        float y__ = y_;
-        if (r > 0.001) {
-            x__ = (th_d / r) * x_;
-            y__ = (th_d / r) * y_;
-        }
-
-        v = Dataset::fx * x__ + Dataset::cx;
-        u = Dataset::fy * y__ + Dataset::cy;
-
-        //v = Dataset::fx * x_ + Dataset::cx;
-        //u = Dataset::fy * y_ + Dataset::cy;
-    }
-
-    template<class T> static void unproject_point(T &p, float u, float v) {
-        // Ignores the spherical distortion!
-        p.x = (v - Dataset::cx) / Dataset::fx;
-        p.y = (u - Dataset::cy) / Dataset::fy;
-        p.z = 1.0;
-    }
 
 protected:
-
-    cv::Mat undistort(cv::Mat &img) {
-        cv::Mat ret;
-        cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
-        cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
-        cv::fisheye::undistortImage(img, ret, K, D, 1.0 * K);
-        //cv::undistort(img, ret, K, D, 1.0 * K);
-        return ret;
-    }
-
-
     template<class T> void add_marker_labels(T cl) {
         if (cl->size() == 0)
             return;
@@ -391,7 +305,7 @@ protected:
             auto rows = this->depth.rows;
 
             int u = -1, v = -1;
-            this->project_point(p, u, v);
+            Dataset::project_point(p, u, v);
 
             if (u < 0 || v < 0 || v >= cols || u >= rows) {
                 //std::cout << "???\n";
@@ -423,7 +337,7 @@ protected:
             auto rows = this->depth.rows;
 
             int u = -1, v = -1;
-            this->project_point(p, u, v);
+            Dataset::project_point(p, u, v);
 
             if (u < 0 || v < 0 || v >= cols || u >= rows)
                 continue;

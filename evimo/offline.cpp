@@ -55,6 +55,7 @@ protected:
 public:
     FrameSequenceVisualizer(std::vector<DatasetFrame> &frames)
         : frame_id(0) {
+        std::cout << "Frame Sequence Visuzlizer...\n";
         this->frames = &frames;
         this->spin();
     }
@@ -75,13 +76,13 @@ public:
         const uint8_t nmodes = 4;
         uint8_t vis_mode = 0;
 
-        bool enable_3D = false;
-        std::shared_ptr<Backprojector> bp;
+        //bool enable_3D = false;
+        //std::shared_ptr<Backprojector> bp;
 
         int code = 0; // Key code
         while (code != 27) {
             code = cv::waitKey(1);
-            if (bp) bp->maybeViewerSpinOnce();
+            //if (bp) bp->maybeViewerSpinOnce();
 
             Dataset::handle_keys(code, vis_mode, nmodes);
 
@@ -93,11 +94,11 @@ public:
                 this->set_slider(this->frame_id - 1);
             }
 
-
+            /*
             if (code == 99) { // 'c'
                 Dataset::modified = true;
             }
-
+            */
 
             if (!Dataset::modified) continue;
             Dataset::modified = false;
@@ -116,12 +117,11 @@ public:
 
             cv::imshow("Frames", img);
 
-            
+            /*
             if (!bp) {
                 bp = std::make_shared<Backprojector>(f.get_timestamp(), 5, 10);
                 bp->initViewer();
             }
-
 
             if (code == 99) { // 'c'
                 enable_3D = !enable_3D;
@@ -132,7 +132,7 @@ public:
             }
 
             if (bp) bp->generate();
-            
+            */
         }
 
         cv::destroyAllWindows();
@@ -149,10 +149,10 @@ int main (int argc, char** argv) {
     // Initialize ROS
     std::string node_name = "event_imo_offline";
     ros::init (argc, argv, node_name);
-    ros::NodeHandle nh;
+    ros::NodeHandle nh("~");
 
     std::string dataset_folder = "";
-    if (!nh.getParam(node_name + "/folder", dataset_folder)) {
+    if (!nh.getParam("folder", dataset_folder)) {
         std::cerr << "No dataset folder specified!" << std::endl;
         return -1;
     }
@@ -161,25 +161,17 @@ int main (int argc, char** argv) {
     bool generate = false;
     int show = -1;
     bool save_3d = false;
-    if (!nh.getParam(node_name + "/fps", FPS)) FPS = 40;
-    if (!nh.getParam(node_name + "/generate", generate)) generate = false;
-    if (!nh.getParam(node_name + "/show", show)) show = -1;
-    if (!nh.getParam(node_name + "/save_3d", save_3d)) save_3d = false;
+    if (!nh.getParam("fps", FPS)) FPS = 40;
+    if (!nh.getParam("generate", generate)) generate = false;
+    if (!nh.getParam("show", show)) show = -1;
+    if (!nh.getParam("save_3d", save_3d)) save_3d = false;
 
     bool no_background = true;
-    if (!nh.getParam(node_name + "/no_bg", no_background)) no_background = true;
+    if (!nh.getParam("no_bg", no_background)) no_background = true;
 
     bool with_images = true;
-    if (!nh.getParam(node_name + "/with_images", with_images)) with_images = true;
+    if (!nh.getParam("with_images", with_images)) with_images = true;
     else std::cout << _yellow("With 'with_images' option, the datased will be generated at image framerate.") << std::endl;
-
-    // -- camera topics
-    std::string cam_pose_topic = "", event_topic = "", img_topic = "";
-    std::map<int, std::string> obj_pose_topics;
-    //if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/dvs_rig";
-    if (!nh.getParam(node_name + "/cam_pose_topic", cam_pose_topic)) cam_pose_topic = "/vicon/DVS346";
-    if (!nh.getParam(node_name + "/event_topic", event_topic)) event_topic = "/dvs/events";
-    if (!nh.getParam(node_name + "/img_topic", img_topic)) img_topic = "/sc/rgb/image";
 
     // -- parse the dataset folder
     std::string bag_name = boost::filesystem::path(dataset_folder).stem().string();
@@ -202,33 +194,36 @@ int main (int argc, char** argv) {
         std::cout << "\t" << info->topic << std::endl;
     }
 
+    // Camera name
+    std::string camera_name = "";
+    if (!nh.getParam("camera_name", camera_name)) camera_name = "main_camera";
+
     // Read datasset configuration files
-    if (!Dataset::init(dataset_folder))
+    if (!Dataset::init(nh, dataset_folder, camera_name))
         return -1;
 
     // Load 3D models
     std::string path_to_self = ros::package::getPath("evimo");
-
     if (!no_background) {
         Dataset::background = std::make_shared<StaticObject>(path_to_self + "/objects/room");
         Dataset::background->transform(Dataset::bg_E);
     }
-
+/*
     if (Dataset::enabled_objects.find(1) != Dataset::enabled_objects.end()) {
         Dataset::clouds[1] = std::make_shared<ViObject>(nh, path_to_self + "/objects/toy_car", 1);
-        if (!nh.getParam(node_name + "/obj_pose_topic_0", obj_pose_topics[1])) obj_pose_topics[1] = "/vicon/Object_1";
+        if (!nh.getParam("obj_pose_topic_0", obj_pose_topics[1])) obj_pose_topics[1] = "/vicon/Object_1";
     }
 
     if (Dataset::enabled_objects.find(2) != Dataset::enabled_objects.end()) {
         Dataset::clouds[2] = std::make_shared<ViObject>(nh, path_to_self + "/objects/toy_plane", 2);
-        if (!nh.getParam(node_name + "/obj_pose_topic_1", obj_pose_topics[2])) obj_pose_topics[2] = "/vicon/Object_2";
+        if (!nh.getParam("obj_pose_topic_1", obj_pose_topics[2])) obj_pose_topics[2] = "/vicon/Object_2";
     }
 
     if (Dataset::enabled_objects.find(3) != Dataset::enabled_objects.end()) {
         Dataset::clouds[3] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cup", 3);
-        if (!nh.getParam(node_name + "/obj_pose_topic_2", obj_pose_topics[3])) obj_pose_topics[3] = "/vicon/Object_3";
+        if (!nh.getParam("obj_pose_topic_2", obj_pose_topics[3])) obj_pose_topics[3] = "/vicon/Object_3";
     }
-
+*/
     // Extract topics from bag
     auto &cam_tj  = Dataset::cam_tj;
     auto &obj_tjs = Dataset::obj_tjs;
@@ -238,14 +233,14 @@ int main (int argc, char** argv) {
 
     uint64_t n_events = 0;
     for (auto &m : view) {
-        if (m.getTopic() == cam_pose_topic) {
+        if (m.getTopic() == Dataset::cam_pos_topic) {
             auto msg = m.instantiate<vicon::Subject>();
             if (msg == NULL) continue;
             cam_tj.add(msg->header.stamp + ros::Duration(Dataset::get_time_offset_pose_to_host()), *msg);
             continue;
         }
 
-        for (auto &p : obj_pose_topics) {
+        for (auto &p : Dataset::obj_pose_topics) {
             if (m.getTopic() != p.second) continue;
             auto msg = m.instantiate<vicon::Subject>();
             if (msg == NULL) break;
@@ -255,7 +250,7 @@ int main (int argc, char** argv) {
             break;
         }
 
-        if (m.getTopic() == event_topic) {
+        if (m.getTopic() == Dataset::event_topic) {
             auto msg = m.instantiate<dvs_msgs::EventArray>();
             if (msg != NULL) {
                 n_events += msg->events.size();
@@ -266,7 +261,7 @@ int main (int argc, char** argv) {
             continue;
         }
 
-        if (with_images && (m.getTopic() == img_topic)) {
+        if (with_images && (m.getTopic() == Dataset::image_topic)) {
             auto msg = m.instantiate<sensor_msgs::Image>();
             images.push_back(cv_bridge::toCvShare(msg, "bgr8")->image);
             image_ts.push_back(msg->header.stamp + ros::Duration(Dataset::get_time_offset_image_to_host()));
@@ -282,11 +277,11 @@ int main (int argc, char** argv) {
     event_array.resize(n_events);
 
     uint64_t id = 0;
-    ros::Time first_event_ts;
-    ros::Time first_event_message_ts;
-    ros::Time last_event_ts;
+    ros::Time first_event_ts = ros::Time(0);
+    ros::Time first_event_message_ts = ros::Time(0);
+    ros::Time last_event_ts = ros::Time(0);
     for (auto &m : view) {
-        if (m.getTopic() != event_topic)
+        if (m.getTopic() != Dataset::event_topic)
             continue;
 
         auto msize = 0;
@@ -343,9 +338,11 @@ int main (int argc, char** argv) {
 
     // Force the first timestamp of the event cloud to be 0
     // trajectories
-    auto time_offset = first_event_message_ts + ros::Duration(Dataset::get_time_offset_event_to_host());
+    auto time_offset = ros::Time(0);
     if (n_events == 0)
         time_offset = cam_tj[0].ts;
+    else
+        time_offset = first_event_message_ts + ros::Duration(Dataset::get_time_offset_event_to_host());
 
     cam_tj.subtract_time(time_offset);
     for (auto &obj_tj : obj_tjs)
@@ -409,7 +406,7 @@ int main (int argc, char** argv) {
             if (ts_err > max_ts_err) max_ts_err = ts_err;
         }
 
-        if (max_ts_err > 0.005) {
+        if (max_ts_err > 0.01) {
             std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " skipping..." << std::endl;
             frame_id_real ++;
             continue;
@@ -459,7 +456,7 @@ int main (int argc, char** argv) {
     // Exit if we are running in the visualization mode
     if (!generate) {
         return 0;
-     }
+    }
 
     // Projecting the clouds and generating masks / depth maps
     std::cout << std::endl << _yellow("Generating ground truth") << std::endl;
