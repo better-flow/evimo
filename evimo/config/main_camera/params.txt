@@ -1,0 +1,6 @@
+res_x: 360
+res_y: 480
+dist_model: radtan
+ros_image_topic: /prophesee/hvga/graylevel_image
+ros_event_topic: /prophesee/hvga/cd_events_buffer
+ros_pos_topic: /vicon/dvs_rig

@@ -1,3 +1,0 @@
-Object1: false
-Object2: false
-Object3: true

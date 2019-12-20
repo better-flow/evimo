@@ -1,0 +1,3 @@
+#objects/toy_car
+#objects/toy_plane
+objects/cup
