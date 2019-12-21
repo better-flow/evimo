@@ -66,8 +66,6 @@ public:
         : frame(0, 0, 0), r(FPS), topic(topic_), images_received(0) {
         this->window_name = "RGBFrames_" + std::to_string(uid);
         uid += 1;
-
-
         this->sub = nh.subscribe(this->topic, 0, &RGBCameraVisualizer::sub_cb, this);
         this->spin();
     }
@@ -77,7 +75,6 @@ public:
         if (msg->encoding == "8UC1") {
             sensor_msgs::Image img = *msg;
             img.encoding = "mono8";
-
             Dataset::images[0] = cv_bridge::toCvCopy(img, "bgr8")->image;
         } else {
             Dataset::images[0] = cv_bridge::toCvShare(msg, "bgr8")->image;
@@ -197,21 +194,6 @@ int main (int argc, char** argv) {
         Dataset::background = std::make_shared<StaticObject>(path_to_self + "/objects/room");
         Dataset::background->transform(Dataset::bg_E);
     }
-
-    /*
-    if (Dataset::enabled_objects.find(1) != Dataset::enabled_objects.end()) {
-        Dataset::clouds[1] = std::make_shared<ViObject>(nh, path_to_self + "/objects/toy_car", 1);
-    }
-
-    if (Dataset::enabled_objects.find(2) != Dataset::enabled_objects.end()) {
-        Dataset::clouds[2] = std::make_shared<ViObject>(nh, path_to_self + "/objects/toy_plane", 2);
-    }
-
-    if (Dataset::enabled_objects.find(3) != Dataset::enabled_objects.end()) {
-        Dataset::clouds[3] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cup", 3);
-    }
-    */
-    //Dataset::clouds[4] = std::make_shared<ViObject>(nh, path_to_self + "/objects/Wand", 4, "Wand", true);
 
     ros::Subscriber cam_sub = nh.subscribe(Dataset::cam_pos_topic, 0, camera_pos_cb);
     RGBCameraVisualizer(nh, FPS, Dataset::image_topic);

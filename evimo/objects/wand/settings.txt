@@ -1,0 +1,4 @@
+id: 254
+name: wand
+mesh: none
+ros_pos_topic: /vicon/Wand

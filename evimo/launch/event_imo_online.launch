@@ -2,7 +2,7 @@
 
 <launch>
   <arg name="output_type"    default="screen"/>
-  <arg name="folder"         default="$(find evimo)/launch/em_config"/>
+  <arg name="folder"         default="$(find evimo)/config"/>
   <arg name="fps"            default="40"/>
 
   <node pkg="evimo" name="evimo_vis" type="datagen_online" output="$(arg output_type)" respawn="false" required="true">
