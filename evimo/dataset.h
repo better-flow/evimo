@@ -260,7 +260,7 @@ public:
                     + ", 'p2': " + std::to_string(Dataset::p2)
                     + ", 'res_x': " + std::to_string(Dataset::res_x)
                     + ", 'res_y': " + std::to_string(Dataset::res_y)
-                    + ", 'dist_model': " + Dataset::dist_model
+                    + ", 'dist_model': '" + Dataset::dist_model + "'"
                     + "}";
     }
 

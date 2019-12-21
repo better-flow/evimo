@@ -1,0 +1,5 @@
+res_x: 480
+res_y: 640
+dist_model: radtan
+ros_event_topic: /prophesee/left/cd_events_buffer
+ros_pos_topic: /vicon/dvs_rig
