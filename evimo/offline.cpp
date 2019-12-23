@@ -166,6 +166,10 @@ int main (int argc, char** argv) {
     if (!nh.getParam("show", show)) show = -1;
     if (!nh.getParam("save_3d", save_3d)) save_3d = false;
 
+    float start_time_offset = 0.0, sequence_duration = -1.0;
+    if (!nh.getParam("start_time_offset", start_time_offset)) start_time_offset =  0.0;
+    if (!nh.getParam("sequence_duration", sequence_duration)) sequence_duration = -1.0;
+
     bool no_background = true;
     if (!nh.getParam("no_bg", no_background)) no_background = true;
 
@@ -208,22 +212,7 @@ int main (int argc, char** argv) {
         Dataset::background = std::make_shared<StaticObject>(path_to_self + "/objects/room");
         Dataset::background->transform(Dataset::bg_E);
     }
-/*
-    if (Dataset::enabled_objects.find(1) != Dataset::enabled_objects.end()) {
-        Dataset::clouds[1] = std::make_shared<ViObject>(nh, path_to_self + "/objects/toy_car", 1);
-        if (!nh.getParam("obj_pose_topic_0", obj_pose_topics[1])) obj_pose_topics[1] = "/vicon/Object_1";
-    }
 
-    if (Dataset::enabled_objects.find(2) != Dataset::enabled_objects.end()) {
-        Dataset::clouds[2] = std::make_shared<ViObject>(nh, path_to_self + "/objects/toy_plane", 2);
-        if (!nh.getParam("obj_pose_topic_1", obj_pose_topics[2])) obj_pose_topics[2] = "/vicon/Object_2";
-    }
-
-    if (Dataset::enabled_objects.find(3) != Dataset::enabled_objects.end()) {
-        Dataset::clouds[3] = std::make_shared<ViObject>(nh, path_to_self + "/objects/cup", 3);
-        if (!nh.getParam("obj_pose_topic_2", obj_pose_topics[3])) obj_pose_topics[3] = "/vicon/Object_3";
-    }
-*/
     // Extract topics from bag
     auto &cam_tj  = Dataset::cam_tj;
     auto &obj_tjs = Dataset::obj_tjs;
@@ -231,8 +220,12 @@ int main (int argc, char** argv) {
     auto &image_ts = Dataset::image_ts;
     std::map<int, vicon::Subject> obj_cloud_to_vicon_tf;
 
+    ros::Time bag_start_ts = view.begin()->getTime();
     uint64_t n_events = 0;
     for (auto &m : view) {
+        if (start_time_offset > 0 && m.getTime() < bag_start_ts + ros::Duration(start_time_offset)) continue;
+        if (sequence_duration > 0 && m.getTime() > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+
         if (m.getTopic() == Dataset::cam_pos_topic) {
             auto msg = m.instantiate<vicon::Subject>();
             if (msg == NULL) continue;
@@ -254,10 +247,7 @@ int main (int argc, char** argv) {
             auto msg = m.instantiate<dvs_msgs::EventArray>();
             if (msg != NULL) {
                 n_events += msg->events.size();
-                Dataset::res_x = msg->height;
-                Dataset::res_y = msg->width;
             }
-
             continue;
         }
 
@@ -281,6 +271,9 @@ int main (int argc, char** argv) {
     ros::Time first_event_message_ts = ros::Time(0);
     ros::Time last_event_ts = ros::Time(0);
     for (auto &m : view) {
+        if (start_time_offset > 0 && m.getTime() < bag_start_ts + ros::Duration(start_time_offset)) continue;
+        if (sequence_duration > 0 && m.getTime() > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+
         if (m.getTopic() != Dataset::event_topic)
             continue;
 
