@@ -258,8 +258,8 @@ public:
                     + ", 'k4': " + std::to_string(Dataset::k4)
                     + ", 'p1': " + std::to_string(Dataset::p1)
                     + ", 'p2': " + std::to_string(Dataset::p2)
-                    + ", 'res_x': " + std::to_string(Dataset::res_x)
-                    + ", 'res_y': " + std::to_string(Dataset::res_y)
+                    + ", 'res_x': " + std::to_string(Dataset::res_y) // FIXME!
+                    + ", 'res_y': " + std::to_string(Dataset::res_x)
                     + ", 'dist_model': '" + Dataset::dist_model + "'"
                     + "}";
     }
