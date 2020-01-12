@@ -223,13 +223,15 @@ int main (int argc, char** argv) {
     ros::Time bag_start_ts = view.begin()->getTime();
     uint64_t n_events = 0;
     for (auto &m : view) {
-        if (start_time_offset > 0 && m.getTime() < bag_start_ts + ros::Duration(start_time_offset)) continue;
-        if (sequence_duration > 0 && m.getTime() > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
-
         if (m.getTopic() == Dataset::cam_pos_topic) {
             auto msg = m.instantiate<vicon::Subject>();
             if (msg == NULL) continue;
-            cam_tj.add(msg->header.stamp + ros::Duration(Dataset::get_time_offset_pose_to_host()), *msg);
+            auto timestamp = msg->header.stamp + ros::Duration(Dataset::get_time_offset_pose_to_host());
+
+            if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
+            if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+
+            cam_tj.add(timestamp, *msg);
             continue;
         }
 
@@ -238,13 +240,23 @@ int main (int argc, char** argv) {
             auto msg = m.instantiate<vicon::Subject>();
             if (msg == NULL) break;
             if (msg->occluded) break;
-            obj_tjs[p.first].add(msg->header.stamp + ros::Duration(Dataset::get_time_offset_pose_to_host()), *msg);
+            auto timestamp = msg->header.stamp + ros::Duration(Dataset::get_time_offset_pose_to_host());
+
+            if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
+            if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+
+            obj_tjs[p.first].add(timestamp, *msg);
             obj_cloud_to_vicon_tf[p.first] = *msg;
             break;
         }
 
         if (m.getTopic() == Dataset::event_topic) {
             auto msg = m.instantiate<dvs_msgs::EventArray>();
+            auto timestamp = msg->header.stamp;
+
+            if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
+            if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+
             if (msg != NULL) {
                 n_events += msg->events.size();
             }
@@ -253,8 +265,13 @@ int main (int argc, char** argv) {
 
         if (with_images && (m.getTopic() == Dataset::image_topic)) {
             auto msg = m.instantiate<sensor_msgs::Image>();
+            auto timestamp = msg->header.stamp + ros::Duration(Dataset::get_time_offset_image_to_host());
+
+            if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
+            if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+
             images.push_back(cv_bridge::toCvShare(msg, "bgr8")->image);
-            image_ts.push_back(msg->header.stamp + ros::Duration(Dataset::get_time_offset_image_to_host()));
+            image_ts.push_back(timestamp);
         }
     }
 
@@ -271,15 +288,17 @@ int main (int argc, char** argv) {
     ros::Time first_event_message_ts = ros::Time(0);
     ros::Time last_event_ts = ros::Time(0);
     for (auto &m : view) {
-        if (start_time_offset > 0 && m.getTime() < bag_start_ts + ros::Duration(start_time_offset)) continue;
-        if (sequence_duration > 0 && m.getTime() > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
-
         if (m.getTopic() != Dataset::event_topic)
             continue;
 
         auto msize = 0;
         auto msg = m.instantiate<dvs_msgs::EventArray>();
         if (msg != NULL) msize = msg->events.size();
+
+        auto timestamp = msg->header.stamp;
+
+        if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
+        if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
 
         for (uint64_t i = 0; i < msize; ++i) {
             int32_t x = 0, y = 0;

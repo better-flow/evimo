@@ -56,20 +56,26 @@ protected:
     DatasetFrame frame;
     ros::Rate r;
     static int uid;
-    std::string window_name, topic;
+    std::string window_name, topic, event_topic;
 
     uint64_t images_received;
-    ros::Subscriber sub;
+    ros::Subscriber sub, event_sub;
+
+    // Buffer for incoming events (aka 'slice')
+    //CircularArray<Event, MAX_SZ, SPAN> ev_buffer;
 
 public:
-    RGBCameraVisualizer(ros::NodeHandle &nh, float FPS, std::string topic_)
-        : frame(0, 0, 0), r(FPS), topic(topic_), images_received(0) {
+    RGBCameraVisualizer(ros::NodeHandle &nh, float FPS, std::string topic_, std::string event_topic_)
+        : frame(0, 0, 0), r(FPS), topic(topic_), event_topic(event_topic_), images_received(0) {
         this->window_name = "RGBFrames_" + std::to_string(uid);
         uid += 1;
         this->sub = nh.subscribe(this->topic, 0, &RGBCameraVisualizer::sub_cb, this);
+        this->event_sub = nh.subscribe(this->event_topic, 0,
+                                       &RGBCameraVisualizer::event_cb<dvs_msgs::EventArray::ConstPtr>, this);
         this->spin();
     }
 
+    // Callbacks
     void sub_cb(const sensor_msgs::ImageConstPtr& msg) {
         Dataset::images.resize(1);
         if (msg->encoding == "8UC1") {
@@ -80,6 +86,17 @@ public:
             Dataset::images[0] = cv_bridge::toCvShare(msg, "bgr8")->image;
         }
         this->images_received ++;
+    }
+
+    template<class T>
+    void event_cb(const T& msg) {
+        Dataset::event_array.clear();
+        for (uint i = 0; i < msg->events.size(); ++i) {
+            ull time = msg->events[i].ts.toNSec();
+            Event e(msg->events[i].y, msg->events[i].x, time);
+            //this->ev_buffer.push_back(ev);
+            Dataset::event_array.push_back(e);
+        }
     }
 
     void spin() {
@@ -105,7 +122,7 @@ public:
 
             for (auto &obj_tj : Dataset::obj_tjs) {
                 if (obj_tj.second.size() == 0) continue;
-                frame.add_object_pos_id(obj_tj.first, 0);
+                this->frame.add_object_pos_id(obj_tj.first, 0);
             }
 
             if (this->images_received > 0) {
@@ -116,6 +133,9 @@ public:
 
             if (Dataset::cam_tj.size() > 0)
                 this->frame.generate();
+
+            if (Dataset::event_array.size() > 0)
+                this->frame.event_slice_ids = std::make_pair(0, Dataset::event_array.size() - 1);
 
             // Get visualization out
             cv::Mat img;
@@ -196,7 +216,7 @@ int main (int argc, char** argv) {
     }
 
     ros::Subscriber cam_sub = nh.subscribe(Dataset::cam_pos_topic, 0, camera_pos_cb);
-    RGBCameraVisualizer(nh, FPS, Dataset::image_topic);
+    RGBCameraVisualizer(nh, FPS, Dataset::image_topic, Dataset::event_topic);
 
     ros::shutdown();
     return 0;
