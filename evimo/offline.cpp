@@ -462,7 +462,7 @@ int main (int argc, char** argv) {
 
     if (save_3d) {
         Backprojector bp(-1, -1, -1);
-        bp.save_clouds(dataset_folder);
+        bp.save_clouds(Dataset::dataset_folder + "/" + camera_name);
     }
 
     // Exit if we are running in the visualization mode

@@ -7,9 +7,13 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/features/normal_3d_omp.h>
+#include <pcl/surface/mls.h>
+#include <pcl/filters/filter.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/registration/transformation_estimation_svd.h>
 #include <unordered_map>
+
+#include <cnpy/cnpy.h>
 
 #include <dataset.h>
 #include <dataset_frame.h>
@@ -24,18 +28,18 @@ protected:
     std::vector<DatasetFrame> frames;
 
     pcl::visualization::PCLVisualizer::Ptr viewer;
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr event_pc, event_pc_roi, mask_pc;
-    pcl::KdTreeFLANN<pcl::PointXYZRGB> epc_kdtree;
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr event_pc, event_pc_roi, mask_pc;
+    pcl::KdTreeFLANN<pcl::PointXYZRGBNormal> epc_kdtree;
 
-    std::unordered_map<int, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> mask_pointclouds;
-    std::unordered_map<int, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> roi_pointclouds;
+    std::unordered_map<int, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> mask_pointclouds;
+    std::unordered_map<int, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> roi_pointclouds;
 
 public:
     Backprojector(double timestamp, double window_size, double framerate)
         : timestamp(timestamp), window_size(window_size)
-        , event_pc(new pcl::PointCloud<pcl::PointXYZRGB>)
-        , event_pc_roi(new pcl::PointCloud<pcl::PointXYZRGB>)
-        , mask_pc(new pcl::PointCloud<pcl::PointXYZRGB>) {
+        , event_pc(new pcl::PointCloud<pcl::PointXYZRGBNormal>)
+        , event_pc_roi(new pcl::PointCloud<pcl::PointXYZRGBNormal>)
+        , mask_pc(new pcl::PointCloud<pcl::PointXYZRGBNormal>) {
 
         if (this->timestamp < 0 || this->window_size < 0) {
             this->timestamp = (Dataset::event_array[Dataset::event_array.size() - 1].get_ts_sec() + Dataset::event_array[0].get_ts_sec()) / 2.0;
@@ -75,29 +79,79 @@ public:
         }
     }
 
-    pcl::PCLPointCloud2 with_normals(pcl::PointCloud<pcl::PointXYZRGB> &in_, float k=0, float r=0.025) {
-        pcl::PCLPointCloud2 output_cloud;
-        pcl::toPCLPointCloud2 (in_, output_cloud);
-
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr in (new pcl::PointCloud<pcl::PointXYZRGB>);
-        pcl::fromPCLPointCloud2 (output_cloud, *in);
-
-        pcl::PointCloud<pcl::Normal> normals;
-        pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne;
-        ne.setInputCloud(in);
-        ne.setSearchMethod(pcl::search::KdTree<pcl::PointXYZRGB>::Ptr(new pcl::search::KdTree<pcl::PointXYZRGB>));
-        ne.setKSearch(k);
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr with_normals(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr in_, float k=0, float r=0.025) {
+        pcl::NormalEstimationOMP<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> ne;
+        pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGBNormal>());
+        ne.setInputCloud(in_);
+        ne.setSearchMethod(tree);
         ne.setRadiusSearch(r);
-        ne.compute(normals);
-
-        pcl::PCLPointCloud2 output_cloud2;
-        pcl::PCLPointCloud2 output_normals;
-        pcl::toPCLPointCloud2 (normals, output_normals);
-        pcl::concatenateFields (output_cloud, output_normals, output_cloud2);
-        return output_cloud2;
+        ne.compute(*in_);
+        return in_;
     }
 
-    void save_clouds(std::string dir) {
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr with_mls(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr in_, float r=10.0/200.0, int order=2) {
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBNormal> ());
+        for (auto &p : *in_) {
+            cloud->push_back(p);
+        }
+
+        pcl::MovingLeastSquares<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> mls;
+        pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGBNormal>());
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr mls_points(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+
+        mls.setComputeNormals(true);
+        //mls.setNumberOfThreads(10);
+        mls.setInputCloud(cloud);
+        //mls.setPolynomialFit(true);
+        mls.setPolynomialOrder(order);
+        mls.setSearchMethod(tree);
+        mls.setSearchRadius(r);
+        mls.process(*mls_points);
+
+        return mls_points;
+    }
+
+    template<typename T>
+    typename pcl::PointCloud<T>::Ptr remove_invalid_points(typename pcl::PointCloud<T>::Ptr cl) {
+        std::vector<std::pair<size_t, float>> indices_with_time;
+        indices_with_time.reserve(cl->size());
+        for (size_t i = 0; i < cl->size(); ++i) {
+            auto &p = (*cl)[i];
+            if (std::fabs(p.x) < 1e-8 && std::fabs(p.y) < 1e-8 && std::fabs(p.z) < 1e-8) continue;
+            if (!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z)) continue;
+            if (!std::isfinite(p.normal_x) || !std::isfinite(p.normal_y) || !std::isfinite(p.normal_z)) continue;
+            if (std::fabs(p.curvature) > 10.0) continue;
+            if (std::fabs(p.normal_z) < 0.0025) continue;
+            float n_len = std::sqrt(p.normal_x * p.normal_x + p.normal_y * p.normal_y + p.normal_z * p.normal_z);
+            if (n_len > 1.01 || n_len < 0.98) continue;
+            indices_with_time.push_back(std::make_pair(i, p.z));
+        }
+
+        std::sort(indices_with_time.begin(), indices_with_time.end(), [](auto &left, auto &right) {
+            return left.second < right.second;
+        });
+
+        typename pcl::PointCloud<T>::Ptr ret(new pcl::PointCloud<T>);
+        ret->reserve(indices_with_time.size());
+
+        for (auto &pair : indices_with_time) {
+            auto &p = (*cl)[pair.first];
+            float n_len = std::sqrt(p.normal_x * p.normal_x + p.normal_y * p.normal_y + p.normal_z * p.normal_z);
+            if (p.normal_z < 0) {
+                p.normal_x *= -1;
+                p.normal_y *= -1;
+                p.normal_z *= -1;
+            }
+            p.normal_x /= n_len;
+            p.normal_y /= n_len;
+            p.normal_z /= n_len;
+            ret->push_back(p);
+        }
+
+        return ret;
+    }
+
+    void save_clouds(std::string dir, bool mls=true, float r=10, float k=0, float order=2) {
         std::cout << "Saving clouds in " << dir << std::endl;
 
         std::cout << "Generating cloud" << std::endl;
@@ -108,21 +162,48 @@ public:
 
         pcl::PLYWriter w;
         std::cout << "Estimating normals for raw cloud" << std::endl;
-        w.writeBinary(dir + "/raw_cloud.ply", this->with_normals(*this->event_pc));
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cl;
+        if (mls) {
+            cl = this->with_mls(this->event_pc, this->px_to_p(r), order);
+        } else {
+            cl = this->with_normals(this->event_pc, k, this->px_to_p(r));
+        }
+        cl = this->remove_invalid_points<pcl::PointXYZRGBNormal>(cl);
+        w.write(dir + "/raw_cloud.ply", *cl, true);
 
         for (auto &oid : this->mask_pointclouds) {
             std::cout << "Estimating normals for mask cloud " << oid.first << std::endl;
-            w.writeBinary(dir + "/mask_cloud_" + std::to_string(oid.first) + ".ply", this->with_normals(*oid.second));
+            if (mls) {
+                cl = this->with_mls(oid.second, this->px_to_p(r), order);
+            } else {
+                cl = this->with_normals(oid.second, k, this->px_to_p(r));
+            }
+            cl = this->remove_invalid_points<pcl::PointXYZRGBNormal>(cl);
+            w.write(dir + "/mask_cloud_" + std::to_string(oid.first) + ".ply", *cl, true);
         }
         for (auto &oid : this->roi_pointclouds) {
             std::cout << "Estimating normals for roi cloud " << oid.first << std::endl;
-            w.writeBinary(dir + "/roi_cloud_" + std::to_string(oid.first) + ".ply", this->with_normals(*oid.second));
+            if (mls) {
+                cl = this->with_mls(oid.second, this->px_to_p(r), order);
+            } else {
+                cl = this->with_normals(oid.second, k, this->px_to_p(r));
+            }
+            cl = this->remove_invalid_points<pcl::PointXYZRGBNormal>(cl);
+            w.write(dir + "/roi_cloud_" + std::to_string(oid.first) + ".ply", *cl, true);
         }
+
+        //std::vector<float> data(100 * 3);
+        //for(int i = 0; i < 100 * 3;i++) data[i] = i;
+        //cnpy::npz_save(dir + "/cloud_preprocessed.npz" , "foo", &data[0], {100, 3}, "w");
     }
 
-    // Conver timestamp to z coordinate
+    // Convert timestamp to z coordinate
     double ts_to_z(double ts) {
         return (ts - (this->timestamp - this->window_size / 2.0)) * 2.0;
+    }
+
+    double px_to_p(double px) {
+        return px / 200.0;
     }
 
     void refresh_ec() {
@@ -130,28 +211,62 @@ public:
         auto e_slice = TimeSlice(Dataset::event_array,
           std::make_pair(std::max(0.0, this->timestamp - this->window_size / 2.0), this->timestamp + this->window_size / 2.0),
           std::make_pair(this->frames.front().event_slice_ids.first, this->frames.back().event_slice_ids.second));
+
+        size_t i = 0;
+        auto src = cv::Mat(e_slice.size(), 1, CV_32FC2, cv::Scalar(0, 0));
+        auto dst = cv::Mat(e_slice.size(), 1, CV_32FC2, cv::Scalar(0, 0));
+        double max_x = 0, max_y = 0;
         for (auto &e : e_slice) {
-            pcl::PointXYZRGB p;
-            p.x = float(e.get_x()) / 200.0; p.y = float(e.get_y()) / 200.0f; p.z = this->ts_to_z(e.get_ts_sec());
+            src.at<cv::Vec2f>(i, 0)[0] = e.get_y();
+            src.at<cv::Vec2f>(i, 0)[1] = e.get_x();
+            if (src.at<cv::Vec2f>(i, 0)[0] > max_x) max_x = src.at<cv::Vec2f>(i, 0)[0];
+            if (src.at<cv::Vec2f>(i, 0)[1] > max_y) max_y = src.at<cv::Vec2f>(i, 0)[1];
+            i += 1;
+        }
+
+        std::cout << "fx, fy, cx, cy, res_x, res_y, max_x, max_y = " << Dataset::fx << "\t" << Dataset::fy << "\t"
+                  << Dataset::cx << "\t" << Dataset::cy << "\t" << Dataset::res_x << "\t" << Dataset::res_y << "\t"
+                  << max_x << "\t" << max_y << "\n";
+
+        cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
+        if (Dataset::dist_model == "radtan") {
+            cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::p1, Dataset::p2);
+            cv::undistortPoints(src, dst, K, D, cv::noArray(), K);
+        } else if (Dataset::dist_model == "equidistant") {
+            cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
+            cv::fisheye::undistortPoints(src, dst, K, D, cv::noArray(), K);
+        } else {
+            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+            return;
+        }
+
+        i = 0;
+        this->event_pc->reserve(e_slice.size());
+        for (auto &e : e_slice) {
+            pcl::PointXYZRGBNormal p;
+            p.x = this->px_to_p(dst.at<cv::Vec2f>(i, 0)[0]);
+            p.y = this->px_to_p(dst.at<cv::Vec2f>(i, 0)[1]);
+            p.z = this->ts_to_z(e.get_ts_sec());
             uint32_t rgb = (static_cast<uint32_t>(0) << 16 |
                             static_cast<uint32_t>(20) << 8 |
                             static_cast<uint32_t>(255));
             p.rgb = *reinterpret_cast<float*>(&rgb);
             this->event_pc->push_back(p);
+            i += 1;
         }
 
-        pcl::RadiusOutlierRemoval<pcl::PointXYZRGB> outrem;
+        pcl::RadiusOutlierRemoval<pcl::PointXYZRGBNormal> outrem;
         outrem.setInputCloud(this->event_pc);
-        outrem.setRadiusSearch(5.0 / 200.0);
-        outrem.setMinNeighborsInRadius(10);
-        outrem.filter (*this->event_pc);
+        outrem.setRadiusSearch(this->px_to_p(3.0));
+        outrem.setMinNeighborsInRadius(30);
+        outrem.filter(*this->event_pc);
 
         this->epc_kdtree.setInputCloud(this->event_pc);
 
         if (this->viewer) {
             viewer->removePointCloud("event cloud");
-            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> ec_rgb(this->event_pc);
-            viewer->addPointCloud<pcl::PointXYZRGB>(this->event_pc, ec_rgb, "event cloud");
+            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBNormal> ec_rgb(this->event_pc);
+            viewer->addPointCloud<pcl::PointXYZRGBNormal>(this->event_pc, ec_rgb, "event cloud");
             viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "event cloud");
         }
     }
@@ -165,9 +280,9 @@ public:
 
         for (auto &oid : this->mask_pointclouds) {
             std::set<int> idxes;
-            this->roi_pointclouds[oid.first] = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+            this->roi_pointclouds[oid.first] = pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
             for (auto &p : *oid.second) {
-                this->epc_kdtree.radiusSearch(p, 3.0 / 200.0, pointIdxRadiusSearch, pointRadiusSquaredDistance);
+                this->epc_kdtree.radiusSearch(p, this->px_to_p(3.0), pointIdxRadiusSearch, pointRadiusSquaredDistance);
                 for (auto &idx : pointIdxRadiusSearch) {
                     if (idxes.find(idx) != idxes.end())
                         continue;
@@ -183,8 +298,8 @@ public:
 
         if (this->viewer) {
             viewer->removePointCloud("event cloud roi");
-            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> ec_rgb(this->event_pc_roi);
-            viewer->addPointCloud<pcl::PointXYZRGB>(this->event_pc_roi, ec_rgb, "event cloud roi");
+            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBNormal> ec_rgb(this->event_pc_roi);
+            viewer->addPointCloud<pcl::PointXYZRGBNormal>(this->event_pc_roi, ec_rgb, "event cloud roi");
             viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "event cloud roi");
         }
     }
@@ -197,7 +312,7 @@ public:
         double rng = 0.0;
         for (auto &p : *this->mask_pc) {
             this->epc_kdtree.nearestKSearch(p, 1, pointIdxRadiusSearch, pointRadiusSquaredDistance);
-            if (pointRadiusSquaredDistance[0] > 4.0 / 200.0) continue;
+            if (pointRadiusSquaredDistance[0] > this->px_to_p(4.0)) continue;
 
             cnt += 1;
             rng += pointRadiusSquaredDistance[0];
@@ -207,7 +322,7 @@ public:
     }
 
     double inverse_score() {
-        pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+        pcl::KdTreeFLANN<pcl::PointXYZRGBNormal> kdtree;
         kdtree.setInputCloud(this->mask_pc);
 
         std::vector<int> pointIdxRadiusSearch(1);
@@ -217,7 +332,7 @@ public:
         double rng = 0.0;
         for (auto &p : *this->event_pc_roi) {
             kdtree.nearestKSearch(p, 1, pointIdxRadiusSearch, pointRadiusSquaredDistance);
-            if (pointRadiusSquaredDistance[0] > 4.0 / 200.0) continue;
+            if (pointRadiusSquaredDistance[0] > this->px_to_p(4.0)) continue;
 
             cnt += 1;
             rng += pointRadiusSquaredDistance[0];
@@ -230,7 +345,7 @@ public:
         pcl::PointCloud<pcl::PointXYZ>::Ptr source(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr target(new pcl::PointCloud<pcl::PointXYZ>);
 
-        pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+        pcl::KdTreeFLANN<pcl::PointXYZRGBNormal> kdtree;
         kdtree.setInputCloud(this->mask_pc);
 
         std::cout << "Score (before): " << this->score() << "\t" << this->inverse_score() << "\n";
@@ -317,7 +432,8 @@ public:
         for (auto &f : this->frames) {
             auto cl = this->mask_to_cloud(f.mask, this->ts_to_z(f.get_timestamp()));
             for (auto &oid : cl) {
-                if (!this->mask_pointclouds[oid.first]) this->mask_pointclouds[oid.first] = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+                if (!this->mask_pointclouds[oid.first]) this->mask_pointclouds[oid.first] =
+                    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
                 *this->mask_pointclouds[oid.first] += *oid.second;
                 *this->mask_pc += *oid.second;
             }
@@ -326,15 +442,15 @@ public:
         refresh_ec_roi();
         if (this->viewer) {
             viewer->removePointCloud("mask cloud");
-            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> m_rgb(this->mask_pc);
-            viewer->addPointCloud<pcl::PointXYZRGB>(this->mask_pc, m_rgb, "mask cloud");
+            pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBNormal> m_rgb(this->mask_pc);
+            viewer->addPointCloud<pcl::PointXYZRGBNormal>(this->mask_pc, m_rgb, "mask cloud");
             viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "mask cloud");
         }
     }
 
-    std::unordered_map<int, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>>
+    std::unordered_map<int, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>
     mask_to_cloud(cv::Mat mask, double z) {
-        std::unordered_map<int, std::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB>>> ret;
+        std::unordered_map<int, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ret;
 
         auto kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
         std::vector<std::vector<uint8_t>> colors {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}};
@@ -351,14 +467,14 @@ public:
                 if (boundary.at<uint8_t>(i, j) == 0) continue;
                 auto oid = boundary.at<uint8_t>(i, j);
 
-                pcl::PointXYZRGB p;
-                p.x = float(i) / 200; p.y = float(j) / 200; p.z = z;
+                pcl::PointXYZRGBNormal p;
+                p.x = this->px_to_p(float(i)); p.y = this->px_to_p(float(j)); p.z = z;
                 auto clr = colors[oid % colors.size()];
                 uint32_t rgb = (static_cast<uint32_t>(clr[0]) << 16 |
                                 static_cast<uint32_t>(clr[1]) << 8    |
                                 static_cast<uint32_t>(clr[2]));
                 p.rgb = *reinterpret_cast<float*>(&rgb);
-                if (!ret[oid]) ret[oid] = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+                if (!ret[oid]) ret[oid] = pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
                 ret[oid]->push_back(p);
             }
         }
@@ -408,8 +524,8 @@ public:
         if (key == "1") {
             show_mask = !show_mask;
             if (show_mask) {
-                pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> m_rgb(this->mask_pc);
-                this->viewer->addPointCloud<pcl::PointXYZRGB>(this->mask_pc, m_rgb, "mask cloud");
+                pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBNormal> m_rgb(this->mask_pc);
+                this->viewer->addPointCloud<pcl::PointXYZRGBNormal>(this->mask_pc, m_rgb, "mask cloud");
                 this->viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "mask cloud");
             } else {
                 this->viewer->removePointCloud("mask cloud");
@@ -421,16 +537,16 @@ public:
             show_ec_roi = !show_ec;
 
             if (show_ec) {
-                pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> ec_rgb(this->event_pc);
-                viewer->addPointCloud<pcl::PointXYZRGB>(this->event_pc, ec_rgb, "event cloud");
+                pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBNormal> ec_rgb(this->event_pc);
+                viewer->addPointCloud<pcl::PointXYZRGBNormal>(this->event_pc, ec_rgb, "event cloud");
                 viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "event cloud");
             } else {
                 viewer->removePointCloud("event cloud");
             }
 
             if (show_ec_roi) {
-                pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> ec_rgb(this->event_pc_roi);
-                viewer->addPointCloud<pcl::PointXYZRGB>(this->event_pc_roi, ec_rgb, "event cloud roi");
+                pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBNormal> ec_rgb(this->event_pc_roi);
+                viewer->addPointCloud<pcl::PointXYZRGBNormal>(this->event_pc_roi, ec_rgb, "event cloud roi");
                 viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "event cloud roi");
             } else {
                 viewer->removePointCloud("event cloud roi");

@@ -33,6 +33,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(OpenCV REQUIRED)
+find_package(ZLIB REQUIRED)
+
 
 catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs vicon dvs_msgs)
 
@@ -48,6 +50,10 @@ add_definitions(${PCL_DEFINITIONS})
 ###########
 ## Build ##
 ###########
+include_directories(${ZLIB_INCLUDE_DIRS})
+add_library(cnpy SHARED "cnpy/cnpy.cpp")
+target_link_libraries(cnpy ${ZLIB_LIBRARIES})
+
 add_executable(datagen_online online.cpp
                               dataset.cpp
                               dataset_frame.cpp
@@ -70,4 +76,5 @@ target_link_libraries(datagen_offline
     ${OpenCV_LIBS}
     ${PCL_LIBRARIES}
     ${Boost_LIBRARIES}
+    cnpy
 )
