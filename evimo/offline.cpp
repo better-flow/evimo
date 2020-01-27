@@ -148,7 +148,7 @@ int main (int argc, char** argv) {
 
     // Initialize ROS
     std::string node_name = "event_imo_offline";
-    ros::init (argc, argv, node_name);
+    ros::init (argc, argv, node_name, ros::init_options::AnonymousName);
     ros::NodeHandle nh("~");
 
     std::string dataset_folder = "";
