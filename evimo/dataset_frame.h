@@ -177,14 +177,17 @@ public:
         return s;
     }
 
-    // Generate frame
-    void generate() {
+    // Generate frame (eiter with distortion or without)
+    void generate(bool nodist=false) {
         this->depth = cv::Scalar(0);
         this->mask  = cv::Scalar(0);
 
         Dataset::update_cam_calib();
         Dataset::cam_tj.set_filtering_window_size(Dataset::pose_filtering_window);
         this->cam_pose_id = TimeSlice(Dataset::cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
+        auto cam_tf = this->get_true_camera_pose();
+        // FIXME
+        //this->timestamp = cam_tf.ts.toSec() + Dataset::get_time_offset_pose_to_host_correction();
 
         if (Dataset::event_array.size() > 0)
             this->event_slice_ids = TimeSlice(Dataset::event_array,
@@ -192,10 +195,9 @@ public:
                                this->timestamp - Dataset::get_time_offset_event_to_host_correction() + Dataset::slice_width / 2.0),
                 this->event_slice_ids).get_indices();
 
-        auto cam_tf = this->get_true_camera_pose();
         if (Dataset::background != nullptr) {
             auto cl = Dataset::background->transform_to_camframe(cam_tf);
-            this->project_cloud(cl, 0);
+            this->project_cloud(cl, 0, nodist);
         }
 
         // Generate mask and depth
@@ -213,18 +215,18 @@ public:
 
             auto obj_pose = this->_get_raw_object_pose(id);
             auto cl = obj.second->transform_to_camframe(cam_tf, obj_pose.pq);
-            this->project_cloud(cl, id);
+            this->project_cloud(cl, id, nodist);
         }
 
         // Add marker labels
         for (auto &obj : Dataset::clouds) {
             auto markerpos = obj.second->marker_cl_in_camframe(cam_tf);
-            this->add_marker_labels(markerpos);
+            this->add_marker_labels(markerpos, nodist);
         }
     }
 
-    void generate_async() {
-        this->thread_handle = std::thread(&DatasetFrame::generate, this);
+    void generate_async(bool nodist=false) {
+        this->thread_handle = std::thread(&DatasetFrame::generate, this, nodist);
     }
 
     void join() {
@@ -287,17 +289,13 @@ public:
 
 
 protected:
-    template<class T> void add_marker_labels(T cl) {
+    template<class T> void add_marker_labels(T cl, bool nodist=false) {
         if (cl->size() == 0)
             return;
 
-        //std::cout << "\n================\n";
         for (auto &p: *cl) {
-            //std::cout << "\t" << p.x << "\t" << p.y << "\t" << p.z << "\t";
-
             float rng = p.z;
             if (rng < 0.001) {
-                //std::cout << "???\n";
                 continue;
             }
 
@@ -305,26 +303,22 @@ protected:
             auto rows = this->depth.rows;
 
             int u = -1, v = -1;
-            Dataset::project_point(p, u, v);
+            if (nodist) {
+                Dataset::project_point_nodist(p, u, v);
+            } else {
+                Dataset::project_point(p, u, v);
+            }
 
             if (u < 0 || v < 0 || v >= cols || u >= rows) {
-                //std::cout << "???\n";
                 continue;
             }
 
-            //std::cout << "->\t" << u << "\t" << v << "\n";
-
-            //this->depth.at<float>(rows - u - 1, cols - v - 1) = 255;
-            //if (rng - 0.01 < this->depth.at<float>(rows - u - 1, cols - v - 1))
-                //this->mask.at<uint8_t>(rows - u - 1, cols - v - 1) = 255;
-
-                this->mask.at<uint8_t>(u, v) = 255;
-            //this->img.at<cv::Vec3b>(rows - u - 1, cols - v - 1)[1] = 255;
+            this->mask.at<uint8_t>(u, v) = 255;
         }
     }
 
 
-    template<class T> void project_cloud(T cl, int oid) {
+    template<class T> void project_cloud(T cl, int oid, bool nodist=false) {
         if (cl->size() == 0)
             return;
 
@@ -337,7 +331,11 @@ protected:
             auto rows = this->depth.rows;
 
             int u = -1, v = -1;
-            Dataset::project_point(p, u, v);
+            if (nodist) {
+                Dataset::project_point_nodist(p, u, v);
+            } else {
+                Dataset::project_point(p, u, v);
+            }
 
             if (u < 0 || v < 0 || v >= cols || u >= rows)
                 continue;

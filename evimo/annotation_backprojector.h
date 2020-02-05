@@ -151,7 +151,7 @@ public:
         return ret;
     }
 
-    void save_clouds(std::string dir, bool mls=true, float r=10, float k=0, float order=2) {
+    void save_clouds(std::string dir, bool mls=false, float r=3, float k=0, float order=2) {
         std::cout << "Saving clouds in " << dir << std::endl;
 
         std::cout << "Generating cloud" << std::endl;
@@ -426,11 +426,12 @@ public:
         this->mask_pointclouds.clear();
 
         // Mask trace cloud
-        for (auto &f : this->frames) f.generate_async();
+        for (auto &f : this->frames) f.generate_async(true);
         for (auto &f : this->frames) f.join();
 
         for (auto &f : this->frames) {
-            auto cl = this->mask_to_cloud(f.mask, this->ts_to_z(f.get_timestamp()));
+            auto cl = this->mask_to_cloud(f.mask, this->ts_to_z(f.get_timestamp() +
+                                Dataset::get_time_offset_pose_to_host_correction()));
             for (auto &oid : cl) {
                 if (!this->mask_pointclouds[oid.first]) this->mask_pointclouds[oid.first] =
                     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
@@ -468,7 +469,7 @@ public:
                 auto oid = boundary.at<uint8_t>(i, j);
 
                 pcl::PointXYZRGBNormal p;
-                p.x = this->px_to_p(float(i)); p.y = this->px_to_p(float(j)); p.z = z;
+                p.x = this->px_to_p(float(j)); p.y = this->px_to_p(float(i)); p.z = z;
                 auto clr = colors[oid % colors.size()];
                 uint32_t rgb = (static_cast<uint32_t>(clr[0]) << 16 |
                                 static_cast<uint32_t>(clr[1]) << 8    |

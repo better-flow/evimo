@@ -76,13 +76,13 @@ public:
         const uint8_t nmodes = 4;
         uint8_t vis_mode = 0;
 
-        //bool enable_3D = false;
-        //std::shared_ptr<Backprojector> bp;
+        bool enable_3D = false;
+        std::shared_ptr<Backprojector> bp;
 
         int code = 0; // Key code
         while (code != 27) {
             code = cv::waitKey(1);
-            //if (bp) bp->maybeViewerSpinOnce();
+            if (bp) bp->maybeViewerSpinOnce();
 
             Dataset::handle_keys(code, vis_mode, nmodes);
 
@@ -94,11 +94,9 @@ public:
                 this->set_slider(this->frame_id - 1);
             }
 
-            /*
             if (code == 99) { // 'c'
                 Dataset::modified = true;
             }
-            */
 
             if (!Dataset::modified) continue;
             Dataset::modified = false;
@@ -117,22 +115,20 @@ public:
 
             cv::imshow("Frames", img);
 
-            /*
-            if (!bp) {
-                bp = std::make_shared<Backprojector>(f.get_timestamp(), 5, 10);
-                bp->initViewer();
-            }
+            //if (!bp) {
+            //    bp = std::make_shared<Backprojector>(f.get_timestamp(), 5, 10);
+            //    bp->initViewer();
+            //}
 
             if (code == 99) { // 'c'
                 enable_3D = !enable_3D;
                 if (enable_3D) {
-                    bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.1, 100);
+                    bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.4, 50);
                     bp->initViewer();
                 }
             }
 
             if (bp) bp->generate();
-            */
         }
 
         cv::destroyAllWindows();
