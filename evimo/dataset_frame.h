@@ -187,12 +187,12 @@ public:
         this->cam_pose_id = TimeSlice(Dataset::cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
         auto cam_tf = this->get_true_camera_pose();
         // FIXME
-        //this->timestamp = cam_tf.ts.toSec() + Dataset::get_time_offset_pose_to_host_correction();
+        auto corrected_ts = cam_tf.ts.toSec() - this->get_timestamp();
 
         if (Dataset::event_array.size() > 0)
             this->event_slice_ids = TimeSlice(Dataset::event_array,
-                std::make_pair(this->timestamp - Dataset::get_time_offset_event_to_host_correction() - Dataset::slice_width / 2.0,
-                               this->timestamp - Dataset::get_time_offset_event_to_host_correction() + Dataset::slice_width / 2.0),
+                std::make_pair(this->timestamp + corrected_ts - Dataset::get_time_offset_event_to_host_correction() - Dataset::slice_width / 2.0,
+                               this->timestamp + corrected_ts - Dataset::get_time_offset_event_to_host_correction() + Dataset::slice_width / 2.0),
                 this->event_slice_ids).get_indices();
 
         if (Dataset::background != nullptr) {

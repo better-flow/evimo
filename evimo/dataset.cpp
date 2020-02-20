@@ -27,7 +27,7 @@ std::string Dataset::window_name;
 int Dataset::value_rr = MAXVAL / 2, Dataset::value_rp = MAXVAL / 2, Dataset::value_ry = MAXVAL / 2;
 int Dataset::value_tx = MAXVAL / 2, Dataset::value_ty = MAXVAL / 2, Dataset::value_tz = MAXVAL / 2;
 bool Dataset::modified = true;
-float Dataset::pose_filtering_window = 0.04;
+float Dataset::pose_filtering_window = -1.0;
 
 // Time offset controls
 float Dataset::image_to_event_to, Dataset::pose_to_event_to;
