@@ -564,11 +564,17 @@ public:
 
     template<class T> static void project_point_radtan(T p, int &u, int &v) {
         u = -1; v = -1;
-        if (p.z < 0.00001)
+        if (p.z < 0.001)
             return;
 
         float x_ = p.x / p.z;
         float y_ = p.y / p.z;
+
+        float rng_th = std::max(Dataset::res_x, Dataset::res_y);
+        float v__ = Dataset::fx * x_ + Dataset::cx;
+        float u__ = Dataset::fy * y_ + Dataset::cy;
+        if ((v__ > rng_th * 1.2) || (v__ < -rng_th * 0.2)) return;
+        if ((u__ > rng_th * 1.2) || (u__ < -rng_th * 0.2)) return;
 
         float r2 = x_ * x_ + y_ * y_;
         float r4 = r2 * r2;
@@ -584,7 +590,7 @@ public:
 
     template<class T> static void project_point_equi(T p, int &u, int &v) {
         u = -1; v = -1;
-        if (p.z < 0.00001)
+        if (p.z < 0.001)
             return;
 
         float x_ = p.x / p.z;
