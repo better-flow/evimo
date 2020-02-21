@@ -2,11 +2,13 @@
 
 <launch>
   <arg name="output_type"    default="screen"/>
+  <arg name="camera_name"    default="none"/>
   <arg name="folder"         default="$(find evimo)/config"/>
   <arg name="fps"            default="40"/>
 
   <node pkg="evimo" name="evimo_vis" type="datagen_online" output="$(arg output_type)" respawn="false" required="true">
     <param name="folder"         value="$(arg folder)"/>
+    <param name="camera_name"    value="$(arg camera_name)"/>
     <param name="fps"            value="$(arg fps)"/>
   </node>
 
