@@ -231,7 +231,7 @@ private:
     std::vector<Pose> poses; /**< array of poses */
 
 public:
-    Trajectory(int32_t window_size = 0)
+    Trajectory(int32_t window_size = -1)
         : filtering_window_size(window_size) {}
 
     void set_filtering_window_size(double window_size) {this->filtering_window_size = window_size; }
@@ -283,6 +283,10 @@ protected:
     auto end()   {return this->poses.end(); }
 
     virtual Pose get_filtered(size_t idx) {
+        if (this->filtering_window_size <= 0) {
+            return this->poses[idx];
+        }
+
         auto central_ts = this->poses[idx].get_ts_sec();
         auto poses_in_window = TimeSlice<Trajectory>(*this,
              std::make_pair(central_ts - this->filtering_window_size / 2.0,

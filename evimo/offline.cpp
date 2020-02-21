@@ -57,6 +57,7 @@ public:
         : frame_id(0) {
         std::cout << "Frame Sequence Visuzlizer...\n";
         this->frames = &frames;
+        //this->frame_id = this->frames->size() / 2;
         this->spin();
     }
 
@@ -76,13 +77,13 @@ public:
         const uint8_t nmodes = 4;
         uint8_t vis_mode = 0;
 
-        //bool enable_3D = false;
-        //std::shared_ptr<Backprojector> bp;
+        bool enable_3D = false;
+        std::shared_ptr<Backprojector> bp;
 
         int code = 0; // Key code
         while (code != 27) {
             code = cv::waitKey(1);
-            //if (bp) bp->maybeViewerSpinOnce();
+            if (bp) bp->maybeViewerSpinOnce();
 
             Dataset::handle_keys(code, vis_mode, nmodes);
 
@@ -94,11 +95,10 @@ public:
                 this->set_slider(this->frame_id - 1);
             }
 
-            /*
             if (code == 99) { // 'c'
                 Dataset::modified = true;
+                enable_3D = !enable_3D;
             }
-            */
 
             if (!Dataset::modified) continue;
             Dataset::modified = false;
@@ -117,22 +117,16 @@ public:
 
             cv::imshow("Frames", img);
 
-            /*
-            if (!bp) {
-                bp = std::make_shared<Backprojector>(f.get_timestamp(), 5, 10);
+            if (enable_3D && !bp) {
+                bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.4, 200);
                 bp->initViewer();
             }
 
-            if (code == 99) { // 'c'
-                enable_3D = !enable_3D;
-                if (enable_3D) {
-                    bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.1, 100);
-                    bp->initViewer();
-                }
+            if (!enable_3D) {
+                bp = nullptr;
             }
 
             if (bp) bp->generate();
-            */
         }
 
         cv::destroyAllWindows();
@@ -315,7 +309,7 @@ int main (int argc, char** argv) {
             if (id == 0) {
                 first_event_ts = current_event_ts;
                 last_event_ts = current_event_ts;
-                first_event_message_ts = m.getTime();
+                first_event_message_ts = msg->header.stamp;// m.getTime();
             } else {
                 if (current_event_ts < last_event_ts) {
                     std::cout << _red("Events are not sorted! ")
@@ -325,8 +319,10 @@ int main (int argc, char** argv) {
                 last_event_ts = current_event_ts;
             }
 
-            auto ts = (first_event_message_ts + (current_event_ts - first_event_ts) +
-                       ros::Duration(Dataset::get_time_offset_event_to_host())).toNSec();
+            //auto ts = (first_event_message_ts + (current_event_ts - first_event_ts) +
+            //           ros::Duration(Dataset::get_time_offset_event_to_host())).toNSec();
+
+            auto ts = (current_event_ts + ros::Duration(Dataset::get_time_offset_event_to_host())).toNSec();
 
             event_array[id] = Event(y, x, ts, polarity);
             id ++;
@@ -351,10 +347,12 @@ int main (int argc, char** argv) {
     // Force the first timestamp of the event cloud to be 0
     // trajectories
     auto time_offset = ros::Time(0);
-    if (n_events == 0)
+    if (n_events == 0) {
         time_offset = cam_tj[0].ts;
-    else
-        time_offset = first_event_message_ts + ros::Duration(Dataset::get_time_offset_event_to_host());
+    } else {
+        //time_offset = first_event_message_ts + ros::Duration(Dataset::get_time_offset_event_to_host());
+        time_offset.fromNSec(event_array[0].timestamp);
+    }
 
     cam_tj.subtract_time(time_offset);
     for (auto &obj_tj : obj_tjs)
@@ -376,7 +374,7 @@ int main (int argc, char** argv) {
               << std::endl << std::endl;
 
     // Align the timestamps
-    double start_ts = 0.2;
+    double start_ts = 0.001;
     unsigned long int frame_id_real = 0;
     double dt = 1.0 / FPS;
     long int cam_tj_id = 0;
@@ -411,16 +409,28 @@ int main (int argc, char** argv) {
             while (event_high < event_array.size() - 1 && event_array[event_high].timestamp < ts_high) event_high ++;
         }
 
-        double max_ts_err = 0.0;
+        double max_ts_err = std::fabs(cam_tj[cam_tj_id].ts.toSec() - ref_ts);
         for (auto &obj_tj : obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
             double ts_err = std::fabs(ref_ts - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
             if (ts_err > max_ts_err) max_ts_err = ts_err;
         }
 
-        if (max_ts_err > 0.01) {
-            std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " skipping..." << std::endl;
+        double max_p2p_err = 0.0;
+        for (auto &obj_tj : obj_tjs) {
+            if (obj_tj.second.size() == 0) continue;
+            double ts_err = std::fabs(cam_tj[cam_tj_id].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
+            if (ts_err > max_p2p_err) max_p2p_err = ts_err;
+        }
+
+        if (max_ts_err > 0.005 || max_p2p_err > 0.001) {
+            std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " / " << max_p2p_err << " skipping..." << std::endl;
             frame_id_real ++;
+            continue;
+        }
+
+        if (frames.size() > 0 && std::fabs(frames.back().get_timestamp() - ref_ts) < 1e-6) {
+            std::cout << _red("Duplicate frame encountered at: ") << ref_ts << " sec. skipping..." << std::endl;
             continue;
         }
 

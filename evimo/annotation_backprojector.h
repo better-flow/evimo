@@ -25,6 +25,7 @@ class Backprojector {
 protected:
     double timestamp;
     double window_size;
+    float px_scale, time_scale;
     std::vector<DatasetFrame> frames;
 
     pcl::visualization::PCLVisualizer::Ptr viewer;
@@ -36,7 +37,7 @@ protected:
 
 public:
     Backprojector(double timestamp, double window_size, double framerate)
-        : timestamp(timestamp), window_size(window_size)
+        : timestamp(timestamp), window_size(window_size), px_scale(1.0/200.0), time_scale(2)
         , event_pc(new pcl::PointCloud<pcl::PointXYZRGBNormal>)
         , event_pc_roi(new pcl::PointCloud<pcl::PointXYZRGBNormal>)
         , mask_pc(new pcl::PointCloud<pcl::PointXYZRGBNormal>) {
@@ -151,7 +152,7 @@ public:
         return ret;
     }
 
-    void save_clouds(std::string dir, bool mls=true, float r=10, float k=0, float order=2) {
+    void save_clouds(std::string dir, bool mls=false, float r=3, float k=0, float order=2) {
         std::cout << "Saving clouds in " << dir << std::endl;
 
         std::cout << "Generating cloud" << std::endl;
@@ -171,6 +172,77 @@ public:
         cl = this->remove_invalid_points<pcl::PointXYZRGBNormal>(cl);
         w.write(dir + "/raw_cloud.ply", *cl, true);
 
+        // Save everything in .npz format
+        std::string npz_name = dir + "/dataset_cpp.npz";
+        { // Meta
+        cnpy::npz_save(npz_name, "fx", &Dataset::fx, {1}, "w");
+        cnpy::npz_save(npz_name, "fy", &Dataset::fy, {1}, "a");
+        cnpy::npz_save(npz_name, "cx", &Dataset::cx, {1}, "a");
+        cnpy::npz_save(npz_name, "cy", &Dataset::cy, {1}, "a");
+        cnpy::npz_save(npz_name, "px_factor", &px_scale, {1}, "a");
+        cnpy::npz_save(npz_name, "time_factor", &time_scale, {1}, "a");
+        cnpy::npz_save(npz_name, "res_x", &Dataset::res_y, {1}, "a"); // FIXME
+        cnpy::npz_save(npz_name, "res_y", &Dataset::res_x, {1}, "a");
+        cnpy::npz_save(npz_name, "dist_model", Dataset::dist_model.c_str(), {Dataset::dist_model.length()}, "a");
+        std::vector<float> K = {Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1};
+        std::vector<float> D;
+        if (Dataset::dist_model == "radtan") {
+            D = {Dataset::k1, Dataset::k2, Dataset::p1, Dataset::p2};
+        } else if (Dataset::dist_model == "equidistant") {
+            D = {Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4};
+        } else {
+            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+        }
+        cnpy::npz_save(npz_name, "K", &K[0], {3,3}, "a");
+        cnpy::npz_save(npz_name, "D", &D[0], {4}, "a");
+        }
+
+        { // Masks
+        std::vector<unsigned char> obj_ids;
+        std::vector<unsigned char> polarity;
+        obj_ids.reserve(cl->size());
+        polarity.reserve(cl->size());
+        for(auto &p : *cl) {
+            auto col = *reinterpret_cast<uint32_t*>(&(p.rgb));
+            unsigned char r = (col >> 16) & 255;
+            unsigned char g = (col >> 8)  & 255;
+            unsigned char b = (col >> 0)  & 255;
+            obj_ids.push_back(r);
+            polarity.push_back((g < 250) ? 0 : 1);
+        }
+        cnpy::npz_save(npz_name, "obj_id", &obj_ids[0], {obj_ids.size()}, "a");
+        cnpy::npz_save(npz_name, "polarity", &polarity[0], {polarity.size()}, "a");
+        }
+
+        { // Edges
+        std::cout << "Computing edges" << std::endl;
+        this->epc_kdtree.setInputCloud(cl);
+        this->epc_kdtree.setSortedResults(true);
+        long unsigned int nearest_k = 500;
+        std::vector<int> edge_data_idx;
+        std::vector<float> edge_data_d;
+        edge_data_idx.reserve(cl->size() * nearest_k);
+        edge_data_d.reserve(cl->size() * nearest_k);
+
+        std::vector<int> pointIdxRadiusSearch;
+        std::vector<float> pointRadiusSquaredDistance;
+        for(size_t i = 0; i < cl->size(); ++i) {
+            auto &p = (*cl)[i];
+            this->epc_kdtree.nearestKSearch(p, nearest_k, pointIdxRadiusSearch, pointRadiusSquaredDistance);
+
+            if ((i + 1) % 1000 == 0) std::cout << "\t" << i + 1 << " / " << cl->size()
+                                               << "\t - " << pointIdxRadiusSearch.size() << std::endl;
+
+            for (size_t j = 0; j < nearest_k; ++j) {
+                edge_data_idx.push_back(pointIdxRadiusSearch[j]);
+                edge_data_d.push_back(std::sqrt(pointRadiusSquaredDistance[j]));
+            }
+        }
+        cnpy::npz_save(npz_name, "edges", &edge_data_idx[0], {cl->size(), nearest_k}, "a");
+        cnpy::npz_save(npz_name, "edge_dist", &edge_data_d[0], {cl->size(), nearest_k}, "a");
+        }
+
+        // Just for visuzlization
         for (auto &oid : this->mask_pointclouds) {
             std::cout << "Estimating normals for mask cloud " << oid.first << std::endl;
             if (mls) {
@@ -191,19 +263,15 @@ public:
             cl = this->remove_invalid_points<pcl::PointXYZRGBNormal>(cl);
             w.write(dir + "/roi_cloud_" + std::to_string(oid.first) + ".ply", *cl, true);
         }
-
-        //std::vector<float> data(100 * 3);
-        //for(int i = 0; i < 100 * 3;i++) data[i] = i;
-        //cnpy::npz_save(dir + "/cloud_preprocessed.npz" , "foo", &data[0], {100, 3}, "w");
     }
 
     // Convert timestamp to z coordinate
     double ts_to_z(double ts) {
-        return (ts - (this->timestamp - this->window_size / 2.0)) * 2.0;
+        return (ts - (this->timestamp - this->window_size / 2.0)) * time_scale;
     }
 
     double px_to_p(double px) {
-        return px / 200.0;
+        return px * px_scale;
     }
 
     void refresh_ec() {
@@ -247,8 +315,9 @@ public:
             p.x = this->px_to_p(dst.at<cv::Vec2f>(i, 0)[0]);
             p.y = this->px_to_p(dst.at<cv::Vec2f>(i, 0)[1]);
             p.z = this->ts_to_z(e.get_ts_sec());
+            uint32_t g = (e.polarity > 0) ? 127 : 255;
             uint32_t rgb = (static_cast<uint32_t>(0) << 16 |
-                            static_cast<uint32_t>(20) << 8 |
+                            static_cast<uint32_t>(g) << 8 |
                             static_cast<uint32_t>(255));
             p.rgb = *reinterpret_cast<float*>(&rgb);
             this->event_pc->push_back(p);
@@ -288,8 +357,11 @@ public:
                         continue;
 
                     idxes.insert(idx);
-                    auto p_ = this->event_pc->points[idx];
-                    p_.rgb = p.rgb;
+                    auto &p_ = this->event_pc->points[idx];
+                    auto col = *reinterpret_cast<uint32_t*>(&(p.rgb)) | *reinterpret_cast<uint32_t*>(&(p_.rgb));
+                    p_.rgb = *reinterpret_cast<float*>(&col);
+                    this->event_pc->points[idx] = p_;
+
                     this->roi_pointclouds[oid.first]->push_back(p_);
                     this->event_pc_roi->push_back(p_);
                 }
@@ -426,11 +498,12 @@ public:
         this->mask_pointclouds.clear();
 
         // Mask trace cloud
-        for (auto &f : this->frames) f.generate_async();
+        for (auto &f : this->frames) f.generate_async(true);
         for (auto &f : this->frames) f.join();
 
         for (auto &f : this->frames) {
-            auto cl = this->mask_to_cloud(f.mask, this->ts_to_z(f.get_timestamp()));
+            auto cl = this->mask_to_cloud(f.mask, this->ts_to_z(f.get_timestamp() +
+                                Dataset::get_time_offset_pose_to_host_correction()));
             for (auto &oid : cl) {
                 if (!this->mask_pointclouds[oid.first]) this->mask_pointclouds[oid.first] =
                     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
@@ -468,11 +541,14 @@ public:
                 auto oid = boundary.at<uint8_t>(i, j);
 
                 pcl::PointXYZRGBNormal p;
-                p.x = this->px_to_p(float(i)); p.y = this->px_to_p(float(j)); p.z = z;
+                p.x = this->px_to_p(float(j)); p.y = this->px_to_p(float(i)); p.z = z;
                 auto clr = colors[oid % colors.size()];
-                uint32_t rgb = (static_cast<uint32_t>(clr[0]) << 16 |
-                                static_cast<uint32_t>(clr[1]) << 8    |
-                                static_cast<uint32_t>(clr[2]));
+                //uint32_t rgb = (static_cast<uint32_t>(clr[0]) << 16 |
+                //                static_cast<uint32_t>(clr[1]) << 8    |
+                //                static_cast<uint32_t>(clr[2]));
+                uint32_t rgb = (static_cast<uint32_t>(oid) << 16 |
+                                static_cast<uint32_t>(0) << 8    |
+                                static_cast<uint32_t>(0));
                 p.rgb = *reinterpret_cast<float*>(&rgb);
                 if (!ret[oid]) ret[oid] = pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
                 ret[oid]->push_back(p);
@@ -515,14 +591,25 @@ public:
         this->viewer->spinOnce(100);
     }
 
-    bool show_mask   = false;
-    bool show_ec     = true;
+    bool show_mask   = true;
+    bool show_ec     = false;
     bool show_ec_roi = false;
+    bool refresh = true;
     void keyboard_handler(const pcl::visualization::KeyboardEvent &event,
                           void* viewer_void) {
         auto key = event.getKeySym();
         if (key == "1") {
             show_mask = !show_mask;
+            refresh = true;
+        }
+
+        if (key == "2") {
+            show_ec = !show_ec;
+            show_ec_roi = !show_ec;
+            refresh = true;
+        }
+
+        if (refresh) {
             if (show_mask) {
                 pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBNormal> m_rgb(this->mask_pc);
                 this->viewer->addPointCloud<pcl::PointXYZRGBNormal>(this->mask_pc, m_rgb, "mask cloud");
@@ -530,11 +617,6 @@ public:
             } else {
                 this->viewer->removePointCloud("mask cloud");
             }
-        }
-
-        if (key == "2") {
-            show_ec = !show_ec;
-            show_ec_roi = !show_ec;
 
             if (show_ec) {
                 pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBNormal> ec_rgb(this->event_pc);
@@ -551,6 +633,8 @@ public:
             } else {
                 viewer->removePointCloud("event cloud roi");
             }
+
+            refresh = false;
         }
 
         if (key == "z") {

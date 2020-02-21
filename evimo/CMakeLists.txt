@@ -36,6 +36,7 @@ find_package(OpenCV REQUIRED)
 find_package(ZLIB REQUIRED)
 
 
+
 catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs geometry_msgs vicon dvs_msgs)
 
 include_directories(.
@@ -50,9 +51,14 @@ add_definitions(${PCL_DEFINITIONS})
 ###########
 ## Build ##
 ###########
+
+
+SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cnpy/cmake" ${CMAKE_MODULE_PATH})
+FIND_PACKAGE(LibZip REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 add_library(cnpy SHARED "cnpy/cnpy.cpp")
-target_link_libraries(cnpy ${ZLIB_LIBRARIES})
+target_include_directories(cnpy PUBLIC ${LIBZIP_INCLUDE_DIR_ZIP})
+target_link_libraries(cnpy ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES})
 
 add_executable(datagen_online online.cpp
                               dataset.cpp
