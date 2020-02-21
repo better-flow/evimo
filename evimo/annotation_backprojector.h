@@ -195,6 +195,9 @@ public:
         }
         cnpy::npz_save(npz_name, "K", &K[0], {3,3}, "a");
         cnpy::npz_save(npz_name, "D", &D[0], {4}, "a");
+
+        auto meta = this->get_full_meta_as_string();
+        cnpy::npz_save(npz_name, "meta", meta.c_str(), {meta.length()}, "a");
         }
 
         { // Masks
@@ -263,6 +266,31 @@ public:
             cl = this->remove_invalid_points<pcl::PointXYZRGBNormal>(cl);
             w.write(dir + "/roi_cloud_" + std::to_string(oid.first) + ".ply", *cl, true);
         }
+    }
+
+    std::string get_full_meta_as_string() {
+        std::cout << std::endl << _yellow("3D: Writing full trajectory") << std::endl;
+        std::string ret = "{\n";
+        ret += Dataset::meta_as_dict() + "\n";
+        ret += ", 'full_trajectory': [\n";
+        for (uint64_t i = 0; i < Dataset::cam_tj.size(); ++i) {
+            DatasetFrame frame(i, Dataset::cam_tj[i].ts.toSec(), -1);
+
+            for (auto &obj_tj : Dataset::obj_tjs) {
+                if (obj_tj.second.size() == 0) continue;
+                frame.add_object_pos_id(obj_tj.first, std::min(i, obj_tj.second.size() - 1));
+            }
+
+            ret += frame.as_dict() + ",\n\n";
+
+            if (i % 10 == 0) {
+                std::cout << "\r\tWritten " << i + 1 << "\t/\t" << Dataset::cam_tj.size() << "\t" << std::flush;
+            }
+        }
+        ret += "]\n";
+        std::cout << std::endl;
+        ret += "\n}\n";
+        return ret;
     }
 
     // Convert timestamp to z coordinate
