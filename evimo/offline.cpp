@@ -471,8 +471,10 @@ int main (int argc, char** argv) {
         FrameSequenceVisualizer fsv(frames);
 
     if (save_3d) {
+        std::string save_dir = Dataset::dataset_folder + '/' + Dataset::camera_name + "/3D_data/";
+        Dataset::create_ground_truth_folder(save_dir);
         Backprojector bp(-1, -1, -1);
-        bp.save_clouds(Dataset::dataset_folder + "/" + camera_name);
+        bp.save_clouds(save_dir);
     }
 
     // Exit if we are running in the visualization mode

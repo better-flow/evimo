@@ -62,7 +62,7 @@ public:
     static bool modified;
 
     // Folder names
-    static std::string dataset_folder, gt_folder;
+    static std::string dataset_folder, camera_name, gt_folder;
 
     static constexpr float MAXVAL = 1000;
     static constexpr float INT_LIN_SC = 10.0;
@@ -74,6 +74,7 @@ public:
 
     static bool init(ros::NodeHandle &n_, std::string dataset_folder, std::string camera_name) {
         Dataset::dataset_folder = dataset_folder;
+        Dataset::camera_name = camera_name;
 
         auto gt_dir_path = boost::filesystem::path(Dataset::dataset_folder);
         gt_dir_path /= camera_name;
@@ -219,8 +220,9 @@ public:
         std::cout << "time offset image to events: " << get_time_offset_image_to_event() << std::endl;
     }
 
-    static void create_ground_truth_folder() {
-        auto gt_dir_path = boost::filesystem::path(Dataset::gt_folder);
+    static void create_ground_truth_folder(std::string folder="") {
+        if (folder=="") folder=Dataset::gt_folder;
+        auto gt_dir_path = boost::filesystem::path(folder);
         std::cout << _blue("Removing old: " + gt_dir_path.string()) << std::endl;
         boost::filesystem::remove_all(gt_dir_path);
         std::cout << "Creating: " << _green(gt_dir_path.string()) << std::endl;

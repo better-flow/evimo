@@ -173,7 +173,7 @@ public:
         w.write(dir + "/raw_cloud.ply", *cl, true);
 
         // Save everything in .npz format
-        std::string npz_name = dir + "/dataset_cpp.npz";
+        std::string npz_name = dir + "/dataset.npz";
         { // Meta
         cnpy::npz_save(npz_name, "fx", &Dataset::fx, {1}, "w");
         cnpy::npz_save(npz_name, "fy", &Dataset::fy, {1}, "a");
@@ -200,6 +200,40 @@ public:
         cnpy::npz_save(npz_name, "meta", meta.c_str(), {meta.length()}, "a");
         }
 
+        { // points and normals
+        float discretization = 0.01;
+        std::vector<float> points;
+        std::vector<float> normals;
+        std::vector<int> index;
+        points.reserve(cl->size() * 3);
+        normals.reserve(cl->size() * 3);
+        index.reserve(int(1.2 * ((*cl)[cl->size() - 1].z - (*cl)[0].z) / discretization));
+        auto last_ts = (*cl)[0].z;
+        for(size_t i = 0; i < cl->size(); ++i) {
+            auto &p = (*cl)[i];
+            points.push_back(p.x);
+            points.push_back(p.y);
+            points.push_back(p.z);
+            normals.push_back(p.normal_x);
+            normals.push_back(p.normal_y);
+            normals.push_back(p.normal_z);
+            while(p.z - last_ts > discretization) {
+                if (p.z - last_ts > 1)
+                    std::cout << _red("\nGap in the events!") << p.z - last_ts << std::endl;
+                if (p.z < last_ts)
+                    std::cout << _red("\nPoints are not sorted!") << p.z << " " << last_ts << std::endl;
+                index.push_back(i);
+                last_ts += discretization;
+            }
+        }
+        index.push_back(cl->size() - 1);
+
+        cnpy::npz_save(npz_name, "xyz", &points[0],  {points.size() / 3,  3}, "a");
+        cnpy::npz_save(npz_name, "n",   &normals[0], {normals.size() / 3, 3}, "a");
+        cnpy::npz_save(npz_name, "idx", &index[0],   {index.size()}, "a");
+        cnpy::npz_save(npz_name, "discretization", &discretization, {1}, "a");
+        }
+
         { // Masks
         std::vector<unsigned char> obj_ids;
         std::vector<unsigned char> polarity;
@@ -221,7 +255,7 @@ public:
         std::cout << "Computing edges" << std::endl;
         this->epc_kdtree.setInputCloud(cl);
         this->epc_kdtree.setSortedResults(true);
-        long unsigned int nearest_k = 500;
+        long unsigned int nearest_k = 200;
         std::vector<int> edge_data_idx;
         std::vector<float> edge_data_d;
         edge_data_idx.reserve(cl->size() * nearest_k);

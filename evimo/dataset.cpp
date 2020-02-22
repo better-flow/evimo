@@ -36,3 +36,4 @@ int Dataset::image_to_event_to_slider = MAXVAL / 2, Dataset::pose_to_event_to_sl
 // Folder names
 std::string Dataset::dataset_folder = "";
 std::string Dataset::gt_folder = "";
+std::string Dataset::camera_name = "";
