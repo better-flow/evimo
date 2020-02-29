@@ -60,7 +60,8 @@ add_library(cnpy SHARED "cnpy/cnpy.cpp")
 target_include_directories(cnpy PUBLIC ${LIBZIP_INCLUDE_DIR_ZIP})
 target_link_libraries(cnpy ${ZLIB_LIBRARIES} ${LIBZIP_LIBRARIES})
 
-add_executable(datagen_online online.cpp
+add_executable(datagen_online plot.cpp
+                              online.cpp
                               dataset.cpp
                               dataset_frame.cpp
 )
@@ -73,6 +74,7 @@ target_link_libraries(datagen_online
 
 
 add_executable(datagen_offline annotation_backprojector.h
+                               plot.cpp
                                offline.cpp
                                dataset.cpp
                                dataset_frame.cpp)

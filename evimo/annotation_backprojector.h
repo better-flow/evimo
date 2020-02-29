@@ -152,7 +152,7 @@ public:
         return ret;
     }
 
-    void save_clouds(std::string dir, bool mls=false, float r=3, float k=0, float order=2) {
+    void save_clouds(std::string dir, bool mls=true, float r=10, float k=0, float order=2) {
         std::cout << "Saving clouds in " << dir << std::endl;
 
         std::cout << "Generating cloud" << std::endl;
@@ -199,7 +199,7 @@ public:
         auto meta = this->get_full_meta_as_string();
         cnpy::npz_save(npz_name, "meta", meta.c_str(), {meta.length()}, "a");
         }
-
+return;
         { // points and normals
         float discretization = 0.01;
         std::vector<float> points;
@@ -389,7 +389,7 @@ public:
         pcl::RadiusOutlierRemoval<pcl::PointXYZRGBNormal> outrem;
         outrem.setInputCloud(this->event_pc);
         outrem.setRadiusSearch(this->px_to_p(3.0));
-        outrem.setMinNeighborsInRadius(30);
+        outrem.setMinNeighborsInRadius(20);
         outrem.filter(*this->event_pc);
 
         this->epc_kdtree.setInputCloud(this->event_pc);

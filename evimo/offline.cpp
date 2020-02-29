@@ -117,6 +117,15 @@ public:
 
             cv::imshow("Frames", img);
 
+            auto plot = plot_trajectory(Dataset::cam_tj, 2000, 400, f.get_timestamp());
+            for (auto &tj : Dataset::obj_tjs) {
+                auto obj_plot = plot_trajectory(tj.second, 2000, 400, f.get_timestamp());
+                cv::Mat arr[] = {plot, obj_plot};
+                cv::vconcat(arr, 2, plot);
+            }
+
+            cv::imshow("Trajectories", plot);
+
             if (enable_3D && !bp) {
                 bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.4, 200);
                 bp->initViewer();
@@ -155,10 +164,12 @@ int main (int argc, char** argv) {
     bool generate = false;
     int show = -1;
     bool save_3d = false;
+    bool ignore_tj = false;
     if (!nh.getParam("fps", FPS)) FPS = 40;
     if (!nh.getParam("generate", generate)) generate = false;
     if (!nh.getParam("show", show)) show = -1;
     if (!nh.getParam("save_3d", save_3d)) save_3d = false;
+    if (!nh.getParam("ignore_trajectories", ignore_tj)) ignore_tj = false;
 
     float start_time_offset = 0.0, sequence_duration = -1.0;
     if (!nh.getParam("start_time_offset", start_time_offset)) start_time_offset =  0.0;
@@ -330,6 +341,18 @@ int main (int argc, char** argv) {
     }
 
     std::cout << _green("Read ") << n_events << _green(" events") << std::endl;
+    if (ignore_tj) {
+        auto t0 = ros::Time(0);
+        t0.fromNSec(event_array[0].timestamp);
+        auto t1 = ros::Time(0);
+        t1.fromNSec(event_array[event_array.size() - 1].timestamp);
+        auto npos = int((t1 - t0).toSec() * 100);
+        std::cout << npos << "\t" << t0 << " - " << t1 << "\n";
+
+        for (size_t i = 0; i < npos; ++i)
+            cam_tj.add(t0 + ros::Duration(float(i) / 100.0), tf::Transform());
+    }
+
     std::cout << std::endl << _green("Read ") << cam_tj.size() << _green(" camera poses and ") << std::endl;
     for (auto &obj_tj : obj_tjs) {
         if (obj_tj.second.size() == 0) continue;

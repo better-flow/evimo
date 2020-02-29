@@ -12,6 +12,7 @@
 #include <dataset.h>
 #include <object.h>
 #include <trajectory.h>
+#include <plot.h>
 
 class DatasetFrame {
 protected:
@@ -80,6 +81,9 @@ public:
 
                 cv::imshow(window.second, img);
             }
+
+            auto plot = plot_trajectory(Dataset::cam_tj, 800, 200);
+            cv::imshow("Trajectories", plot);
         }
 
         for (auto &frame_ptr : DatasetFrame::visualization_list) {

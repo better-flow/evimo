@@ -90,6 +90,7 @@ public:
 
     static void init_GUI() {
         Dataset::window_name = "Calibration Control";
+        cv::namedWindow("Trajectories", cv::WINDOW_AUTOSIZE);
         cv::namedWindow(Dataset::window_name, cv::WINDOW_AUTOSIZE);
         cv::createTrackbar("R", Dataset::window_name, &value_rr, MAXVAL, on_trackbar);
         cv::createTrackbar("P", Dataset::window_name, &value_rp, MAXVAL, on_trackbar);

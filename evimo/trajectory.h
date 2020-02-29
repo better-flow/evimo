@@ -1,7 +1,12 @@
 #include <valarray>
-
 #include <common.h>
 
+#include <ros/ros.h>
+#include <tf/transform_listener.h>
+
+// VICON
+#include <vicon/Subject.h>
+#include <object.h>
 
 #ifndef TRAJECTORY_H
 #define TRAJECTORY_H
