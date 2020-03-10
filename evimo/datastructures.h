@@ -26,7 +26,7 @@ public:
 
     inline size_t size () {
         this->fix_span();
-        return this->current_size; 
+        return this->current_size;
     }
 
     inline void push_back (DType &d) {
@@ -41,7 +41,7 @@ public:
         }
 
         *(this->head) = d;
-        this->latest = this->head;    
+        this->latest = this->head;
     }
 
     inline void fix_span () {
@@ -66,7 +66,7 @@ public:
 
     inline auto begin() {
         this->fix_span();
-        return _CAiterator(this->head, this->head_id, this->data); 
+        return _CAiterator(this->head, this->head_id, this->data);
     }
 
     inline auto end()   {
@@ -92,7 +92,7 @@ protected:
             }
 
             this->ptr_id --;
-            this->ptr --;           
+            this->ptr --;
             return *this;
         }
 
@@ -105,7 +105,7 @@ protected:
         }
 
     protected:
-        _CAiterator(DType *ptr_, size_t ptr_id_, DType *data_) 
+        _CAiterator(DType *ptr_, size_t ptr_id_, DType *data_)
             : ptr_id(ptr_id_), ptr(ptr_), data(data_) {}
 
     private:
@@ -141,7 +141,7 @@ public:
 
     inline size_t size () {
         this->fix_span();
-        return this->current_size; 
+        return this->current_size;
     }
 
     inline void push_back (DType &d) {
@@ -156,7 +156,7 @@ public:
         }
 
         *(this->head) = &d;
-        this->latest = this->head;    
+        this->latest = this->head;
     }
 
     inline void fix_span () {
@@ -181,7 +181,7 @@ public:
 
     inline auto begin() {
         this->fix_span();
-        return _CAiterator(this->head, this->head_id, this->data); 
+        return _CAiterator(this->head, this->head_id, this->data);
     }
 
     inline auto end()   {

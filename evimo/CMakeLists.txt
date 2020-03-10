@@ -86,3 +86,14 @@ target_link_libraries(datagen_offline
     ${Boost_LIBRARIES}
     cnpy
 )
+
+
+find_package(X11 REQUIRED)
+add_executable(collect calib/collect.cpp)
+
+target_link_libraries(collect
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${Boost_LIBRARIES}
+    ${X11_LIBRARIES}
+)
