@@ -64,6 +64,11 @@ public:
 
     virtual void start_accumulating() {this->accumulating = true;}
     virtual void save() {
+        if (!this->accumulating) {
+            std::cout << _red("Trying to save with no accumulation") << std::endl;
+            return;
+        }
+
         this->accumulating = false;
         std::string img_name = this->root_dir + '/' + this->name + '/' + std::to_string(this->cnt * 7 + 7) + "0000000.png";
         cv::imwrite(img_name, this->get_accumulated_image());
@@ -158,7 +163,7 @@ public:
         auto &img = this->accumulated_image;
         int *p = (int *)img.data;
         for (int i = 0; i < img.rows * img.cols; ++i, p++) {
-            if (*p == 0) continue;
+            if (*p <= 100) continue;
             nz_avg_cnt ++;
             nz_avg += *p;
         }
@@ -177,6 +182,74 @@ private:
         accumulated_image.at<int>(e.fr_x, e.fr_y) ++;
     }
 };
+
+
+class FlickerPattern {
+private:
+    ros::Rate r;
+    std::thread thread_handle;
+    bool paused;
+
+protected:
+    std::string window_name;
+    uint32_t res_x, res_y;
+    cv::Mat pattern;
+
+public:
+    FlickerPattern(float fps, std::string n="pattern")
+        : r(fps * 2), paused(false), res_x(0), res_y(0), window_name(n) {
+        cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
+        this->thread_handle = std::thread(&FlickerPattern::vis_spin, this);
+    }
+
+    virtual ~FlickerPattern() {
+        cv::destroyWindow(this->window_name);
+    }
+
+    virtual void stop() {
+        this->paused = true;
+        cv::imshow(this->window_name, this->pattern);
+    }
+
+    virtual void cnte() {this->paused = false;}
+
+private:
+    void vis_spin() {
+        while (ros::ok()) {
+            r.sleep();
+            if (this->res_y == 0 || this->res_x == 0) {
+                continue;
+            }
+
+            cv::imshow(this->window_name, this->pattern);
+            r.sleep();
+            if (!this->paused)
+                cv::imshow(this->window_name, cv::Mat::zeros(this->res_y, this->res_x, CV_8U));
+        }
+    }
+};
+
+
+class FlickerCheckerBoard : public FlickerPattern {
+public:
+    FlickerCheckerBoard(int px_w_, int py_w_, int nx_, int ny_, float fps, std::string n="checkerboard")
+        : FlickerPattern(fps, n) {
+        this->res_x = px_w_ * (nx_ + 1);
+        this->res_y = py_w_ * (ny_ + 1);
+        this->pattern = cv::Mat::zeros(this->res_y, this->res_x, CV_8U);
+        for (int i = 0; i < nx_ + 1; ++i) {
+            for (int j = 0; j < ny_ + 1; ++j) {
+                if ((i + j) % 2 == 0) continue;
+                for (int k = i * px_w_; k < (i + 1) * px_w_; ++k) {
+                    for (int l = j * py_w_; l < (j + 1) * py_w_; ++l) {
+                        this->pattern.at<uint8_t>(l, k) = 255;
+                    }
+                }
+            }
+        }
+    }
+};
+
 
 
 int main (int argc, char** argv) {
@@ -242,16 +315,22 @@ int main (int argc, char** argv) {
         if (!i->create_dir()) return -1;
     }
 
+    // Create a flicker pattern
+    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,6,4, 10);
+    fpattern->stop();
 
     int code = 0; // Key code
     while (code != 27) {
         code = cv::waitKey(5);
         if (code == 32) {
+            fpattern->cnte();
             for (auto &i : imagers)
                 i->start_accumulating();
         }
 
         if (code == 115) { // 's'
+            fpattern->stop();
+            ros::Duration(0.1).sleep();
             for (auto &i : imagers)
                 i->save();
         }
