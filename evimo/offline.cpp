@@ -286,7 +286,7 @@ int main (int argc, char** argv) {
     }
 
     auto &event_array = Dataset::event_array;
-    event_array.resize(n_events);
+    event_array.reserve(n_events);
 
     uint64_t id = 0;
     ros::Time first_event_ts = ros::Time(0);
@@ -335,10 +335,11 @@ int main (int argc, char** argv) {
 
             auto ts = (current_event_ts + ros::Duration(Dataset::get_time_offset_event_to_host())).toNSec();
 
-            event_array[id] = Event(y, x, ts, polarity);
+            event_array.push_back(Event(y, x, ts, polarity));
             id ++;
         }
     }
+    n_events = event_array.size();
 
     std::cout << _green("Read ") << n_events << _green(" events") << std::endl;
     if (ignore_tj) {
