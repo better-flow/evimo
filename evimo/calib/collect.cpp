@@ -38,21 +38,24 @@ protected:
     uint32_t res_x, res_y;
     ros::Subscriber sub;
     std::string root_dir, name, window_name, topic;
+    bool headless;
 
     uint64_t cnt;
     bool accumulating;
     cv::Mat accumulated_image;
 
 public:
-    Imager(std::string root_dir_, std::string name_, std::string topic_)
-        : res_x(0), res_y(0), root_dir(root_dir_), name(name_), topic(topic_), cnt(0), accumulating(false) {
+    Imager(std::string root_dir_, std::string name_, std::string topic_, bool headless_ =false)
+        : res_x(0), res_y(0), root_dir(root_dir_), name(name_), topic(topic_)
+        , headless(headless_), cnt(0), accumulating(false) {
         this->window_name = this->name + "_" + std::to_string(uid);
         Imager::uid += 1;
-        cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
+        if (!this->headless)
+            cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
     }
 
     virtual ~Imager() {
-        cv::destroyWindow(this->window_name);
+        if (!this->headless) cv::destroyWindow(this->window_name);
     }
 
     virtual bool create_dir() {
@@ -72,12 +75,59 @@ public:
         this->accumulating = false;
         std::string img_name = this->root_dir + '/' + this->name + '/' + std::to_string(this->cnt * 7 + 7) + "0000000.png";
         cv::imwrite(img_name, this->get_accumulated_image());
-        cnt += 1;
+        this->cnt += 1;
     }
     virtual cv::Mat get_accumulated_image() {return this->accumulated_image;}
 };
 
 int Imager::uid = 0;
+
+
+// Save data from Vicon
+class ViconImager : public Imager {
+protected:
+    std::ofstream ofile;
+    vicon::Subject last_pos;
+
+public:
+    ViconImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_)
+        : Imager(root_dir_, name_, topic_, true) {
+        this->sub = nh.subscribe(this->topic, 0, &ViconImager::pose_cb, this);
+    }
+
+    ~ViconImager() {
+        this->ofile.close();
+    }
+
+    virtual bool create_dir() override {
+        std::string fname = '/' + this->name + '_' + "poses.txt";
+        auto out_dir_path = boost::filesystem::path(this->root_dir);
+        std::cout << "Creating: " << _green(out_dir_path.string() + fname) << std::endl;
+        boost::filesystem::create_directories(out_dir_path);
+        this->ofile.open(this->root_dir + fname, std::ofstream::out);
+        return true;
+    }
+
+    void pose_cb(const vicon::Subject& subject) {
+        this->last_pos = subject;
+    }
+
+    void save() override {
+        if (!this->accumulating) {
+            std::cout << _red("Trying to save with no accumulation") << std::endl;
+            return;
+        }
+
+        auto &p = this->last_pos;
+        this->accumulating = false;
+        this->ofile << this->cnt << " "
+                    << p.position.x << " " << p.position.y << " " << p.position.z << " "
+                    << p.orientation.x << " " << p.orientation.y << " " << p.orientation.z
+                    << " " << p.orientation.w << "\n";
+        this->ofile.flush();
+        this->cnt += 1;
+    }
+};
 
 
 // Visuzlize and collect frames from regular cameras
@@ -121,6 +171,7 @@ public:
         this->sub = nh.subscribe(this->topic, 0,
                                  &EventStreamImager::event_cb<dvs_msgs::EventArray::ConstPtr>, this);
         this->thread_handle = std::thread(&EventStreamImager::vis_spin, this);
+        this->thread_handle.detach();
     }
 
     // Callbacks
@@ -163,7 +214,7 @@ public:
         auto &img = this->accumulated_image;
         int *p = (int *)img.data;
         for (int i = 0; i < img.rows * img.cols; ++i, p++) {
-            if (*p <= 100) continue;
+            if (*p <= 50) continue;
             nz_avg_cnt ++;
             nz_avg += *p;
         }
@@ -200,6 +251,7 @@ public:
         : r(fps * 2), paused(false), res_x(0), res_y(0), window_name(n) {
         cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
         this->thread_handle = std::thread(&FlickerPattern::vis_spin, this);
+        this->thread_handle.detach();
     }
 
     virtual ~FlickerPattern() {
@@ -302,11 +354,13 @@ int main (int argc, char** argv) {
             imagers.push_back(std::make_shared<EventStreamImager>(nh, result_path, cam_name, topic_name));
         } else if (cam_type == "rgb") {
             imagers.push_back(std::make_shared<RGBImager>(nh, result_path, cam_name, topic_name));
+        } else if (cam_type == "vicon") {
+            imagers.push_back(std::make_shared<ViconImager>(nh, result_path, cam_name, topic_name));
         } else {
             std::cout << _red("unknown camera type:\t") << cam_type << std::endl;
         }
 
-        std::cout << _green("Read camera:\t") << cam_name << ":\t" << cam_type << "\t" << topic_name << std::endl;
+        std::cout << _green("Read source:\t") << cam_name << ":\t" << cam_type << "\t" << topic_name << std::endl;
     }
     ifs.close();
 
@@ -316,19 +370,22 @@ int main (int argc, char** argv) {
     }
 
     // Create a flicker pattern
-    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,6,4, 10);
+    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,6,4,10);
     fpattern->stop();
 
+    ros::Time begin, end;
     int code = 0; // Key code
     while (code != 27) {
         code = cv::waitKey(5);
         if (code == 32) {
+            begin = ros::Time::now();
             fpattern->cnte();
             for (auto &i : imagers)
                 i->start_accumulating();
         }
 
         if (code == 115) { // 's'
+            end = ros::Time::now();
             fpattern->stop();
             ros::Duration(0.1).sleep();
             for (auto &i : imagers)
