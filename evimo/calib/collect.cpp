@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <mutex>
 #include <boost/filesystem.hpp>
 #include <X11/Xlib.h>
 
@@ -45,7 +46,7 @@ protected:
     cv::Mat accumulated_image;
 
 public:
-    Imager(std::string root_dir_, std::string name_, std::string topic_, bool headless_ =false)
+    Imager(std::string root_dir_, std::string name_, std::string topic_, bool headless_=false)
         : res_x(0), res_y(0), root_dir(root_dir_), name(name_), topic(topic_)
         , headless(headless_), cnt(0), accumulating(false) {
         this->window_name = this->name + "_" + std::to_string(uid);
@@ -159,6 +160,7 @@ public:
 class EventStreamImager : public Imager {
 protected:
     ros::Rate r;
+    std::mutex mutex;
     std::thread thread_handle;
 
     // Buffer for incoming events (aka 'slice')
@@ -168,7 +170,7 @@ protected:
 public:
     EventStreamImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, float fps_=40)
         : Imager(root_dir_, name_, topic_), r(fps_) {
-        this->sub = nh.subscribe(this->topic, 0,
+        this->sub = nh.subscribe(this->topic, 1,
                                  &EventStreamImager::event_cb<dvs_msgs::EventArray::ConstPtr>, this);
         this->thread_handle = std::thread(&EventStreamImager::vis_spin, this);
         this->thread_handle.detach();
@@ -177,6 +179,7 @@ public:
     // Callbacks
     template<class T>
     void event_cb(const T& msg) {
+        const std::lock_guard<std::mutex> lock(this->mutex);
         for (uint i = 0; i < msg->events.size(); ++i) {
             ull time = msg->events[i].ts.toNSec();
             Event e(msg->events[i].y, msg->events[i].x, time);
@@ -193,6 +196,7 @@ public:
             if (this->accumulating) {
                 img = this->get_accumulated_image();
             } else {
+                const std::lock_guard<std::mutex> lock(this->mutex);
                 img = EventFile::color_time_img(&ev_buffer, 1, this->res_y, this->res_x);
             }
             if (img.cols == 0 || img.rows == 0)
@@ -209,6 +213,7 @@ public:
     }
 
     cv::Mat get_accumulated_image() override {
+        const std::lock_guard<std::mutex> lock(this->mutex);
         double nz_avg = 0;
         uint64_t nz_avg_cnt = 0;
         auto &img = this->accumulated_image;
@@ -370,7 +375,7 @@ int main (int argc, char** argv) {
     }
 
     // Create a flicker pattern
-    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,6,4,10);
+    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,6,4,3);
     fpattern->stop();
 
     ros::Time begin, end;

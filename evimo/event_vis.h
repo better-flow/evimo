@@ -114,7 +114,7 @@ template<class T> cv::Mat EventFile::color_time_img (T *events, int scale, int r
     x_max = std::min(x_max, (uint)res_x);
     y_max = std::min(y_max, (uint)res_y);
 
-    x_min = 0; y_min = 0; x_max = res_x; y_max = res_y;
+    x_min = 0; y_min = 0; x_max = res_x - 1; y_max = res_y - 1;
 
     if ((x_min > x_max) || (y_min > y_max)) {
         return cv::Mat(0, 0, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -131,6 +131,8 @@ template<class T> cv::Mat EventFile::color_time_img (T *events, int scale, int r
 
     double x_shift = - double((x_max - x_min) / 2 + x_min) * double(scale) + double(metric_wsizex) / 2.0;
     double y_shift = - double((y_max - y_min) / 2 + y_min) * double(scale) + double(metric_wsizey) / 2.0;
+    x_shift = 0; y_shift = 0;
+
 
     int ignored = 0, total = 0;
     for (auto &e : *events) {
@@ -145,8 +147,10 @@ template<class T> cv::Mat EventFile::color_time_img (T *events, int scale, int r
 
         float angle = 2 * 3.14 * (double(e.timestamp - t_min) / double(t_max - t_min));
 
-        x += scale / 2;
-        y += scale / 2;
+        if (scale > 1) {
+            x += scale / 2;
+            y += scale / 2;
+        }
 
         for (int jx = x - scale / 2; jx <= x + scale / 2; ++jx) {
             for (int jy = y - scale / 2; jy <= y + scale / 2; ++jy) {
