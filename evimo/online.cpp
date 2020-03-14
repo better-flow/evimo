@@ -61,9 +61,6 @@ protected:
     uint64_t images_received;
     ros::Subscriber sub, event_sub;
 
-    // Buffer for incoming events (aka 'slice')
-    //CircularArray<Event, MAX_SZ, SPAN> ev_buffer;
-
 public:
     RGBCameraVisualizer(ros::NodeHandle &nh, float FPS, std::string topic_, std::string event_topic_)
         : frame(0, 0, 0), r(FPS), topic(topic_), event_topic(event_topic_), images_received(0) {
@@ -94,7 +91,6 @@ public:
         for (uint i = 0; i < msg->events.size(); ++i) {
             ull time = msg->events[i].ts.toNSec();
             Event e(msg->events[i].y, msg->events[i].x, time);
-            //this->ev_buffer.push_back(ev);
             Dataset::event_array.push_back(e);
         }
     }

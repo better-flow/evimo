@@ -14,6 +14,8 @@
 #include <ros/package.h>
 
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <image_transport/image_transport.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
@@ -133,9 +135,15 @@ public:
 
 // Visuzlize and collect frames from regular cameras
 class RGBImager : public Imager {
+protected:
+    std::shared_ptr<image_transport::ImageTransport> it_ptr;
+    image_transport::Publisher img_pub;
+
 public:
     RGBImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_)
         : Imager(root_dir_, name_, topic_) {
+        this->it_ptr = std::make_shared<image_transport::ImageTransport>(nh);
+        this->img_pub = it_ptr->advertise(this->window_name + "/image_raw", 1);
         this->sub = nh.subscribe(this->topic, 0, &RGBImager::frame_cb, this);
     }
 
@@ -152,6 +160,9 @@ public:
         this->res_x = msg->width;
         this->accumulated_image = img;
         cv::imshow(this->window_name, img);
+
+        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+        this->img_pub.publish(img_msg);
     }
 };
 
@@ -167,9 +178,14 @@ protected:
     // 1e8 == 0.1 sec
     CircularArray<Event, 3000000, 100000000> ev_buffer;
 
+    std::shared_ptr<image_transport::ImageTransport> it_ptr;
+    image_transport::Publisher img_pub;
+
 public:
     EventStreamImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, float fps_=40)
         : Imager(root_dir_, name_, topic_), r(fps_) {
+        this->it_ptr = std::make_shared<image_transport::ImageTransport>(nh);
+        this->img_pub = it_ptr->advertise(this->window_name + "/image_raw", 1);
         this->sub = nh.subscribe(this->topic, 1,
                                  &EventStreamImager::event_cb<dvs_msgs::EventArray::ConstPtr>, this);
         this->thread_handle = std::thread(&EventStreamImager::vis_spin, this);
@@ -203,6 +219,9 @@ public:
                 continue;
 
             cv::imshow(this->window_name, img);
+
+            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+            this->img_pub.publish(img_msg);
             r.sleep();
         }
     }
@@ -228,6 +247,8 @@ public:
 
         cv::Mat ret;
         cv::convertScaleAbs(this->accumulated_image, ret, img_scale, 0);
+        std::vector<cv::Mat> ch = {ret, ret, ret};
+        cv::merge(ch, ret);
         return ret;
     }
 
