@@ -312,15 +312,15 @@ class FlickerCheckerBoard : public FlickerPattern {
 public:
     FlickerCheckerBoard(int px_w_, int py_w_, int nx_, int ny_, float fps, std::string n="checkerboard")
         : FlickerPattern(fps, n) {
-        this->res_x = px_w_ * (nx_ + 1);
-        this->res_y = py_w_ * (ny_ + 1);
-        this->pattern = cv::Mat::zeros(this->res_y, this->res_x, CV_8U);
+        this->res_x = px_w_ * (nx_ + 1) + px_w_;
+        this->res_y = py_w_ * (ny_ + 1) + py_w_;
+        this->pattern = cv::Mat::ones(this->res_y, this->res_x, CV_8U) * 255;
         for (int i = 0; i < nx_ + 1; ++i) {
             for (int j = 0; j < ny_ + 1; ++j) {
                 if ((i + j) % 2 == 0) continue;
                 for (int k = i * px_w_; k < (i + 1) * px_w_; ++k) {
                     for (int l = j * py_w_; l < (j + 1) * py_w_; ++l) {
-                        this->pattern.at<uint8_t>(l, k) = 255;
+                        this->pattern.at<uint8_t>(l + py_w_ / 2, k + px_w_ / 2) = 0;
                     }
                 }
             }
@@ -396,7 +396,7 @@ int main (int argc, char** argv) {
     }
 
     // Create a flicker pattern
-    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,6,4,3);
+    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,7,5,5);
     fpattern->stop();
 
     ros::Time begin, end;
