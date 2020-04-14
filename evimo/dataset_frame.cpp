@@ -2,7 +2,7 @@
 #include <event_vis.h>
 #include <dataset.h>
 
-cv::Mat DatasetFrame::get_visualization_event_projection(bool timg) {
+cv::Mat DatasetFrame::get_visualization_event_projection(bool timg, bool nodist) {
     cv::Mat img;
     if (Dataset::event_array.size() == 0)
         return cv::Mat(this->depth.rows, this->depth.cols, CV_8U, cv::Scalar(0));
@@ -16,12 +16,15 @@ cv::Mat DatasetFrame::get_visualization_event_projection(bool timg) {
             img = EventFile::projection_img(&ev_slice, 1, Dataset::res_x, Dataset::res_y);
         }
     }
+
+    if (nodist)
+        img = Dataset::undistort(img);
     return img;
 }
 
-cv::Mat DatasetFrame::get_visualization_depth(bool overlay_events) {
+cv::Mat DatasetFrame::get_visualization_depth(bool overlay_events, bool nodist) {
     auto depth_img = this->depth;
-    cv::Mat img_pr = this->get_visualization_event_projection();
+    cv::Mat img_pr = this->get_visualization_event_projection(false, nodist);
     auto ret = cv::Mat(depth_img.rows, depth_img.cols, CV_8UC3, cv::Scalar(0, 0, 0));
     cv::Mat mask;
     cv::threshold(depth_img, mask, 0.01, 255, cv::THRESH_BINARY);
@@ -37,13 +40,18 @@ cv::Mat DatasetFrame::get_visualization_depth(bool overlay_events) {
                 ret.at<cv::Vec3b>(i, j)[2] = img_pr.at<uint8_t>(i, j);
         }
     }
+
     return ret;
 }
 
-cv::Mat DatasetFrame::get_visualization_mask(bool overlay_events) {
+cv::Mat DatasetFrame::get_visualization_mask(bool overlay_events, bool nodist) {
     auto mask_img = this->mask;
-    auto rgb_img  = this->img;
-    cv::Mat img_pr = this->get_visualization_event_projection();
+    auto rgb_img  = this->img.clone();
+
+    if (nodist)
+        rgb_img = Dataset::undistort(rgb_img);
+
+    cv::Mat img_pr = this->get_visualization_event_projection(false, nodist);
     auto ret = cv::Mat(mask_img.rows, mask_img.cols, CV_8UC3, cv::Scalar(0, 0, 0));
     for(int i = 0; i < mask_img.rows; ++i) {
         for (int j = 0; j < mask_img.cols; ++j) {
@@ -64,6 +72,7 @@ cv::Mat DatasetFrame::get_visualization_mask(bool overlay_events) {
                 ret.at<cv::Vec3b>(i, j)[2] = img_pr.at<uint8_t>(i, j);
         }
     }
+
     return ret;
 }
 

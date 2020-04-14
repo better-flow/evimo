@@ -74,6 +74,9 @@ public:
         std::pair<uint64_t, uint64_t> idx_pair;
         idx_pair.first  = this->find_nearest(this->time_bounds.first,  hint.first);
         idx_pair.second = this->find_nearest(this->time_bounds.second, hint.second);
+        if (idx_pair.second < idx_pair.first) {
+            idx_pair.first = idx_pair.second;
+        }
         this->set_indices(idx_pair);
     }
 

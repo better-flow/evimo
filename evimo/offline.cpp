@@ -52,12 +52,19 @@ protected:
     std::vector<DatasetFrame> *frames;
     int frame_id;
 
+    TjPlot plotter; // plot trajectories
+
 public:
     FrameSequenceVisualizer(std::vector<DatasetFrame> &frames)
-        : frame_id(0) {
+        : frame_id(0), plotter("Trajectories", 4000, 800) {
         std::cout << "Frame Sequence Visuzlizer...\n";
         this->frames = &frames;
         //this->frame_id = this->frames->size() / 2;
+
+        this->plotter.add_trajectory_plot(Dataset::cam_tj);
+        for (auto &tj : Dataset::obj_tjs)
+            this->plotter.add_trajectory_plot(tj.second);
+
         this->spin();
     }
 
@@ -76,6 +83,7 @@ public:
         Dataset::init_GUI();
         const uint8_t nmodes = 4;
         uint8_t vis_mode = 0;
+        bool nodist = true;
 
         bool enable_3D = false;
         std::shared_ptr<Backprojector> bp;
@@ -104,27 +112,21 @@ public:
             Dataset::modified = false;
 
             auto &f = this->frames->at(this->frame_id);
-            f.generate();
+            f.generate(nodist);
 
             cv::Mat img;
             switch (vis_mode) {
                 default:
-                case 0: img = f.get_visualization_mask(true); break;
-                case 1: img = f.get_visualization_mask(false); break;
-                case 2: img = f.get_visualization_depth(true); break;
-                case 3: img = f.get_visualization_event_projection(true); break;
+                case 0: img = f.get_visualization_mask(true, nodist); break;
+                case 1: img = f.get_visualization_mask(false, nodist); break;
+                case 2: img = f.get_visualization_depth(true, nodist); break;
+                case 3: img = f.get_visualization_event_projection(true, nodist); break;
             }
 
             cv::imshow("Frames", img);
 
-            auto plot = plot_trajectory(Dataset::cam_tj, 2000, 400, f.get_timestamp());
-            for (auto &tj : Dataset::obj_tjs) {
-                auto obj_plot = plot_trajectory(tj.second, 2000, 400, f.get_timestamp());
-                cv::Mat arr[] = {plot, obj_plot};
-                cv::vconcat(arr, 2, plot);
-            }
-
-            cv::imshow("Trajectories", plot);
+            this->plotter.add_vertical(f.get_timestamp());
+            this->plotter.show();
 
             if (enable_3D && !bp) {
                 bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.4, 200);

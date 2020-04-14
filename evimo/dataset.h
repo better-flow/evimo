@@ -178,12 +178,12 @@ public:
         }
 
         if (code == 91) { // '['
-            Dataset::slice_width = std::max(0.0, Dataset::slice_width - 0.005);
+            Dataset::slice_width = std::max(0.0, Dataset::slice_width - 0.002);
             Dataset::modified = true;
         }
 
         if (code == 93) { // ']'
-            Dataset::slice_width += 0.005;
+            Dataset::slice_width += 0.002;
             Dataset::modified = true;
         }
 

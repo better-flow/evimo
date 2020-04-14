@@ -50,11 +50,17 @@ public:
             cv::namedWindow(window_names[frame_ptr], cv::WINDOW_NORMAL);
         }
 
+        TjPlot plotter("Trajectories", 2000, 400);
+        plotter.add_trajectory_plot(Dataset::cam_tj);
+        for (auto &tj : Dataset::obj_tjs)
+            plotter.add_trajectory_plot(tj.second);
+
         Dataset::modified = true;
         Dataset::init_GUI();
         const uint8_t nmodes = 3;
         uint8_t vis_mode = 0;
 
+        bool nodist = true;
         int code = 0; // Key code
         while (code != 27) {
             code = cv::waitKey(1);
@@ -64,7 +70,7 @@ public:
             Dataset::modified = false;
 
             for (auto &window : window_names) {
-                window.first->generate_async();
+                window.first->generate_async(nodist);
             }
 
             for (auto &window : window_names) {
@@ -73,17 +79,17 @@ public:
                 cv::Mat img;
                 switch (vis_mode) {
                     default:
-                    case 0: img = window.first->get_visualization_mask(true); break;
-                    case 1: img = window.first->get_visualization_mask(false); break;
-                    case 2: img = window.first->get_visualization_depth(true); break;
-                    case 3: img = window.first->get_visualization_event_projection(true); break;
+                    case 0: img = window.first->get_visualization_mask(true, nodist); break;
+                    case 1: img = window.first->get_visualization_mask(false, nodist); break;
+                    case 2: img = window.first->get_visualization_depth(true, nodist); break;
+                    case 3: img = window.first->get_visualization_event_projection(true, nodist); break;
                 }
 
+                plotter.add_vertical(window.first->get_timestamp());
                 cv::imshow(window.second, img);
             }
 
-            auto plot = plot_trajectory(Dataset::cam_tj, 800, 200);
-            cv::imshow("Trajectories", plot);
+            plotter.show();
         }
 
         for (auto &frame_ptr : DatasetFrame::visualization_list) {
@@ -238,9 +244,9 @@ public:
     }
 
     // Visualization helpers
-    cv::Mat get_visualization_event_projection(bool timg = false);
-    cv::Mat get_visualization_depth(bool overlay_events = true);
-    cv::Mat get_visualization_mask(bool overlay_events = true);
+    cv::Mat get_visualization_event_projection(bool timg = false, bool nodist = false);
+    cv::Mat get_visualization_depth(bool overlay_events = true, bool nodist = false);
+    cv::Mat get_visualization_mask(bool overlay_events = true, bool nodist = false);
 
     // Writeout functions
     std::string as_dict() {
@@ -326,6 +332,9 @@ protected:
         if (cl->size() == 0)
             return;
 
+        this->depth = cv::Mat(this->depth.rows, this->depth.cols, CV_32F, cv::Scalar(0));
+        this->mask  = cv::Mat(this->mask.rows, this->mask.cols, CV_8U, cv::Scalar(0));
+
         for (auto &p: *cl) {
             float rng = p.z;
             if (rng < 0.001)
@@ -346,8 +355,8 @@ protected:
 
             int patch_size = 1;//int(1.0 / rng);
 
-            if (oid == 0)
-                patch_size = int(5.0 / rng);
+            //if (oid == 0)
+            //    patch_size = int(5.0 / rng);
 
             int u_lo = std::max(u - patch_size / 2, 0);
             int u_hi = std::min(u + patch_size / 2, rows - 1);
@@ -356,10 +365,8 @@ protected:
 
             for (int ii = u_lo; ii <= u_hi; ++ii) {
                 for (int jj = v_lo; jj <= v_hi; ++jj) {
-                    float base_rng = this->depth.at<float>(rows - ii - 1, cols - jj - 1);
+                    float base_rng = this->depth.at<float>(ii, jj);
                     if (base_rng > rng || base_rng < 0.001) {
-                        //this->depth.at<float>(rows - ii - 1, cols - jj - 1) = rng;
-                        //this->mask.at<uint8_t>(rows - ii - 1, cols - jj - 1) = oid;
                         this->depth.at<float>(ii, jj) = rng;
                         this->mask.at<uint8_t>(ii, jj) = oid;
                     }

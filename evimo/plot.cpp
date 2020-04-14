@@ -2,20 +2,10 @@
 
 
 
-void rotation2global(std::valarray<float> &arr) {
-    auto last_val = arr[0];
-    for (size_t i = 1; i < arr.size(); ++i) {
-        auto cnt = std::round((last_val - arr[i]) / (2 * M_PI));
-        arr[i] += cnt * 2 * M_PI;
-        last_val = arr[i];
-    }
-}
-
-
 //cv::Mat plot_erate(, int res_x, int res_y, float t0) {
 
 
-cv::Mat plot_trajectory(Trajectory &tj, int res_x, int res_y, float t0) {
+void TjPlot::add_trajectory_plot(Trajectory &tj) {
     auto n_pts = tj.size();
     std::valarray<float> t(n_pts);
     std::valarray<float> x(n_pts);
@@ -37,11 +27,10 @@ cv::Mat plot_trajectory(Trajectory &tj, int res_x, int res_y, float t0) {
         ry[i] = -R[2];
     }
 
-    auto t_rng = t[t.size() - 1] - t[0];
-    t -= t[0];
-    t *= float(res_x) / t_rng;
-    t0 -= t[0];
-    t0 *= float(res_x) / t_rng;
+    if (this->t_rng < 0)
+        this->t_rng = t[t.size() - 1];
+
+    t *= float(this->res_x) / this->t_rng;
 
     x -= x[0];
     y -= y[0];
@@ -50,9 +39,9 @@ cv::Mat plot_trajectory(Trajectory &tj, int res_x, int res_y, float t0) {
     rp -= rp[0];
     ry -= ry[0];
 
-    rotation2global(rr);
-    rotation2global(rp);
-    rotation2global(ry);
+    this->rotation2global(rr);
+    this->rotation2global(rp);
+    this->rotation2global(ry);
 
     auto lo_T = std::min({x.min(), y.min(), z.min()});
     auto hi_T = std::max({x.max(), y.max(), z.max()});
@@ -69,12 +58,12 @@ cv::Mat plot_trajectory(Trajectory &tj, int res_x, int res_y, float t0) {
 
     float frame = 10;
 
-    x *= (float(res_y / 2) - 2 * frame) / (hi_T - lo_T);
-    y *= (float(res_y / 2) - 2 * frame) / (hi_T - lo_T);
-    z *= (float(res_y / 2) - 2 * frame) / (hi_T - lo_T);
-    rr *= (float(res_y / 2) - 2 * frame) / (hi_R - lo_R);
-    rp *= (float(res_y / 2) - 2 * frame) / (hi_R - lo_R);
-    ry *= (float(res_y / 2) - 2 * frame) / (hi_R - lo_R);
+    x *= (float(this->res_y / 2) - 2 * frame) / (hi_T - lo_T);
+    y *= (float(this->res_y / 2) - 2 * frame) / (hi_T - lo_T);
+    z *= (float(this->res_y / 2) - 2 * frame) / (hi_T - lo_T);
+    rr *= (float(this->res_y / 2) - 2 * frame) / (hi_R - lo_R);
+    rp *= (float(this->res_y / 2) - 2 * frame) / (hi_R - lo_R);
+    ry *= (float(this->res_y / 2) - 2 * frame) / (hi_R - lo_R);
     x += frame;
     y += frame;
     z += frame;
@@ -82,12 +71,17 @@ cv::Mat plot_trajectory(Trajectory &tj, int res_x, int res_y, float t0) {
     rp += frame;
     ry += frame;
 
-    rr += res_y / 2;
-    rp += res_y / 2;
-    ry += res_y / 2;
+    rr += this->res_y / 2;
+    rp += this->res_y / 2;
+    ry += this->res_y / 2;
 
-    auto ret = cv::Mat(res_y, res_x, CV_8UC3, cv::Scalar(255, 255, 255));
+    auto ret = cv::Mat(this->res_y, this->res_x, CV_8UC3, cv::Scalar(255, 255, 255));
     for (size_t i = 1; i < t.size(); ++i) {
+        if (t[i] >= this->res_x) {
+            std::cout << "t is out or plot range";
+            continue;
+        }
+
         cv::line(ret, {t[i-1], x[i-1]}, {t[i], x[i]},   cv::Scalar(0xb4, 0x77, 0x1f), 2, CV_AA);
         cv::line(ret, {t[i-1], y[i-1]}, {t[i], y[i]},   cv::Scalar(0x0e, 0x7f, 0xff), 2, CV_AA);
         cv::line(ret, {t[i-1], z[i-1]}, {t[i], z[i]},   cv::Scalar(0x2c, 0xa0, 0x2c), 2, CV_AA);
@@ -96,13 +90,7 @@ cv::Mat plot_trajectory(Trajectory &tj, int res_x, int res_y, float t0) {
         cv::line(ret, {t[i-1], ry[i-1]}, {t[i], ry[i]}, cv::Scalar(0xcf, 0xbe, 0x17), 2, CV_AA);
     }
 
-    cv::line(ret, {10, res_y / 2}, {res_x - 10, res_y / 2}, cv::Scalar(127, 127, 127));
-
-    if(t0 >= 0) {
-        cv::line(ret, {t0, frame}, {t0, res_y - frame}, cv::Scalar(0, 0, 255));
-    }
-
-    return ret;
+    cv::line(ret, {10, this->res_y / 2}, {this->res_x - 10, this->res_y / 2}, cv::Scalar(127, 127, 127));
+    this->plots.push_back(ret);
+    this->plots_cache.push_back(ret.clone());
 }
-
-
