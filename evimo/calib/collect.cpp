@@ -159,9 +159,10 @@ public:
         this->res_y = msg->height;
         this->res_x = msg->width;
         this->accumulated_image = img.clone();
-        cv::imshow(this->window_name, img);
+        cv::imshow(this->window_name, this->accumulated_image);
+        //cv::waitKey(1);
 
-        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->accumulated_image).toImageMsg();
         this->img_pub.publish(img_msg);
     }
 };
@@ -173,6 +174,7 @@ protected:
     ros::Rate r;
     std::mutex mutex;
     std::thread thread_handle;
+    cv::Mat vis_img;
 
     // Buffer for incoming events (aka 'slice')
     // 1e8 == 0.1 sec
@@ -217,10 +219,12 @@ public:
             }
             if (img.cols == 0 || img.rows == 0)
                 continue;
+            this->vis_img = img.clone();
 
-            cv::imshow(this->window_name, img);
+            cv::imshow(this->window_name, this->vis_img);
+            //cv::waitKey(1);
 
-            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->vis_img).toImageMsg();
             this->img_pub.publish(img_msg);
             r.sleep();
         }
@@ -399,7 +403,7 @@ int main (int argc, char** argv) {
     }
 
     // Create a flicker pattern
-    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,7,5,5);
+    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,13,6,5);
     fpattern->stop();
 
     ros::Time begin, end;
