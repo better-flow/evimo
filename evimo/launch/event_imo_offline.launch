@@ -2,14 +2,16 @@
 
 <launch>
   <arg name="output_type"    default="screen"/>
-  <arg name="folder"         default=""/>
+  <arg name="camera_name"    default="none"/>
+  <arg name="folder"         default="none"/>
   <arg name="fps"            default="40"/>
-  <arg name="smoothing"      default="1"/>
+  <arg name="show"           default="-2"/>
 
-  <node pkg="evimo" name="evimo" type="evimo" output="$(arg output_type)" respawn="false" required="true">
+  <node pkg="evimo" name="evimo_vis_offline" type="datagen_offline" output="$(arg output_type)" respawn="false" required="true">
     <param name="folder"         value="$(arg folder)"/>
+    <param name="camera_name"    value="$(arg camera_name)"/>
     <param name="fps"            value="$(arg fps)"/>
-    <param name="smoothing"      value="$(arg smoothing)"/>
+    <param name="show"           value="$(arg show)"/>
   </node>
 
   <!-- Start rviz visualization with preset config -->

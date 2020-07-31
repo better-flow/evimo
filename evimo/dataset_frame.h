@@ -160,19 +160,6 @@ public:
         return Pose(cam_tf.ts, obj_tf);
     }
 
-/*
-    TODO: Need to define a frame in which to report!
-    Pose get_object_velocity(int id) {
-        auto vel = Dataset::obj_tjs.at(id).get_velocity(this->obj_pose_ids.at(id));
-        //auto cam_pose = get_true_camera_pose();
-        //cam_pose.setT({0, 0, 0});
-        //auto l = get_object_pose_cam_frame(id).pq.inverse() * cam_pose.pq;
-        //vel.pq = l.inverse() * vel.pq * l;
-        vel.pq = get_object_pose_cam_frame(id).pq.inverse() * vel.pq;
-        return vel;
-    }
-*/
-
     float get_timestamp() {
         return this->timestamp - Dataset::get_time_offset_pose_to_host_correction();
     }
