@@ -144,7 +144,7 @@ public:
         : Imager(root_dir_, name_, topic_) {
         this->it_ptr = std::make_shared<image_transport::ImageTransport>(nh);
         this->img_pub = it_ptr->advertise(this->window_name + "/image_raw", 1);
-        this->sub = nh.subscribe(this->topic, 0, &RGBImager::frame_cb, this);
+        this->sub = nh.subscribe(this->topic, 1, &RGBImager::frame_cb, this);
     }
 
     void frame_cb(const sensor_msgs::ImageConstPtr& msg) {
@@ -158,10 +158,11 @@ public:
         }
         this->res_y = msg->height;
         this->res_x = msg->width;
-        this->accumulated_image = img;
-        cv::imshow(this->window_name, img);
+        this->accumulated_image = img.clone();
+        cv::imshow(this->window_name, this->accumulated_image);
+        //cv::waitKey(1);
 
-        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->accumulated_image).toImageMsg();
         this->img_pub.publish(img_msg);
     }
 };
@@ -173,10 +174,11 @@ protected:
     ros::Rate r;
     std::mutex mutex;
     std::thread thread_handle;
+    cv::Mat vis_img;
 
     // Buffer for incoming events (aka 'slice')
     // 1e8 == 0.1 sec
-    CircularArray<Event, 3000000, 100000000> ev_buffer;
+    CircularArray<Event, 1000000, 50000000> ev_buffer;
 
     std::shared_ptr<image_transport::ImageTransport> it_ptr;
     image_transport::Publisher img_pub;
@@ -217,10 +219,12 @@ public:
             }
             if (img.cols == 0 || img.rows == 0)
                 continue;
+            this->vis_img = img.clone();
 
-            cv::imshow(this->window_name, img);
+            cv::imshow(this->window_name, this->vis_img);
+            //cv::waitKey(1);
 
-            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", img).toImageMsg();
+            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->vis_img).toImageMsg();
             this->img_pub.publish(img_msg);
             r.sleep();
         }
@@ -285,8 +289,8 @@ public:
     }
 
     virtual void stop() {
+        // maybe should add a mutex here
         this->paused = true;
-        cv::imshow(this->window_name, this->pattern);
     }
 
     virtual void cnte() {this->paused = false;}
@@ -300,9 +304,12 @@ private:
             }
 
             cv::imshow(this->window_name, this->pattern);
+            cv::waitKey(1);
             r.sleep();
-            if (!this->paused)
+            if (!this->paused) {
                 cv::imshow(this->window_name, cv::Mat::zeros(this->res_y, this->res_x, CV_8U));
+                cv::waitKey(1);
+            }
         }
     }
 };
@@ -314,10 +321,10 @@ public:
         : FlickerPattern(fps, n) {
         this->res_x = px_w_ * (nx_ + 1) + px_w_;
         this->res_y = py_w_ * (ny_ + 1) + py_w_;
-        this->pattern = cv::Mat::ones(this->res_y, this->res_x, CV_8U) * 255;
+        this->pattern = cv::Mat::ones(this->res_y, this->res_x, CV_8U) * 190;
         for (int i = 0; i < nx_ + 1; ++i) {
             for (int j = 0; j < ny_ + 1; ++j) {
-                if ((i + j) % 2 == 0) continue;
+                if ((i + j) % 2 == 1) continue;
                 for (int k = i * px_w_; k < (i + 1) * px_w_; ++k) {
                     for (int l = j * py_w_; l < (j + 1) * py_w_; ++l) {
                         this->pattern.at<uint8_t>(l + py_w_ / 2, k + px_w_ / 2) = 0;
@@ -396,7 +403,7 @@ int main (int argc, char** argv) {
     }
 
     // Create a flicker pattern
-    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,7,5,5);
+    std::shared_ptr<FlickerPattern> fpattern = std::make_shared<FlickerCheckerBoard>(40,40,13,6,5);
     fpattern->stop();
 
     ros::Time begin, end;
@@ -413,7 +420,8 @@ int main (int argc, char** argv) {
         if (code == 115) { // 's'
             end = ros::Time::now();
             fpattern->stop();
-            ros::Duration(0.1).sleep();
+            ros::Duration(0.3).sleep();
+            ros::spinOnce();
             for (auto &i : imagers)
                 i->save();
         }
