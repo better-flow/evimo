@@ -2,3 +2,4 @@
 #objects/toy_plane
 objects/cup
 objects/wand
+objects/checkerboard

@@ -619,6 +619,10 @@ public:
     }
 
     static cv::Mat undistort(cv::Mat &img) {
+        if (img.rows == 0 or img.cols == 0) {
+            return img;
+        }
+
         cv::Mat ret;
         cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
 
