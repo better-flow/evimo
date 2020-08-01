@@ -126,7 +126,15 @@ public:
         this->ofile << this->cnt << " "
                     << p.position.x << " " << p.position.y << " " << p.position.z << " "
                     << p.orientation.x << " " << p.orientation.y << " " << p.orientation.z
-                    << " " << p.orientation.w << "\n";
+                    << " " << p.orientation.w << "";
+
+        auto &markers = p.markers;
+        for (auto &marker : markers) {
+            this->ofile << " | {'" << marker.name << "': '"
+                        << marker.position.x << " " << marker.position.y << " " << marker.position.z << "'}";
+        }
+        this->ofile << "\n";
+
         this->ofile.flush();
         this->cnt += 1;
     }
