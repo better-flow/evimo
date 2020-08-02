@@ -136,7 +136,7 @@ class Camera:
         self.dist_model = calib['distortion_model']
         self.tgt_rows = target['targetRows']
         self.tgt_cols = target['targetCols']
-        print(self.name, ':\n', self.K, '\n', self.D, '\n', self.dist_model, '\n')
+        print (self.name, ':\n', self.K, '\n', self.D, '\n', self.dist_model, '\n')
 
         self.objp = np.zeros((self.tgt_cols * self.tgt_rows, 3), np.float32)
         self.objp[:,:2] = np.mgrid[0:self.tgt_cols,0:self.tgt_rows].T.reshape(-1,2)
@@ -147,6 +147,7 @@ class Camera:
         fnames = glob.glob(self.name + '/*.png')
         ts = [int(os.path.basename(fname).split('.')[0]) for fname in fnames]
         fnames = [n for _, n in sorted(zip(ts,fnames))]
+        print (fnames)
 
         for fname in fnames:
             img = cv2.imread(fname)
@@ -154,13 +155,11 @@ class Camera:
             if (self.dist_model == 'radtan'):
                 img = cv2.undistort(img, self.K, self.D, None, self.K)
             elif (self.dist_model == 'equidistant'):
-                img = cv2.fishye.undistort(img, self.K, self.D, None, self.K)
+                img = cv2.fisheye.undistortImage(img, self.K, self.D, None, self.K)
             else:
                 print("Unknown undistortion model!")
 
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            gray = 255 - gray
-
             self.images.append(gray)
 
         self.img_R = []
@@ -215,7 +214,7 @@ class Camera:
 
 
 target = yaml.load(open('target.yaml'), Loader=yaml.FullLoader)
-calib  = yaml.load(open('camchain-img.yaml'), Loader=yaml.FullLoader)
+calib  = yaml.load(open('camchain-output.yaml'), Loader=yaml.FullLoader)
 rig_p = RigPoses('rig_0_poses.txt')
 for id_ in calib.keys():
     cam = Camera(calib[id_], target)

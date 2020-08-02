@@ -314,11 +314,24 @@ public:
         if (subject.occluded)
             std::cout << "Computing cloud_to_vicon_tf on occluded vicon track!" << std::endl;
 
-        if (this->no_mesh)
-            return;
+        //if (this->no_mesh)
+        //    return;
+
+        auto &markers = subject.markers;
+        if (this->no_mesh) {
+            this->obj_markerpos->clear();
+            this->obj_cloud->clear();
+            for (auto &marker : markers) {
+                pcl::PointXYZRGB p;
+                p.x = marker.position.x;
+                p.y = marker.position.y;
+                p.z = marker.position.z;
+                this->obj_markerpos->push_back(p);
+                this->obj_cloud->push_back(p);
+            }
+        }
 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr target(new pcl::PointCloud<pcl::PointXYZRGB>);
-        auto &markers = subject.markers;
         for (auto &marker : markers) {
             pcl::PointXYZRGB p;
             p.x = marker.position.x;

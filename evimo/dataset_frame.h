@@ -199,7 +199,7 @@ public:
 
         // Generate mask and depth
         for (auto &obj : Dataset::clouds) {
-            if (obj.second->has_no_mesh()) continue;
+            //if (obj.second->has_no_mesh()) continue;
             auto id = obj.first;
             Dataset::obj_tjs.at(id).set_filtering_window_size(Dataset::pose_filtering_window);
             this->obj_pose_ids[id] = TimeSlice(Dataset::obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
