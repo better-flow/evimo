@@ -69,10 +69,16 @@ class RigPoses:
 
         u0 = np.array(u0_arr)
         u1 = np.array(u1_arr)
-        w = np.array(w_arr)
+        w = np.array(w_arr)# * 0 + 1
         w /= np.linalg.norm(w)
 
         R, rmsd = Rotation.align_vectors(u0, u1, weights=w)
+        uerr = np.linalg.norm(u0 - (R.as_dcm() @ u1.transpose()).transpose(), axis=1)
+        merr = np.median(uerr)
+        print("Initial R:", R.as_euler('xyz'), "; median error:", merr)
+        w[uerr > merr] = 0
+        R, rmsd = Rotation.align_vectors(u0, u1, weights=w)
+        print("Refined R:", R.as_euler('xyz'))
 
         a = np.zeros(shape=(0,3), dtype=np.float)
         b = np.zeros(shape=(0,1), dtype=np.float)
@@ -93,6 +99,7 @@ class RigPoses:
         print()
         print("x-y-z-R-P-Y:")
         print(np.hstack((T.transpose()[0], R.as_euler('xyz'))))
+        return R.as_dcm(), T
 
 
     # get R and T of the camera at time t=t1 in the frame of camera at t=t0
@@ -104,10 +111,10 @@ class RigPoses:
         R0_inv = R0.inv()
         R = R1 * R0_inv # '*' instead of '@' because not numpy matrices
 
-        #T = np.expand_dims(R0.apply((T1 - T0).transpose()[0]), axis=0).transpose()
         T = np.expand_dims(R1.apply((T0 - T1).transpose()[0]), axis=0).transpose()
         if (dcm): R = R.as_dcm()
         return R, T
+
 
     def q2rpy(self, q):
         w = q[0]
@@ -126,7 +133,7 @@ class RigPoses:
 
 
 class Camera:
-    def __init__(self, calib, target):
+    def __init__(self, calib, target, cb_config=None):
         self.name = calib['rostopic'].split('/')[1]
         K = calib['intrinsics']
         self.K = np.array([[K[0],0,K[2]],[0,K[1],K[3]],[0,0,1]], dtype=np.float32)
@@ -146,10 +153,10 @@ class Camera:
         self.images = []
         fnames = glob.glob(self.name + '/*.png')
         ts = [int(os.path.basename(fname).split('.')[0]) for fname in fnames]
-        fnames = [n for _, n in sorted(zip(ts,fnames))]
-        print (fnames)
+        self.fnames = [n for _, n in sorted(zip(ts,fnames))]
+        print (self.fnames)
 
-        for fname in fnames:
+        for fname in self.fnames:
             img = cv2.imread(fname)
 
             if (self.dist_model == 'radtan'):
@@ -164,6 +171,12 @@ class Camera:
 
         self.img_R = []
         self.img_T = []
+        self.compute_relative_RT(cb_config)
+
+    def compute_relative_RT(self, cb_config=None):
+        self.img_R = []
+        self.img_T = []
+        self.marker_points = []
         for i, img in enumerate(self.images):
             ret, corners = cv2.findChessboardCorners(img, (self.tgt_cols, self.tgt_rows), None)
             if (not ret):
@@ -173,7 +186,7 @@ class Camera:
             img_vis = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
             criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-            corners = cv2.cornerSubPix(img, corners, (11,11), (-1,-1), criteria)
+            corners = cv2.cornerSubPix(img, corners, (2,2), (-1,-1), criteria)
             ret_, rvecs, tvecs = cv2.solvePnP(self.objp, corners, self.K, np.zeros(4))
 
             R,_ = cv2.Rodrigues(rvecs)
@@ -181,20 +194,29 @@ class Camera:
             self.img_R.append(R)
             self.img_T.append(tvecs)
 
-            print ("Added", fnames[i])
+            if (cb_config is not None):
+                p_, _ = cv2.projectPoints(cb_config.reshape(-1,3), rvecs, tvecs, self.K, np.zeros(4))
+                p_int = p_.reshape(-1,2).astype(np.int32)
+                img_vis[p_int[:,1], p_int[:,0]] = np.array([0,0,255])
+                self.marker_points.append(p_.reshape(-1,2))
+
+            print ("Added", self.fnames[i])
             continue
 
-            axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
+            cv2.namedWindow('img', cv2.WINDOW_GUI_EXPANDED)
+            axis = np.float32([[6,0,0], [0,6,0], [0,0,-3]]).reshape(-1,3) * target['rowSpacingMeters']
             imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, self.K, np.zeros(4))
             corner = tuple(corners[0].ravel())
-            img_vis = cv2.line(img_vis, corner, tuple(imgpts[0].ravel()), (0,0,255), 5)
-            img_vis = cv2.line(img_vis, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
-            img_vis = cv2.line(img_vis, corner, tuple(imgpts[2].ravel()), (255,0,0), 5)
-
+            img_vis = cv2.line(img_vis, corner, tuple(imgpts[0].ravel()), (0,0,255), 1)
+            img_vis = cv2.line(img_vis, corner, tuple(imgpts[1].ravel()), (0,255,0), 1)
+            img_vis = cv2.line(img_vis, corner, tuple(imgpts[2].ravel()), (255,0,0), 1)
             img_vis = cv2.drawChessboardCorners(img_vis, (self.tgt_cols, self.tgt_rows), corners, ret)
 
             cv2.imshow('img', img_vis)
             cv2.waitKey(0)
+            #break
+        self.marker_points = np.array(self.marker_points, dtype=np.float32)
+
 
     def get_Rt(self, i0, i1, dcm=False):
         T0 = self.img_T[i0]
@@ -212,13 +234,136 @@ class Camera:
         return R, T
 
 
+    def plot_3d_markers(self, fname, rig, R, T):
+        Rt = np.array([[ 0.66311942, -0.51381591,  0.54430309],
+             [-0.74838454, -0.44161449,  0.49487092],
+             [-0.01390042, -0.73550653, -0.67737502]])
+        Tt = np.array([[0.02214107], [-0.00067327], [-0.03020277]])
+
+        R = np.array([[ 0.6650224,  -0.51521156,  0.54064984],
+                      [-0.7467138,  -0.44630921,  0.49318009],
+                      [-0.01279508, -0.7316865,  -0.6815212 ]])
+        T = np.array([[-0.02110721], [ 0.00434272], [-0.03105385]])
+
+
+        f = open(fname, 'r')
+        marker_poses = []
+        for line in f.readlines():
+            markers = line.split('|')[1:]
+            pose_list = []
+            for marker in markers:
+                d = eval(marker)
+                name = list(d.keys())[0]
+                spl = d[name].split(' ')
+                xyz = np.array([float(spl[0]), float(spl[1]), float(spl[2])])
+                pose_list.append(xyz)
+            marker_poses.append(pose_list)
+        marker_poses = np.array(marker_poses)
+
+        cv2.namedWindow('img', cv2.WINDOW_GUI_EXPANDED)
+        for i, img in enumerate(self.images):
+            img_vis = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+            R_cam = Rotation.from_euler('xyz', rig.RPY[i], degrees=False)
+            T_cam = rig.T[i]
+
+            X1 = R_cam.as_dcm() @ (marker_poses[i].transpose() - T_cam)
+            #X2 = np.linalg.inv(R) @ (X1 - T)
+            X2 = np.linalg.inv(R) @ X1 + T
+
+            p_ = self.K @ X2
+            px = p_[0] / p_[2]
+            py = p_[1] / p_[2]
+
+            # plot
+            px = px.astype(np.int32)
+            py = py.astype(np.int32)
+            mask = (px >= 0) & (py >= 0)
+            mask &= (px < img_vis.shape[1]) & (py < img_vis.shape[0])
+            px = px[mask]
+            py = py[mask]
+
+            img_vis[py, px] = np.array([0, 0, 255])
+
+            cv2.imshow('img', img_vis)
+            cv2.waitKey(0)
+
+            #break
+
+    def calibrate_3d(self, fname, rig):
+        f = open(fname, 'r')
+        marker_poses = []
+        for line in f.readlines():
+            markers = line.split('|')[1:]
+            pose_list = []
+            for i, marker in enumerate(markers):
+                d = eval(marker)
+                name = list(d.keys())[0]
+                spl = d[name].split(' ')
+                xyz = np.array([float(spl[0]), float(spl[1]), float(spl[2])])
+                pose_list.append(xyz)
+                if (i >= 2): break
+
+            marker_poses.append(pose_list)
+        marker_poses = np.array(marker_poses, dtype=np.float32)
+
+        p3d = []
+        for i, img in enumerate(self.images):
+            R_cam = Rotation.from_euler('xyz', rig.RPY[i], degrees=False)
+            T_cam = rig.T[i]
+
+            X1 = R_cam.as_dcm() @ (marker_poses[i].transpose() - T_cam)
+            p3d.append(X1.transpose())
+        p3d = np.array(p3d, dtype=np.float32)
+        #p3d = p3d[:,0,:]
+        #self.marker_points = self.marker_points[:,0,:]
+
+        p3d = np.array(p3d).reshape(-1, 3).astype(np.float32)
+        p_pix = self.marker_points.reshape(-1, 1, 2).astype(np.float32)
+
+        ret_, rvecs, tvecs = cv2.solvePnP(p3d, p_pix, self.K, np.zeros(4))
+        print (rvecs, tvecs)
+
+        R = Rotation.from_rotvec(rvecs[:,0]).inv().as_dcm()
+        print (R, tvecs)
+
+        #X2 = np.linalg.inv(R) @ p3d.transpose() + tvecs
+        p_, _ = cv2.projectPoints(p3d, rvecs, tvecs, self.K, np.zeros(4))
+
+        err = self.marker_points.reshape(-1, 2) - p_.reshape(-1, 2)
+        err = np.around(err, decimals=2)
+        np.set_printoptions(suppress=True)
+        print (err)
+
+
+        return R, tvecs
+
+
+def get_marker_poses_local_frame(fname):
+    try:
+        f = open(fname, 'r')
+    except:
+        print ("Failed to open", fname)
+        return None
+
+    points = []
+    for line in f.readlines():
+        spl = line.split(' ')
+        points.append(np.array([float(spl[0]), float(spl[1]), float(spl[2])]))
+    return np.array(points)
+
 
 target = yaml.load(open('target.yaml'), Loader=yaml.FullLoader)
 calib  = yaml.load(open('camchain-output.yaml'), Loader=yaml.FullLoader)
 rig_p = RigPoses('rig_0_poses.txt')
+cb_config = get_marker_poses_local_frame('cb_0_config.txt')
 for id_ in calib.keys():
-    cam = Camera(calib[id_], target)
-    rig_p.calibrate(cam)
+    R = None
+    T = None
+    cam = Camera(calib[id_], target, cb_config)
+    R, T = cam.calibrate_3d('cb_0_poses.txt', rig_p)
+    #R, T = rig_p.calibrate(cam)
+    #cam.plot_3d_markers('cb_0_poses.txt', rig_p, R, T)
     break
 
 
