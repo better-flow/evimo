@@ -1,4 +1,0 @@
-id: 1
-name: toy_car
-mesh: model.ply
-ros_pos_topic: /vicon/Object_1
