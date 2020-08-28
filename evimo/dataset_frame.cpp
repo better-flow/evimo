@@ -66,7 +66,8 @@ cv::Mat DatasetFrame::get_visualization_mask(bool overlay_events, bool nodist) {
                     ret.at<cv::Vec3b>(i, j) = color;
                 }
             } else {
-                ret.at<cv::Vec3b>(i, j) = color;
+                if (id > 0)
+                    ret.at<cv::Vec3b>(i, j) = color;
             }
             if (overlay_events && Dataset::event_array.size() > 0 && img_pr.at<uint8_t>(i, j) > 0)
                 ret.at<cv::Vec3b>(i, j)[2] = img_pr.at<uint8_t>(i, j);

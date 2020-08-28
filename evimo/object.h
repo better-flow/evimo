@@ -134,7 +134,7 @@ protected:
     ros::NodeHandle n_;
     image_transport::ImageTransport it_;
 
-    std::string folder, name, pos_topic = "";
+    std::string folder, name, pos_topic = "", pointcloud_unit;
     int id;
 
     bool no_mesh; // This object has no pointcloud
@@ -162,6 +162,7 @@ public:
         auto config_fname   = this->folder + "/config.txt";
         auto settings_fname = this->folder + "/settings.txt";
         auto cloud_fname    = std::string("");
+        this->pointcloud_unit = "m"; // everything in meters by default
 
         std::ifstream settings;
         settings.open(settings_fname, std::ifstream::in);
@@ -196,7 +197,15 @@ public:
 
             if (key == "ros_pos_topic")
                 this->pos_topic = value;
+
+            if (key == "unit")
+                this->pointcloud_unit = value;
         }
+        float metric_scale = 1.0;
+        if (this->pointcloud_unit == "mm")
+            metric_scale = 0.001;
+        if (this->pointcloud_unit == "cm")
+            metric_scale = 0.01;
 
         if (this->pos_topic == "") {
             std::cout << _red("No ros pose topic specified for object in ")
@@ -221,6 +230,7 @@ public:
         }
 
         std::cout << "Initializing " << this->name << "; id = " << this->id << std::endl;
+        std::cout << "All coordinates are assumed to be in " << _yellow(this->pointcloud_unit) << std::endl;
 
         this->vis_pub = n_.advertise<visualization_msgs::MarkerArray>("/ev_imo/markers", 0);
         this->obj_sub = n_.subscribe(this->pos_topic, 0, &ViObject::vicon_pos_cb, this);
@@ -254,6 +264,8 @@ public:
             return;
         }
 
+        for (auto &p : *(this->obj_cloud)) {p.x *= metric_scale; p.y *= metric_scale; p.z *= metric_scale;} // scale the cloud
+
         this->obj_cloud_camera_frame->header.frame_id = "/camera_center";
         this->obj_cloud_transformed->header.frame_id = "/camera_center";
         this->obj_cloud->header.frame_id = "/map";
@@ -266,7 +278,7 @@ public:
             if (!(cfg >> marker_id >> x >> y >> z))
                 continue;
             pcl::PointXYZRGB p;
-            p.x = x; p.y = y; p.z = z;
+            p.x = x * metric_scale; p.y = y * metric_scale; p.z = z * metric_scale;
             p.r = 255; p.g = 255; p.b = 255;
             this->obj_markerpos->push_back(p);
         }
@@ -332,12 +344,17 @@ public:
         }
 
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr target(new pcl::PointCloud<pcl::PointXYZRGB>);
+        int idx__ = 0;
         for (auto &marker : markers) {
             pcl::PointXYZRGB p;
             p.x = marker.position.x;
             p.y = marker.position.y;
             p.z = marker.position.z;
             target->push_back(p);
+            idx__ += 1;
+
+            // there might be unregistered trackable points on the object
+            if (idx__ >= this->obj_markerpos->size()) break;
         }
 
         if (target->size() != this->obj_markerpos->size()) {
@@ -353,6 +370,20 @@ public:
         auto p = ViObject::subject2tf(subject);
         auto inv_p = p.inverse();
 
+        /*
+        std::cout << "Estimating marker2vicon svd error:\n";
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr markers_vicon(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl_ros::transformPointCloud(*(this->obj_markerpos), *markers_vicon, svd_tf);
+        for (int i = 0; i < this->obj_markerpos->size(); ++i) {
+            auto &p0 = markers_vicon->at(i);
+            auto &p1 = target->at(i);
+            std::cout << "\t" << i << ":\t" << p0.x << " " << p0.y << " " << p0.z << "\t->\t"
+                      << p1.x << " " << p1.y << " " << p1.z << "\t("
+                      << p0.x - p1.x << " " << p0.y - p1.y << " " << p0.z - p1.z << ")\n";
+        }
+        */
+
+        //                                    in                      out                tf
         pcl_ros::transformPointCloud(*(this->obj_markerpos), *(this->obj_markerpos), inv_p * svd_tf);
         pcl_ros::transformPointCloud(*(this->obj_cloud), *(this->obj_cloud), inv_p * svd_tf);
     }

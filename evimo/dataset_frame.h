@@ -176,8 +176,8 @@ public:
 
     // Generate frame (eiter with distortion or without)
     void generate(bool nodist=false) {
-        this->depth = cv::Scalar(0);
-        this->mask  = cv::Scalar(0);
+        this->depth = cv::Mat(this->depth.rows, this->depth.cols, CV_32F, cv::Scalar(0));
+        this->mask  = cv::Mat(this->mask.rows, this->mask.cols, CV_8U, cv::Scalar(0));
 
         Dataset::update_cam_calib();
         Dataset::cam_tj.set_filtering_window_size(Dataset::pose_filtering_window);
@@ -318,9 +318,6 @@ protected:
     template<class T> void project_cloud(T cl, int oid, bool nodist=false) {
         if (cl->size() == 0)
             return;
-
-        this->depth = cv::Mat(this->depth.rows, this->depth.cols, CV_32F, cv::Scalar(0));
-        this->mask  = cv::Mat(this->mask.rows, this->mask.cols, CV_8U, cv::Scalar(0));
 
         for (auto &p: *cl) {
             float rng = p.z;

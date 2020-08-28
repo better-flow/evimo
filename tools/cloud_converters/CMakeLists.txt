@@ -7,7 +7,7 @@ project(text2cloud)
 #set(CMAKE_BUILD_TYPE Debug)
 
 
-find_package(PCL 1.9 REQUIRED)
+find_package(PCL REQUIRED)
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})

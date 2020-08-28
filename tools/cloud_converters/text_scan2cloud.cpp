@@ -237,21 +237,25 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> interactionCustomizationVis
 }
 
 // RANSAC
-void find_spheres (pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud) {
+void find_spheres (pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, bool mm = false) {
   std::cout << "Running RANSAC...\n";
-  
+
   pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
 
-  pcl::SACSegmentation<pcl::PointXYZRGB> seg; 
+  pcl::SACSegmentation<pcl::PointXYZRGB> seg;
   seg.setOptimizeCoefficients (true);
   seg.setModelType (pcl::SACMODEL_SPHERE);
   seg.setMethodType (pcl::SAC_RANSAC);
   seg.setMaxIterations (100000000);
-  seg.setDistanceThreshold (0.0005);
-  seg.setRadiusLimits (0.003, 0.007);
+
+  float scale = 1.0;
+  if (mm) scale = 1000;
+
+  seg.setDistanceThreshold (0.00005 * scale);
+  seg.setRadiusLimits (0.003 * scale, 0.014 * scale);
   seg.setInputCloud (cloud);
- 
+
   seg.segment (*inliers, *coefficients);
   /*
   pcl::SampleConsensusModelSphere<pcl::PointXYZRGB>::Ptr
@@ -273,6 +277,8 @@ void find_spheres (pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud) {
   std::cout << "Coefficients: (x, y, z):" << coefficients->values[0] << " "
                                           << coefficients->values[1] << " "
                                           << coefficients->values[2] << "\n";
+
+  std::cout << "Inliers:" << inliers->indices.size() << "\n";
   std::cout << "Radius:" << coefficients->values[3] << "\n";
   std::cout << "Done.\n";
 }
@@ -294,7 +300,7 @@ int main (int argc, char** argv)
   bool simple(false), ransac(false), shrink(false);
   simple = true;
   std::cout << "Simple visualisation example\n";
- 
+
   if (pcl::console::find_argument (argc, argv, "-r") >= 0)
   {
     ransac = true;
@@ -305,6 +311,14 @@ int main (int argc, char** argv)
     shrink = true;
     std::cout << "Downsampling\n";
   }
+
+  bool in_mm = false;
+  if (pcl::console::find_argument (argc, argv, "-mm") >= 0)
+  {
+    in_mm = true;
+    std::cout << "In millimeters\n";
+  }
+
 
   std::string in_file = "";
   pcl::console::parse_argument (argc, argv, "-in", in_file);
@@ -319,7 +333,7 @@ int main (int argc, char** argv)
     std::ifstream f(in_file, std::ifstream::in);
     double x = 0, y = 0, z = 0, r = 0, g = 0, b = 0;
     while (!f.eof()) {
-      if (!(f >> x >> y >> z >> r >> g >> b))                     
+      if (!(f >> x >> y >> z >> r >> g >> b))
         continue;
       pcl::PointXYZRGB p;
       p.x = x / 1000.0; p.y = y / 1000.0; p.z = z / 1000.0;
@@ -329,7 +343,7 @@ int main (int argc, char** argv)
     }
   } else if (ext == "pcd") {
     std::cout << "Reading as .pcd...\n";
-    pcl::io::loadPCDFile(in_file, *point_cloud_ptr);  
+    pcl::io::loadPCDFile(in_file, *point_cloud_ptr);
   } else if (ext == "ply") {
     std::cout << "Reading as .ply...\n";
     pcl::io::loadPLYFile(in_file, *point_cloud_ptr);
@@ -338,7 +352,7 @@ int main (int argc, char** argv)
     return -1;
   }
   if (ext != "ply") {
-  center_of_mass /= 1000.0 * point_cloud_ptr->size();
+    center_of_mass /= 1000.0 * point_cloud_ptr->size();
     for (auto &p : *point_cloud_ptr) {
       p.x -= center_of_mass.x();
       p.y -= center_of_mass.y();
@@ -359,13 +373,13 @@ int main (int argc, char** argv)
   std::cout << "Downsampled cloud: " << point_cloud_filtered_ptr->size() << " points\n";
 
   //pcl::io::savePCDFileASCII (name + "_small_processed.pcd", *point_cloud_filtered_ptr);
-  
+
   if (shrink)
     pcl::io::savePLYFileASCII (name + "_small.ply", *point_cloud_filtered_ptr);
 
   // Algorithmic part
   if (ransac)
-    find_spheres(point_cloud_ptr);
+    find_spheres(point_cloud_ptr, in_mm);
 
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
   viewer = rgbVis(point_cloud_ptr);
