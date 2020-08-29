@@ -1,5 +1,3 @@
-#objects/toy_car
-#objects/toy_plane
-objects/cup
 objects/wand
-objects/checkerboard
+objects/box_01
+objects/car_01

@@ -1,0 +1,6 @@
+res_x: 1552
+res_y: 2080
+dist_model: radtan
+ros_image_topic: /flea3/image_color
+ros_event_topic: none
+ros_pos_topic: /vicon/dvs_rig

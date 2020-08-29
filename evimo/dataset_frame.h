@@ -337,7 +337,7 @@ protected:
             if (u < 0 || v < 0 || v >= cols || u >= rows)
                 continue;
 
-            int patch_size = 1;//int(1.0 / rng);
+            int patch_size = 5;//int(1.0 / rng);
 
             //if (oid == 0)
             //    patch_size = int(5.0 / rng);
