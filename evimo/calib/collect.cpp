@@ -167,11 +167,15 @@ public:
         this->res_y = msg->height;
         this->res_x = msg->width;
         this->accumulated_image = img.clone();
-        cv::imshow(this->window_name, this->accumulated_image);
+
+        cv::Mat vis_img = this->accumulated_image.clone();
+        if (this->accumulated_image.cols > 1200 || this->accumulated_image.rows > 1200)
+            cv::resize(vis_img, vis_img, cv::Size(), 0.5, 0.5);
+        cv::imshow(this->window_name, vis_img);
         //cv::waitKey(1);
 
-        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->accumulated_image).toImageMsg();
-        this->img_pub.publish(img_msg);
+        //sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->accumulated_image).toImageMsg();
+        //this->img_pub.publish(img_msg);
     }
 };
 
@@ -232,8 +236,8 @@ public:
             cv::imshow(this->window_name, this->vis_img);
             //cv::waitKey(1);
 
-            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->vis_img).toImageMsg();
-            this->img_pub.publish(img_msg);
+            //sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->vis_img).toImageMsg();
+            //this->img_pub.publish(img_msg);
             r.sleep();
         }
     }
