@@ -33,6 +33,9 @@
 #include <dvs_msgs/Event.h>
 #include <dvs_msgs/EventArray.h>
 
+// Detect Vicon Wand
+#include "detect_wand.h"
+
 
 class Imager {
 protected:
@@ -146,10 +149,12 @@ class RGBImager : public Imager {
 protected:
     std::shared_ptr<image_transport::ImageTransport> it_ptr;
     image_transport::Publisher img_pub;
+    bool detect_wand;
 
 public:
-    RGBImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_)
+    RGBImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, bool detect_wand_=false)
         : Imager(root_dir_, name_, topic_) {
+        this->detect_wand = detect_wand_;
         this->it_ptr = std::make_shared<image_transport::ImageTransport>(nh);
         this->img_pub = it_ptr->advertise(this->window_name + "/image_raw", 1);
         this->sub = nh.subscribe(this->topic, 1, &RGBImager::frame_cb, this);
@@ -169,10 +174,16 @@ public:
         this->accumulated_image = img.clone();
 
         cv::Mat vis_img = this->accumulated_image.clone();
+
+        if (this->detect_wand) {
+            auto wand_points = wand::detect_wand(vis_img, 0.5, 0.5, 0.5);
+            vis_img = wand::draw_wand(vis_img, wand_points);
+        }
+
         if (this->accumulated_image.cols > 1200 || this->accumulated_image.rows > 1200)
             cv::resize(vis_img, vis_img, cv::Size(), 0.5, 0.5);
         cv::imshow(this->window_name, vis_img);
-        //cv::waitKey(1);
+        cv::waitKey(1);
 
         //sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->accumulated_image).toImageMsg();
         //this->img_pub.publish(img_msg);
@@ -194,10 +205,12 @@ protected:
 
     std::shared_ptr<image_transport::ImageTransport> it_ptr;
     image_transport::Publisher img_pub;
+    bool detect_wand;
 
 public:
-    EventStreamImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, float fps_=40)
+    EventStreamImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, float fps_=40, bool detect_wand_=false)
         : Imager(root_dir_, name_, topic_), r(fps_) {
+        this->detect_wand = detect_wand_;
         this->it_ptr = std::make_shared<image_transport::ImageTransport>(nh);
         this->img_pub = it_ptr->advertise(this->window_name + "/image_raw", 1);
         this->sub = nh.subscribe(this->topic, 1,
@@ -233,8 +246,13 @@ public:
                 continue;
             this->vis_img = img.clone();
 
+            if (this->detect_wand) {
+                auto wand_points = wand::detect_wand(this->vis_img, 0.5, 0.5, 0.5);
+                this->vis_img = wand::draw_wand(this->vis_img, wand_points);
+            }
+
             cv::imshow(this->window_name, this->vis_img);
-            //cv::waitKey(1);
+            cv::waitKey(1);
 
             //sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->vis_img).toImageMsg();
             //this->img_pub.publish(img_msg);
@@ -243,6 +261,7 @@ public:
     }
 
     void start_accumulating() override {
+        const std::lock_guard<std::mutex> lock(this->mutex);
         this->accumulating = true;
         this->accumulated_image = cv::Mat::zeros(this->res_y, this->res_x, CV_32S);
     }
@@ -364,6 +383,13 @@ int main (int argc, char** argv) {
         return -1;
     }
 
+    // Detect wand
+    bool detect_wand = false;
+    if (!nh.getParam("d", detect_wand)) detect_wand = false;
+
+    int e_fps = 40;
+    if (!nh.getParam("fps", e_fps)) e_fps = 40;
+
     // Data processors
     std::vector<std::shared_ptr<Imager>> imagers;
 
@@ -396,9 +422,9 @@ int main (int argc, char** argv) {
         std::string topic_name = trim(line.substr(sep + 1));
 
         if (cam_type == "event") {
-            imagers.push_back(std::make_shared<EventStreamImager>(nh, result_path, cam_name, topic_name));
+            imagers.push_back(std::make_shared<EventStreamImager>(nh, result_path, cam_name, topic_name, e_fps, detect_wand));
         } else if (cam_type == "rgb") {
-            imagers.push_back(std::make_shared<RGBImager>(nh, result_path, cam_name, topic_name));
+            imagers.push_back(std::make_shared<RGBImager>(nh, result_path, cam_name, topic_name, detect_wand));
         } else if (cam_type == "vicon") {
             imagers.push_back(std::make_shared<ViconImager>(nh, result_path, cam_name, topic_name));
         } else {

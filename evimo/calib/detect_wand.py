@@ -69,8 +69,8 @@ def find_all_3lines(keypoints, th):
         for j in range(i + 1, n_pts - 1):
             dp = keypoints[i,:2] - keypoints[j,:2]
             l_dp = np.linalg.norm(dp)
-            cross = keypoints[i,0] * keypoints[j,1] - keypoints[i,1] * keypoints[j,0]
             if (l_dp < th): continue
+            cross = keypoints[i,0] * keypoints[j,1] - keypoints[i,1] * keypoints[j,0]
 
             for k in range(j + 1, n_pts):
                 d = np.abs(dp[1] * keypoints[k,0] - dp[0] * keypoints[k,1] + cross) / l_dp
@@ -78,7 +78,7 @@ def find_all_3lines(keypoints, th):
 
                 points = np.vstack((keypoints[i,:2], keypoints[j,:2], keypoints[k,:2]))
 
-                if (dp[0] > dp[1]):
+                if (abs(dp[0]) > abs(dp[1])):
                     order = np.argsort(points[:,0])
                 else:
                     order = np.argsort(points[:,1])
