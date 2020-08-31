@@ -78,10 +78,10 @@ std::vector<cv::KeyPoint> get_blobs(cv::Mat &image_) {
 
 
 std::vector<std::vector<uint32_t>> find_all_3lines(std::vector<cv::KeyPoint> &keypoints, float th) {
-    auto n_pts = keypoints.size();
+    int n_pts = keypoints.size();
     std::vector<std::vector<uint32_t>> idx;
-    for (uint32_t i = 0; i < n_pts - 2; ++i) {
-        for (uint32_t j = i + 1; j < n_pts - 1; ++j) {
+    for (int32_t i = 0; i < n_pts - 2; ++i) {
+        for (int32_t j = i + 1; j < n_pts - 1; ++j) {
             float dp_x = keypoints[i].pt.x - keypoints[j].pt.x;
             float dp_y = keypoints[i].pt.y - keypoints[j].pt.y;
             float l_dp = std::sqrt(dp_x * dp_x + dp_y * dp_y);

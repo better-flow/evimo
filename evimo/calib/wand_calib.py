@@ -242,10 +242,11 @@ if __name__ == "__main__":
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, int(1e3), 1e-6)
 
 
+    flags = cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_FIX_K3 + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5 + cv2.CALIB_FIX_K6
     if (dist_model == 'radtan'):
         retval, K_, D_, rvecs, tvecs = cv2.calibrateCamera(p3d, p_pix, imageSize=(res_y, res_x),
                                                            cameraMatrix=K, distCoeffs=D,
-                                                           flags=cv2.CALIB_USE_INTRINSIC_GUESS,
+                                                           flags=flags,
                                                            criteria=criteria)
         p_pix_reproj, _ = cv2.projectPoints(p3d[0], rvecs[0], tvecs[0], K_, D_)
     elif (dist_model == 'equidistant'):
@@ -255,7 +256,7 @@ if __name__ == "__main__":
 
         retval, K_, D_, rvecs, tvecs = cv2.fisheye.calibrate(p3d__, p_pix.reshape(1, -1, 1, 2),
                                                              image_size=(res_y, res_x), K=K, D=D,
-                                                             flags=cv2.fisheye.CALIB_USE_INTRINSIC_GUESS)# + cv2.fisheye.CALIB_CHECK_COND)
+                                                             flags=flags)# + cv2.fisheye.CALIB_CHECK_COND)
         print (rvecs, tvecs)
         print (K, D)
 
@@ -280,7 +281,7 @@ if __name__ == "__main__":
     print ("\nRunning calibration")
     retval, K_, D_, rvecs, tvecs = cv2.calibrateCamera(p3d[:,outlier_mask,:], p_pix[:,outlier_mask,:], imageSize=(res_y, res_x),
                                                        cameraMatrix=K, distCoeffs=D,
-                                                       flags=cv2.CALIB_USE_INTRINSIC_GUESS,
+                                                       flags=flags,
                                                        criteria=criteria)
     p_pix_reproj, _ = cv2.projectPoints(p3d[0], rvecs[0], tvecs[0], K_, D_)
     error = np.linalg.norm(p_pix_reproj[:,0] - p_pix[0], axis=1)
@@ -288,7 +289,18 @@ if __name__ == "__main__":
 
     print (K_)
     print (D_)
-    print (rvecs)
+    print (np.array(rvecs))
     print (tvecs)
+
+    R = Rotation.from_rotvec(np.array(rvecs).reshape(3)).inv()
+    T = np.array(tvecs).reshape(3, 1)
+    T = R.as_dcm() @ T
+
+    print ("\nIntrinsic:")
+    print (K_[0,0], K_[1,1], K_[0,2], K_[1,2], D_[0,0], D_[1,0], D_[2,0], D_[3,0])
+
+    print ("\nExtrinsic:")
+    print("x-y-z-R-P-Y:")
+    print(np.hstack((T.reshape(3), R.as_euler('xyz'))))
 
     plot_reprojection_error(p_pix[0], p_pix_reproj[:,0], p3d[0])
