@@ -294,7 +294,7 @@ if __name__ == "__main__":
 
     R = Rotation.from_rotvec(np.array(rvecs).reshape(3)).inv()
     T = np.array(tvecs).reshape(3, 1)
-    T = R.as_dcm() @ T
+    T = -R.as_dcm() @ T
 
     print ("\nIntrinsic:")
     print (K_[0,0], K_[1,1], K_[0,2], K_[1,2], D_[0,0], D_[1,0], D_[2,0], D_[3,0])

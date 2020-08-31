@@ -4,6 +4,7 @@
 #include <thread>
 #include <type_traits>
 #include <cmath>
+#include <mutex>
 #include <iomanip>
 #include <iostream>
 #include <boost/filesystem.hpp>
@@ -60,6 +61,7 @@ protected:
 
     uint64_t images_received;
     ros::Subscriber sub, event_sub;
+    std::mutex mutex;
 
 public:
     RGBCameraVisualizer(ros::NodeHandle &nh, float FPS, std::string topic_, std::string event_topic_)
@@ -74,13 +76,14 @@ public:
 
     // Callbacks
     void sub_cb(const sensor_msgs::ImageConstPtr& msg) {
+        const std::lock_guard<std::mutex> lock(this->mutex);
         Dataset::images.resize(1);
         if (msg->encoding == "8UC1") {
             sensor_msgs::Image img = *msg;
             img.encoding = "mono8";
-            Dataset::images[0] = cv_bridge::toCvCopy(img, "bgr8")->image;
+            Dataset::images[0] = (cv_bridge::toCvCopy(img, "bgr8")->image).clone();
         } else {
-            Dataset::images[0] = cv_bridge::toCvShare(msg, "bgr8")->image;
+            Dataset::images[0] = (cv_bridge::toCvShare(msg, "bgr8")->image).clone();
         }
         this->images_received ++;
     }
@@ -105,6 +108,8 @@ public:
 
         int code = 0; // Key code
         while (code != 27) {
+            {
+            const std::lock_guard<std::mutex> lock(this->mutex);
             code = cv::waitKey(1);
 
             Dataset::handle_keys(code, vis_mode, nmodes);
@@ -146,12 +151,13 @@ public:
             if (img.cols == 0 || img.rows == 0)
                 continue;
 
-            cv::resize(img, img, cv::Size(), 0.5, 0.5);
+            //cv::resize(img, img, cv::Size(), 0.5, 0.5);
             cv::imshow(this->window_name, img);
 
             // Publish image
             sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->frame.img).toImageMsg();
             res_img_pub.publish(msg);
+            } // mutex
 
             ros::spinOnce();
             r.sleep();

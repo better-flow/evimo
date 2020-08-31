@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 def get_blobs(img_):
     if (len(img_.shape) >= 3):
-        img = img_[:,:,0].copy()
+        img = img_[:,:,1].copy()
     else:
         img = img_.copy()
     img = img.astype(np.uint8)
@@ -54,8 +54,6 @@ def get_blobs(img_):
 
     #im_with_keypoints = cv2.drawKeypoints(img, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     #plt.imshow(im_with_keypoints)
-
-
     #plt.show()
     return ret
 

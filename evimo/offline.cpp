@@ -277,7 +277,7 @@ int main (int argc, char** argv) {
             if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
             if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
 
-            images.push_back(cv_bridge::toCvShare(msg, "bgr8")->image);
+            images.push_back((cv_bridge::toCvShare(msg, "bgr8")->image).clone());
             image_ts.push_back(timestamp);
         }
     }
