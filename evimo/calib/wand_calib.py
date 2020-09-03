@@ -123,6 +123,7 @@ class Wand:
 
         detection_mask = []
         image_points = []
+        blob_param = []
         for fname in self.fnames:
             image = cv2.imread(fname)
             keypoints = detect_wand.get_blobs(image)
@@ -134,18 +135,23 @@ class Wand:
             disp = None
             if (debug): disp = image
             idx, err = detect_wand.find_all_3lines(keypoints, th=max(image.shape[0], image.shape[1]) * 5e-3)
-            wand_points = detect_wand.detect_wand(keypoints, idx, wand_3d_mapping, th_rel=th_rel, th_lin=th_lin, th_ang=th_ang, img_=disp)
+            wand_points, wand_idx = detect_wand.detect_wand(keypoints, idx, wand_3d_mapping, th_rel=th_rel, th_lin=th_lin, th_ang=th_ang, img_=disp)
 
             if (wand_points is None):
                 detection_mask.append(False)
                 wand_points = np.zeros(shape=(5, 2), dtype=np.float32)
+                wand_idx    = np.zeros(shape=(5), dtype=np.int32)
+                keypoints   = np.zeros(shape=(5, 3), dtype=np.float32)
             else:
                 detection_mask.append(True)
             image_points.append(wand_points)
-        return np.array(image_points), np.array(detection_mask)
+            blob_param.append(keypoints[wand_idx,2])
+
+        return np.array(image_points), np.array(blob_param), np.array(detection_mask)
 
 
 def plot_reprojection_error(detections, reprojected, p3d):
+    print ("Plotting", p3d.shape, "points")
     distances = p3d[:,2]
     distances = 10 * (distances - np.min(distances)) / (np.max(distances) - np.min(distances))
 
@@ -199,6 +205,7 @@ if __name__ == "__main__":
         detections_npz = np.load(npz_save_location)
         rig_points = detections_npz['rig_points']
         image_points = detections_npz['image_points']
+        blob_param = detections_npz['blob_param']
         mask = detections_npz['mask']
     else:
         rig = Rig(os.path.join(args.f, 'rig_0_poses.txt'))
@@ -215,9 +222,9 @@ if __name__ == "__main__":
                                             [166.117447, 95.441071, 11.552736]]) * 1e-3}
 
         rig_points, mask1 = wand.to_rig_frame(rig, wand_3d_mapping)
-        image_points, mask2 = wand.detect(os.path.join(args.f, args.c), wand_3d_mapping, th_rel=0.5, th_lin=0.5, th_ang=0.5)
+        image_points, blob_param, mask2 = wand.detect(os.path.join(args.f, args.c), wand_3d_mapping, th_rel=0.5, th_lin=0.5, th_ang=0.5)
         mask = mask1 & mask2
-        np.savez(npz_save_location, mask=mask, rig_points=rig_points, image_points=image_points)
+        np.savez(npz_save_location, mask=mask, rig_points=rig_points, image_points=image_points, blob_param=blob_param)
 
 
     print ("\nArray shapes:")
@@ -226,8 +233,12 @@ if __name__ == "__main__":
 
     p3d = rig_points[mask].reshape(1, -1, 3).astype(np.float32)
     p_pix = image_points[mask].reshape(1, -1, 2).astype(np.float32)
+    blob_p = blob_param[mask].reshape(-1).astype(np.float32)
 
-    print (p3d.shape, p_pix.shape)
+    print (p3d.shape, p_pix.shape, blob_p.shape)
+    if (blob_p.shape[0] != p_pix.shape[1]):
+        print ("Blob features are not aligned to pixel ids")
+        sys.exit(-1)
 
     '''
     k = 0
@@ -239,17 +250,27 @@ if __name__ == "__main__":
     '''
 
     print ("\nRunning calibration")
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, int(1e3), 1e-6)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, int(1e6), 1e-8)
 
 
     flags = cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_FIX_K3 + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5 + cv2.CALIB_FIX_K6
+    flags += cv2.CALIB_FIX_PRINCIPAL_POINT + cv2.CALIB_FIX_ASPECT_RATIO + cv2.CALIB_FIX_K1 + cv2.CALIB_FIX_K2
+    #flags = cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_RATIONAL_MODEL
     if (dist_model == 'radtan'):
         retval, K_, D_, rvecs, tvecs = cv2.calibrateCamera(p3d, p_pix, imageSize=(res_y, res_x),
                                                            cameraMatrix=K, distCoeffs=D,
                                                            flags=flags,
                                                            criteria=criteria)
-        p_pix_reproj, _ = cv2.projectPoints(p3d[0], rvecs[0], tvecs[0], K_, D_)
+        rvecs = rvecs[0]
+        tvecs = tvecs[0]
+
+        #retval, rvecs, tvecs = cv2.solvePnP(p3d, p_pix, cameraMatrix=K, distCoeffs=D)
+
+        p_pix_reproj, _ = cv2.projectPoints(p3d[0], rvecs.reshape(1,3), tvecs.reshape(1,3), K_, D_)
     elif (dist_model == 'equidistant'):
+        print ("Model", dist_model, "is not supported!")
+        sys.exit(0)
+
         p3d__ = p3d.reshape(1, 1, -1, 3)
         #p3d__[0,0,:,0] = p3d[0,:,1]
         #p3d__[0,0,:,1] = p3d[0,:,0]
@@ -274,18 +295,50 @@ if __name__ == "__main__":
     #for i in range(p_pix[0].shape[0]):
     #    print(p_pix[0,i], '->', p_pix_reproj[i,0], '\t', error[i])
 
-    th = np.percentile(error, 80)
+    th = np.percentile(error, 30)
     print ("\tThresholding at", th)
     outlier_mask = error < th
 
+    # Plot error histograms
+    fig, ax = plt.subplots(2, 2, dpi=300, tight_layout=True)
+    th_95 = np.percentile(error, 95)
+    outlier_mask_95 = error < th_95
+    ax[0,0].hist(error[outlier_mask_95], bins=100)
+    ax[0,1].hist(p3d[0,:,2], bins=100)
+    ax[0,1].hist(p3d[0,outlier_mask,2], bins=100)
+    ax[1,0].hist(p3d[0,:,0], bins=100)
+    ax[1,0].hist(p3d[0,outlier_mask,0], bins=100)
+    ax[1,1].hist(p3d[0,:,1], bins=100)
+    ax[1,1].hist(p3d[0,outlier_mask,1], bins=100)
+    #ax[1,0].hist(blob_p, bins=100)
+    #ax[1,0].hist(blob_p[outlier_mask], bins=100)
+
+    #ax[1,0].hist(p_pix[0,:,0], bins=100)
+    #ax[1,0].hist(p_pix[0,outlier_mask,0], bins=100)
+    #ax[1,1].hist(p_pix[0,:,1], bins=100)
+    #ax[1,1].hist(p_pix[0,outlier_mask,1], bins=100)
+    #ax[1,0].hist2d(p_pix[0,:,0], p_pix[0,:,1], bins=100)
+    #ax[1,1].hist2d(p_pix[0,outlier_mask,0], p_pix[0,outlier_mask,1], bins=100)
+    plt.show()
+
+
     print ("\nRunning calibration")
     retval, K_, D_, rvecs, tvecs = cv2.calibrateCamera(p3d[:,outlier_mask,:], p_pix[:,outlier_mask,:], imageSize=(res_y, res_x),
-                                                       cameraMatrix=K, distCoeffs=D,
+                                                       cameraMatrix=K_, distCoeffs=D_,
                                                        flags=flags,
                                                        criteria=criteria)
-    p_pix_reproj, _ = cv2.projectPoints(p3d[0], rvecs[0], tvecs[0], K_, D_)
+    rvecs = rvecs[0]
+    tvecs = tvecs[0]
+
+    #retval, rvecs, tvecs = cv2.solvePnP(p3d, p_pix, cameraMatrix=K, distCoeffs=D)
+
+    p_pix_reproj, _ = cv2.projectPoints(p3d[0], rvecs.reshape(1,3), tvecs.reshape(1,3), K_, D_)
     error = np.linalg.norm(p_pix_reproj[:,0] - p_pix[0], axis=1)
     print ("\tAverage error / reprojection error:", np.mean(error[outlier_mask]), retval)
+
+    p_pix = p_pix[:, outlier_mask]
+    p3d = p3d[:, outlier_mask]
+    p_pix_reproj = p_pix_reproj[outlier_mask]
 
     print (K_)
     print (D_)

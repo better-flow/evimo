@@ -52,7 +52,7 @@ def get_blobs(img_):
         ret[i,:2] = k.pt
         ret[i,2]  = k.size
 
-    #im_with_keypoints = cv2.drawKeypoints(img, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    #im_with_keypoints = cv2.drawKeypoints(255 - img_[:,:,1], keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     #plt.imshow(im_with_keypoints)
     #plt.show()
     return ret
@@ -116,6 +116,7 @@ def detect_wand(keypoints, idx, wand_3d_mapping, th_rel, th_lin, th_ang, img_=No
         img = np.dstack((img_, img_, img_)).copy()
 
     ret = []
+    idx_ret = []
     for i, l1 in enumerate(idx):
         for j, l2 in enumerate(idx):
             if (i == j): continue
@@ -123,22 +124,30 @@ def detect_wand(keypoints, idx, wand_3d_mapping, th_rel, th_lin, th_ang, img_=No
             if (len(set(l1).union(l2)) != 5): continue
 
             p2 = keypoints[l1[1],:2] # center point
+            idx_p2 = l1[1]
 
             d1 = np.linalg.norm(p2 - keypoints[l1[0],:2])
             d2 = np.linalg.norm(p2 - keypoints[l1[2],:2])
             if (d1 > d2):
                 p1 = keypoints[l1[0],:2]
                 p3 = keypoints[l1[2],:2]
+                idx_p1 = l1[0]
+                idx_p3 = l1[2]
             else:
                 p1 = keypoints[l1[2],:2]
                 p3 = keypoints[l1[0],:2]
+                idx_p1 = l1[2]
+                idx_p3 = l1[0]
 
             p4 = keypoints[l2[1],:2]
+            idx_p4 = l2[1]
 
             if (l1[1] == l2[0]):
                 p5 = keypoints[l2[2],:2]
+                idx_p5 = l2[2]
             else:
                 p5 = keypoints[l2[0],:2]
+                idx_p5 = l2[0]
 
             gt_rel1 = np.linalg.norm(wand_3d_mapping['red'][1] - wand_3d_mapping['red'][0]) / \
                                      np.linalg.norm(wand_3d_mapping['red'][1] - wand_3d_mapping['red'][2])
@@ -163,6 +172,7 @@ def detect_wand(keypoints, idx, wand_3d_mapping, th_rel, th_lin, th_ang, img_=No
 
             print ("\tFound:", l1, l2)
             ret.append(np.vstack((p1, p2, p3, p4, p5)))
+            idx_ret.append(np.array([idx_p1, idx_p2, idx_p3, idx_p4, idx_p5]))
 
             if (img is None): continue
             img = cv2.line(img, tuple(p2.astype(np.int32)), tuple(p1.astype(np.int32)), (255,0,0), 2)
@@ -175,11 +185,11 @@ def detect_wand(keypoints, idx, wand_3d_mapping, th_rel, th_lin, th_ang, img_=No
 
     if (len(ret) > 1):
         print ("Failed: Found more than 1 candidates")
-        return None
+        return None, None
     if (len(ret) == 0):
         print ("Failed: Found 0 candidates")
-        return None
-    return ret[0]
+        return None, None
+    return ret[0], idx_ret[0]
 
 
 if __name__ == "__main__":
@@ -206,7 +216,10 @@ if __name__ == "__main__":
                                         [166.117447, 95.441071, 11.552736]])}
 
     idx, err = find_all_3lines(keypoints, th=max(image.shape[0], image.shape[1]) * 5e-3)
-    wand_points = detect_wand(keypoints, idx, wand_3d_mapping, th_rel=0.5, th_lin=0.5, th_ang=0.5, img_=image)
+    wand_points, wand_idx = detect_wand(keypoints, idx, wand_3d_mapping, th_rel=0.5, th_lin=0.5, th_ang=0.5, img_=image)
+    print ("Wand points:")
+    print (wand_points)
+    print ("Wand idx:", wand_idx)
 
-
-
+    print ("Keypoints:")
+    print (keypoints[wand_idx])
