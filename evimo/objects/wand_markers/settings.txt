@@ -1,5 +1,0 @@
-id: 14
-name: wand
-mesh: model.ply
-unit: mm
-ros_pos_topic: /vicon/Wand
