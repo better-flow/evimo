@@ -177,11 +177,11 @@ def plot_reprojection_error(detections, reprojected, p3d):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Calibrate using Vicon calibration wand.')
-    parser.add_argument('f', type=str, help='root dir', default="")
+    parser.add_argument('f', type=str, nargs='+', help='root dir(s)', default=[""])
     parser.add_argument('-c', type=str, help='camera name', default="cam_0")
     args = parser.parse_args()
 
-    calib = yaml.load(open(os.path.join(args.f, args.c + '.yaml')), Loader=yaml.FullLoader)
+    calib = yaml.load(open(os.path.join(args.f[0], args.c + '.yaml')), Loader=yaml.FullLoader)
     calib_ids = list(calib.keys())
     if (len(calib_ids) != 1):
         print ("Can only handel 1 camera per calib file!", calib_ids)
@@ -199,33 +199,47 @@ if __name__ == "__main__":
         print ("Only 'radtan' and 'equidistant' models are supported!")
         sys.exit(-1)
 
-    npz_save_location = os.path.join(args.f, "detections_" + args.c + ".npz")
-    if os.path.exists(npz_save_location) and os.path.isfile(npz_save_location):
-        print ("Using saved .npz file with detections:", npz_save_location)
-        detections_npz = np.load(npz_save_location)
-        rig_points = detections_npz['rig_points']
-        image_points = detections_npz['image_points']
-        blob_param = detections_npz['blob_param']
-        mask = detections_npz['mask']
-    else:
-        rig = Rig(os.path.join(args.f, 'rig_0_poses.txt'))
-        wand = Wand(os.path.join(args.f, 'wand_poses.txt'))
-        wand_3d_mapping = {'red': np.array([[30.576542, -150.730270, -45.588951],
-                                            [-45.614960, -18.425253, 2.359259],
-                                            [-83.571022, 47.522499, 26.421692],
-                                            [64.297485, 39.157578, 6.395612],
-                                            [169.457520, 97.256927, 11.720362]]) * 1e-3,
-                            'ir': np.array([[32.454151, -153.981064, -46.729141],
-                                            [-43.735237, -21.440924, 1.182336],
-                                            [-81.761475, 44.537903, 25.208614],
-                                            [60.946213, 36.995384, 6.158191],
-                                            [166.117447, 95.441071, 11.552736]]) * 1e-3}
+    rig_points = []
+    image_points = []
+    blob_param = []
+    mask = []
+    for folder in args.f:
+        npz_save_location = os.path.join(folder, "detections_" + args.c + ".npz")
+        if os.path.exists(npz_save_location) and os.path.isfile(npz_save_location):
+            print ("Using saved .npz file with detections:", npz_save_location)
+            detections_npz = np.load(npz_save_location)
+            rig_points_i = detections_npz['rig_points']
+            image_points_i = detections_npz['image_points']
+            blob_param_i = detections_npz['blob_param']
+            mask_i = detections_npz['mask']
+        else:
+            rig = Rig(os.path.join(folder, 'rig_0_poses.txt'))
+            wand = Wand(os.path.join(folder, 'wand_poses.txt'))
+            wand_3d_mapping = {'red': np.array([[30.576542, -150.730270, -45.588951],
+                                                [-45.614960, -18.425253, 2.359259],
+                                                [-83.571022, 47.522499, 26.421692],
+                                                [64.297485, 39.157578, 6.395612],
+                                                [169.457520, 97.256927, 11.720362]]) * 1e-3,
+                                'ir': np.array([[32.454151, -153.981064, -46.729141],
+                                                [-43.735237, -21.440924, 1.182336],
+                                                [-81.761475, 44.537903, 25.208614],
+                                                [60.946213, 36.995384, 6.158191],
+                                                [166.117447, 95.441071, 11.552736]]) * 1e-3}
 
-        rig_points, mask1 = wand.to_rig_frame(rig, wand_3d_mapping)
-        image_points, blob_param, mask2 = wand.detect(os.path.join(args.f, args.c), wand_3d_mapping, th_rel=0.5, th_lin=0.5, th_ang=0.5)
-        mask = mask1 & mask2
-        np.savez(npz_save_location, mask=mask, rig_points=rig_points, image_points=image_points, blob_param=blob_param)
+            rig_points_i, mask1 = wand.to_rig_frame(rig, wand_3d_mapping)
+            image_points_i, blob_param_i, mask2 = wand.detect(os.path.join(folder, args.c), wand_3d_mapping, th_rel=0.5, th_lin=0.5, th_ang=0.5)
+            mask_i = mask1 & mask2
+            np.savez(npz_save_location, mask=mask_i, rig_points=rig_points_i, image_points=image_points_i, blob_param=blob_param_i)
 
+        rig_points.append(rig_points_i)
+        image_points.append(image_points_i)
+        blob_param.append(blob_param_i)
+        mask.append(mask_i)
+
+    rig_points = np.vstack(rig_points)
+    image_points = np.vstack(image_points)
+    blob_param = np.vstack(blob_param)
+    mask = np.hstack(mask)
 
     print ("\nArray shapes:")
     print (rig_points.shape, rig_points[mask].shape)
@@ -254,7 +268,9 @@ if __name__ == "__main__":
 
 
     flags = cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_FIX_K3 + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5 + cv2.CALIB_FIX_K6
-    flags += cv2.CALIB_FIX_PRINCIPAL_POINT + cv2.CALIB_FIX_ASPECT_RATIO + cv2.CALIB_FIX_K1 + cv2.CALIB_FIX_K2
+    #flags += cv2.CALIB_FIX_K1 + cv2.CALIB_FIX_K2 + cv2.CALIB_ZERO_TANGENT_DIST
+    #D *= 0
+    #flags += cv2.CALIB_FIX_PRINCIPAL_POINT + cv2.CALIB_FIX_ASPECT_RATIO + cv2.CALIB_FIX_K1 + cv2.CALIB_FIX_K2
     #flags = cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_RATIONAL_MODEL
     if (dist_model == 'radtan'):
         retval, K_, D_, rvecs, tvecs = cv2.calibrateCamera(p3d, p_pix, imageSize=(res_y, res_x),
@@ -265,7 +281,6 @@ if __name__ == "__main__":
         tvecs = tvecs[0]
 
         #retval, rvecs, tvecs = cv2.solvePnP(p3d, p_pix, cameraMatrix=K, distCoeffs=D)
-
         p_pix_reproj, _ = cv2.projectPoints(p3d[0], rvecs.reshape(1,3), tvecs.reshape(1,3), K_, D_)
     elif (dist_model == 'equidistant'):
         print ("Model", dist_model, "is not supported!")
