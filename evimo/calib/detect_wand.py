@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 def get_blobs(img_):
     if (len(img_.shape) >= 3):
-        img = img_[:,:,1].copy()
+        img = img_[:,:,2].copy()
     else:
         img = img_.copy()
     img = img.astype(np.uint8)
@@ -173,6 +173,12 @@ def detect_wand(keypoints, idx, wand_3d_mapping, th_rel, th_lin, th_ang, img_=No
             print ("\tFound:", l1, l2)
             ret.append(np.vstack((p1, p2, p3, p4, p5)))
             idx_ret.append(np.array([idx_p1, idx_p2, idx_p3, idx_p4, idx_p5]))
+
+            if (len(ret) > 1):
+                print ("Failed: Found more than 1 candidates")
+                return None, None
+
+
 
             if (img is None): continue
             img = cv2.line(img, tuple(p2.astype(np.int32)), tuple(p1.astype(np.int32)), (255,0,0), 2)

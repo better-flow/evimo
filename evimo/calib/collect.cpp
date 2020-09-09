@@ -56,8 +56,8 @@ public:
         , headless(headless_), cnt(0), accumulating(false) {
         this->window_name = this->name + "_" + std::to_string(uid);
         Imager::uid += 1;
-        if (!this->headless)
-            cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
+        //if (!this->headless)
+        //    cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
     }
 
     virtual ~Imager() {
@@ -180,13 +180,16 @@ public:
             vis_img = wand::draw_wand(vis_img, wand_points);
         }
 
-        if (this->accumulated_image.cols > 1200 || this->accumulated_image.rows > 1200)
-            cv::resize(vis_img, vis_img, cv::Size(), 0.5, 0.5);
-        cv::imshow(this->window_name, vis_img);
-        cv::waitKey(1);
+        float scale = 640.0 / float(this->accumulated_image.cols);
+        if (std::fabs(scale - 1.0) > 0.2) cv::resize(vis_img, vis_img, cv::Size(), scale, scale);
 
-        //sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->accumulated_image).toImageMsg();
-        //this->img_pub.publish(img_msg);
+        //if (this->accumulated_image.cols > 1200 || this->accumulated_image.rows > 1200)
+        //    cv::resize(vis_img, vis_img, cv::Size(), 0.5, 0.5);
+        //cv::imshow(this->window_name, vis_img);
+        //cv::waitKey(1);
+
+        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", vis_img).toImageMsg();
+        this->img_pub.publish(img_msg);
     }
 };
 
@@ -251,11 +254,11 @@ public:
                 this->vis_img = wand::draw_wand(this->vis_img, wand_points);
             }
 
-            cv::imshow(this->window_name, this->vis_img);
-            cv::waitKey(1);
+            //cv::imshow(this->window_name, this->vis_img);
+            //cv::waitKey(1);
 
-            //sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->vis_img).toImageMsg();
-            //this->img_pub.publish(img_msg);
+            sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->vis_img).toImageMsg();
+            this->img_pub.publish(img_msg);
             r.sleep();
         }
     }

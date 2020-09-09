@@ -1,4 +1,5 @@
-id: 253
+id: 9
 name: checkerboard
-mesh: none
+mesh: model.ply
+unit: mm
 ros_pos_topic: /vicon/checkerboard
