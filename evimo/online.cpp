@@ -151,7 +151,7 @@ public:
             if (img.cols == 0 || img.rows == 0)
                 continue;
 
-            //cv::resize(img, img, cv::Size(), 0.5, 0.5);
+            cv::resize(img, img, cv::Size(), 0.5, 0.5);
             cv::imshow(this->window_name, img);
 
             // Publish image

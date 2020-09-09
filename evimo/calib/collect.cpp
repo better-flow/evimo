@@ -246,7 +246,7 @@ public:
                 continue;
             this->vis_img = img.clone();
 
-            if (this->detect_wand) {
+            if (this->detect_wand && this->accumulating) {
                 auto wand_points = wand::detect_wand(this->vis_img, 0.5, 0.5, 0.5);
                 this->vis_img = wand::draw_wand(this->vis_img, wand_points);
             }
