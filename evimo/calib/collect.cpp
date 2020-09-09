@@ -181,7 +181,7 @@ public:
         }
 
         float scale = 640.0 / float(this->accumulated_image.cols);
-        if (std::fabs(scale - 1.0) > 0.2) cv::resize(vis_img, vis_img, cv::Size(), scale, scale);
+        if (scale < 1.1) cv::resize(vis_img, vis_img, cv::Size(), scale, scale);
 
         //if (this->accumulated_image.cols > 1200 || this->accumulated_image.rows > 1200)
         //    cv::resize(vis_img, vis_img, cv::Size(), 0.5, 0.5);
@@ -313,14 +313,11 @@ protected:
 public:
     FlickerPattern(float fps, std::string n="pattern")
         : r(fps * 2), paused(false), res_x(0), res_y(0), window_name(n) {
-        cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
         this->thread_handle = std::thread(&FlickerPattern::vis_spin, this);
         this->thread_handle.detach();
     }
 
-    virtual ~FlickerPattern() {
-        cv::destroyWindow(this->window_name);
-    }
+    virtual ~FlickerPattern() {}
 
     virtual void stop() {
         // maybe should add a mutex here
@@ -331,6 +328,7 @@ public:
 
 private:
     void vis_spin() {
+        cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
         while (ros::ok()) {
             r.sleep();
             if (this->res_y == 0 || this->res_x == 0) {
@@ -345,6 +343,7 @@ private:
                 cv::waitKey(1);
             }
         }
+        cv::destroyWindow(this->window_name);
     }
 };
 
