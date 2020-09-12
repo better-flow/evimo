@@ -109,6 +109,9 @@ class Wand:
                 mask.append(True)
             red_X1 = R @ wand_3d_mapping['red'].transpose() + T
             p3d.append(red_X1.transpose())
+            
+            if (red_X1.transpose()[0,2] < 0):
+                mask[-1] = False
 
         rig_points = np.array(p3d, dtype=np.float32)
         mask = np.array(mask)
@@ -337,6 +340,7 @@ if __name__ == "__main__":
     plt.show()
 
 
+    print (K_)
     print ("\nRunning calibration")
     retval, K_, D_, rvecs, tvecs = cv2.calibrateCamera(p3d[:,outlier_mask,:], p_pix[:,outlier_mask,:], imageSize=(res_y, res_x),
                                                        cameraMatrix=K_, distCoeffs=D_,

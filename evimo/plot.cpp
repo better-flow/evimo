@@ -82,12 +82,18 @@ void TjPlot::add_trajectory_plot(Trajectory &tj) {
             continue;
         }
 
-        cv::line(ret, {t[i-1], x[i-1]}, {t[i], x[i]},   cv::Scalar(0xb4, 0x77, 0x1f), 2, CV_AA);
-        cv::line(ret, {t[i-1], y[i-1]}, {t[i], y[i]},   cv::Scalar(0x0e, 0x7f, 0xff), 2, CV_AA);
-        cv::line(ret, {t[i-1], z[i-1]}, {t[i], z[i]},   cv::Scalar(0x2c, 0xa0, 0x2c), 2, CV_AA);
-        cv::line(ret, {t[i-1], rr[i-1]}, {t[i], rr[i]}, cv::Scalar(0x22, 0xbd, 0xbc), 2, CV_AA);
-        cv::line(ret, {t[i-1], rp[i-1]}, {t[i], rp[i]}, cv::Scalar(0x7f, 0x7f, 0x7f), 2, CV_AA);
-        cv::line(ret, {t[i-1], ry[i-1]}, {t[i], ry[i]}, cv::Scalar(0xcf, 0xbe, 0x17), 2, CV_AA);
+        #if CV_MAJOR_VERSION < 4
+            auto line_type = CV_AA;
+        #else
+            auto line_type = cv::LINE_AA;
+        #endif
+        
+        cv::line(ret, {(int)t[i-1], (int)x[i-1]}, {(int)t[i], (int)x[i]},   cv::Scalar(0xb4, 0x77, 0x1f), 2, line_type);
+        cv::line(ret, {(int)t[i-1], (int)y[i-1]}, {(int)t[i], (int)y[i]},   cv::Scalar(0x0e, 0x7f, 0xff), 2, line_type);
+        cv::line(ret, {(int)t[i-1], (int)z[i-1]}, {(int)t[i], (int)z[i]},   cv::Scalar(0x2c, 0xa0, 0x2c), 2, line_type);
+        cv::line(ret, {(int)t[i-1], (int)rr[i-1]}, {(int)t[i], (int)rr[i]}, cv::Scalar(0x22, 0xbd, 0xbc), 2, line_type);
+        cv::line(ret, {(int)t[i-1], (int)rp[i-1]}, {(int)t[i], (int)rp[i]}, cv::Scalar(0x7f, 0x7f, 0x7f), 2, line_type);
+        cv::line(ret, {(int)t[i-1], (int)ry[i-1]}, {(int)t[i], (int)ry[i]}, cv::Scalar(0xcf, 0xbe, 0x17), 2, line_type);
     }
 
     cv::line(ret, {10, this->res_y / 2}, {this->res_x - 10, this->res_y / 2}, cv::Scalar(127, 127, 127));

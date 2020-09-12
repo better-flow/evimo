@@ -77,9 +77,9 @@ std::vector<cv::KeyPoint> get_blobs(cv::Mat &image_) {
 }
 
 
-std::vector<std::vector<uint32_t>> find_all_3lines(std::vector<cv::KeyPoint> &keypoints, float th) {
+std::vector<std::vector<int32_t>> find_all_3lines(std::vector<cv::KeyPoint> &keypoints, float th) {
     int n_pts = keypoints.size();
-    std::vector<std::vector<uint32_t>> idx;
+    std::vector<std::vector<int32_t>> idx;
     for (int32_t i = 0; i < n_pts - 2; ++i) {
         for (int32_t j = i + 1; j < n_pts - 1; ++j) {
             float dp_x = keypoints[i].pt.x - keypoints[j].pt.x;
@@ -87,7 +87,7 @@ std::vector<std::vector<uint32_t>> find_all_3lines(std::vector<cv::KeyPoint> &ke
             float l_dp = std::sqrt(dp_x * dp_x + dp_y * dp_y);
             if (l_dp < th) continue;
             float cross = keypoints[i].pt.x * keypoints[j].pt.y - keypoints[i].pt.y * keypoints[j].pt.x;
-            for (uint32_t k = j + 1; k < n_pts; ++k) {
+            for (int32_t k = j + 1; k < n_pts; ++k) {
                 float d = std::fabs(dp_y * keypoints[k].pt.x - dp_x * keypoints[k].pt.y + cross) / l_dp;
                 if (d >= th) continue;
 
@@ -110,7 +110,7 @@ std::vector<std::vector<uint32_t>> find_all_3lines(std::vector<cv::KeyPoint> &ke
 }
 
 
-std::vector<cv::Point2f> detect_wand_internal(std::vector<cv::KeyPoint> &keypoints, std::vector<std::vector<uint32_t>> &idx,
+std::vector<cv::Point2f> detect_wand_internal(std::vector<cv::KeyPoint> &keypoints, std::vector<std::vector<int32_t>> &idx,
                                               std::valarray<std::valarray<float>> &wand_3d_mapping,
                                               float th_rel=0.5, float th_lin=0.5, float th_ang=0.5) {
 
@@ -172,10 +172,18 @@ std::vector<cv::Point2f> detect_wand_internal(std::vector<cv::KeyPoint> &keypoin
 cv::Mat draw_wand(cv::Mat &img_, std::vector<cv::Point2f> &wand) {
     if (wand.size() != 5) return img_;
     cv::Mat ret = img_.clone();
-    cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[0].x), int(wand[0].y)}, cv::Scalar(255, 0,   0),   2, CV_AA);
-    cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[2].x), int(wand[2].y)}, cv::Scalar(0,   255, 0),   2, CV_AA);
-    cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[3].x), int(wand[3].y)}, cv::Scalar(0,   0,   255), 2, CV_AA);
-    cv::line(ret, {int(wand[3].x), int(wand[3].y)}, {int(wand[4].x), int(wand[4].y)}, cv::Scalar(255, 255, 255), 2, CV_AA);
+
+    #if CV_MAJOR_VERSION < 4
+        cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[0].x), int(wand[0].y)}, cv::Scalar(255, 0,   0),   2, CV_AA);
+        cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[2].x), int(wand[2].y)}, cv::Scalar(0,   255, 0),   2, CV_AA);
+        cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[3].x), int(wand[3].y)}, cv::Scalar(0,   0,   255), 2, CV_AA);
+        cv::line(ret, {int(wand[3].x), int(wand[3].y)}, {int(wand[4].x), int(wand[4].y)}, cv::Scalar(255, 255, 255), 2, CV_AA);
+    #else
+        cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[0].x), int(wand[0].y)}, cv::Scalar(255, 0,   0),   2, cv::LINE_AA);
+        cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[2].x), int(wand[2].y)}, cv::Scalar(0,   255, 0),   2, cv::LINE_AA);
+        cv::line(ret, {int(wand[1].x), int(wand[1].y)}, {int(wand[3].x), int(wand[3].y)}, cv::Scalar(0,   0,   255), 2, cv::LINE_AA);
+        cv::line(ret, {int(wand[3].x), int(wand[3].y)}, {int(wand[4].x), int(wand[4].y)}, cv::Scalar(255, 255, 255), 2, cv::LINE_AA);
+    #endif
     return ret;
 }
 
