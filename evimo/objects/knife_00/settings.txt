@@ -1,0 +1,5 @@
+id: 16
+name: knife_00
+mesh: model.ply
+unit: mm
+ros_pos_topic: /vicon/knife_00

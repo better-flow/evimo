@@ -1,0 +1,5 @@
+id: 15
+name: drone_01
+mesh: model.ply
+unit: mm
+ros_pos_topic: /vicon/drone_01

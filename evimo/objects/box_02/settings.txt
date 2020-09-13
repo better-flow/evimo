@@ -1,0 +1,5 @@
+id: 10
+name: box_02
+mesh: model.ply
+unit: mm
+ros_pos_topic: /vicon/box_02

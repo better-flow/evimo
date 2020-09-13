@@ -1,0 +1,5 @@
+id: 11
+name: can_00
+mesh: model.ply
+unit: mm
+ros_pos_topic: /vicon/can_00
