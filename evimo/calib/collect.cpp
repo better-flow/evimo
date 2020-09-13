@@ -204,7 +204,7 @@ protected:
 
     // Buffer for incoming events (aka 'slice')
     // 1e8 == 0.1 sec
-    CircularArray<Event, 1000000, 50000000> ev_buffer;
+    CircularArray<Event, 100000, 50000000> ev_buffer;
 
     std::shared_ptr<image_transport::ImageTransport> it_ptr;
     image_transport::Publisher img_pub;
