@@ -1,0 +1,5 @@
+id: 23
+name: toy_00
+mesh: model.ply
+unit: mm
+ros_pos_topic: /vicon/toy_00

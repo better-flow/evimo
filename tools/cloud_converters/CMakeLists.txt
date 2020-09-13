@@ -6,8 +6,8 @@ project(text2cloud)
 #set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 #set(CMAKE_BUILD_TYPE Debug)
 
-
 find_package(PCL REQUIRED)
+
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})

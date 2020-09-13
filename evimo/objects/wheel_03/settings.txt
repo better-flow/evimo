@@ -1,0 +1,5 @@
+id: 28
+name: wheel_03
+mesh: model.ply
+unit: mm
+ros_pos_topic: /vicon/wheel_03

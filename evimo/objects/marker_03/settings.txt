@@ -1,0 +1,5 @@
+id: 20
+name: marker_03
+mesh: model.ply
+unit: mm
+ros_pos_topic: /vicon/marker_03

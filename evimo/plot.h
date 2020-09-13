@@ -28,7 +28,7 @@ public:
 
         for (auto &img : this->plots_cache) {
             if(t0 >= 0) {
-                cv::line(img, {t0, frame}, {t0, res_y - frame}, cv::Scalar(0, 0, 255));
+                cv::line(img, {(int)t0, (int)(this->frame)}, {(int)t0, this->res_y - (int)(this->frame)}, cv::Scalar(0, 0, 255));
             }
         }
     }
