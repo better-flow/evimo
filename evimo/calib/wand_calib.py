@@ -178,6 +178,48 @@ def plot_reprojection_error(detections, reprojected, p3d):
 
 
 
+def estimate_individual(K, D, p3d, p_pix):
+    ret_T = []
+    ret_R = []
+    for i in range(p3d.shape[0]):
+        retval, rvecs, tvecs = cv2.solvePnP(p3d[i], p_pix[i], cameraMatrix=K, distCoeffs=D)
+        ret_T.append(tvecs.transpose()[0])
+        ret_R.append(rvecs.transpose()[0])
+
+    ret_T = np.array(ret_T)
+    ret_R = np.array(ret_R)
+
+    values = np.hstack((ret_T, ret_R))
+    md = np.median(values, axis=0)
+    error = np.abs(values - md)
+
+    th_80 = np.percentile(error, 90, axis=0)
+    mask_Tx = error[:,0] < th_80[0]
+    mask_Ty = error[:,1] < th_80[1]
+    mask_Tz = error[:,2] < th_80[2]
+    mask_Rx = error[:,3] < th_80[3]
+    mask_Ry = error[:,4] < th_80[4]
+    mask_Rz = error[:,5] < th_80[5]
+    mask = mask_Tx & mask_Ty & mask_Tz & mask_Rx & mask_Ry & mask_Rz
+
+    fig, ax = plt.subplots(2, 3, dpi=300, tight_layout=True)
+    ax[0,0].hist(ret_T[:,0], bins=100)
+    ax[0,0].hist(ret_T[mask,0], bins=100)
+    ax[0,1].hist(ret_T[:,1], bins=100)
+    ax[0,1].hist(ret_T[mask,1], bins=100)
+    ax[0,2].hist(ret_T[:,2], bins=100)
+    ax[0,2].hist(ret_T[mask,2], bins=100)
+    ax[1,0].hist(ret_R[:,0], bins=100)
+    ax[1,0].hist(ret_R[mask,0], bins=100)
+    ax[1,1].hist(ret_R[:,1], bins=100)
+    ax[1,1].hist(ret_R[mask,1], bins=100)
+    ax[1,2].hist(ret_R[:,2], bins=100)
+    ax[1,2].hist(ret_R[mask,2], bins=100)
+    plt.show()
+
+    return ret_T, ret_R, mask
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Calibrate using Vicon calibration wand.')
     parser.add_argument('f', type=str, nargs='+', help='root dir(s)', default=[""])
@@ -266,6 +308,12 @@ if __name__ == "__main__":
             k += 1
     '''
 
+    #_, _, mask_ind = estimate_individual(K, D, rig_points[mask], image_points[mask])
+    #p3d = rig_points[mask][mask_ind].reshape(1, -1, 3).astype(np.float32)
+    #p_pix = image_points[mask][mask_ind].reshape(1, -1, 2).astype(np.float32)
+    #blob_p = blob_param[mask][mask_ind].reshape(-1).astype(np.float32)
+
+
     print ("\nRunning calibration")
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, int(1e6), 1e-8)
 
@@ -338,7 +386,6 @@ if __name__ == "__main__":
     #ax[1,0].hist2d(p_pix[0,:,0], p_pix[0,:,1], bins=100)
     #ax[1,1].hist2d(p_pix[0,outlier_mask,0], p_pix[0,outlier_mask,1], bins=100)
     plt.show()
-
 
     print (K_)
     print ("\nRunning calibration")
