@@ -20,7 +20,7 @@ int main (int argc, char** argv) {
                                                            {64.297485, 39.157578, 6.395612},
                                                            {169.457520, 97.256927, 11.720362}};
 
-    auto idx = find_all_3lines(keypoints, float(std::max(image.rows, image.cols)) * 5e-3);
+    auto idx = find_all_3lines(keypoints, 0.2);
     std::cout << "Lines:\n";
     for (auto &line : idx) {
         std::cout << "\t" << line[0] << " " << line[1] << " " << line[2] << "\n";

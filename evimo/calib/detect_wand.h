@@ -89,7 +89,7 @@ std::vector<std::vector<int32_t>> find_all_3lines(std::vector<cv::KeyPoint> &key
             float cross = keypoints[i].pt.x * keypoints[j].pt.y - keypoints[i].pt.y * keypoints[j].pt.x;
             for (int32_t k = j + 1; k < n_pts; ++k) {
                 float d = std::fabs(dp_y * keypoints[k].pt.x - dp_x * keypoints[k].pt.y + cross) / l_dp;
-                if (d >= th) continue;
+                if (d / l_dp >= th) continue;
 
                 dp_x = std::fabs(dp_x);
                 dp_y = std::fabs(dp_y);
@@ -197,7 +197,7 @@ std::vector<cv::Point2f> detect_wand(cv::Mat &image, float th_rel=0.5, float th_
                                                            {169.457520, 97.256927, 11.720362}};
 
     auto keypoints = get_blobs(image);
-    auto idx = find_all_3lines(keypoints, float(std::max(image.rows, image.cols)) * 5e-3);
+    auto idx = find_all_3lines(keypoints, 0.2);
     auto wand_points = detect_wand_internal(keypoints, idx, wand_3d_mapping, th_rel, th_lin, th_ang);
     return wand_points;
 }

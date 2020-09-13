@@ -1,3 +1,5 @@
 objects/wand
 objects/box_01
 objects/car_01
+objects/turntable
+objects/tabletop

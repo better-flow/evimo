@@ -72,7 +72,7 @@ def find_all_3lines(keypoints, th):
 
             for k in range(j + 1, n_pts):
                 d = np.abs(dp[1] * keypoints[k,0] - dp[0] * keypoints[k,1] + cross) / l_dp
-                if (d >= th): continue
+                if (d / l_dp >= th): continue
 
                 points = np.vstack((keypoints[i,:2], keypoints[j,:2], keypoints[k,:2]))
 
@@ -221,7 +221,7 @@ if __name__ == "__main__":
                                         [60.946213, 36.995384, 6.158191],
                                         [166.117447, 95.441071, 11.552736]])}
 
-    idx, err = find_all_3lines(keypoints, th=max(image.shape[0], image.shape[1]) * 5e-3)
+    idx, err = find_all_3lines(keypoints, th=0.2)
     wand_points, wand_idx = detect_wand(keypoints, idx, wand_3d_mapping, th_rel=0.5, th_lin=0.5, th_ang=0.5, img_=image)
     print ("Wand points:")
     print (wand_points)

@@ -137,7 +137,7 @@ class Wand:
 
             disp = None
             if (debug): disp = image
-            idx, err = detect_wand.find_all_3lines(keypoints, th=max(image.shape[0], image.shape[1]) * 5e-3)
+            idx, err = detect_wand.find_all_3lines(keypoints, th=0.2)
             wand_points, wand_idx = detect_wand.detect_wand(keypoints, idx, wand_3d_mapping, th_rel=th_rel, th_lin=th_lin, th_ang=th_ang, img_=disp)
 
             if (wand_points is None):
