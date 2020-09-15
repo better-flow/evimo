@@ -375,7 +375,11 @@ protected:
                         auto d3 = (uu - u0) * (v2 - v0) - (vv - v0) * (u2 - u0);
                         if (((d1 < 0) || (d2 < 0) || (d3 < 0)) && ((d1 > 0) || (d2 > 0) || (d3 > 0))) continue;
 
-                        this->mask.at<uint8_t>(uu, vv) = oid;
+                        float base_rng = this->depth.at<float>(uu, vv);
+                        if (base_rng > z || base_rng < 0.001) {
+                            this->depth.at<float>(uu, vv) = z;
+                            this->mask.at<uint8_t>(uu, vv) = oid;
+                        }
                     }
                 }
             }
