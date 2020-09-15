@@ -207,7 +207,7 @@ int main (int argc, char** argv)
     }
   }
   std::cout << "Read " << point_cloud_ptr->size() << " points\n";
-  pcl::io::savePLYFileASCII (name + ".ply", *point_cloud_ptr);
+  //pcl::io::savePLYFileASCII (name + ".ply", *point_cloud_ptr);
   //pcl::io::savePCDFileASCII (name + "_processed.pcd", *point_cloud_ptr);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_filtered_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);

@@ -142,6 +142,7 @@ protected:
     ros::Publisher obj_pub, vis_pub;
     ros::Subscriber obj_sub;
 
+    pcl::PolygonMesh::Ptr mesh;
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud;
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud_transformed;
     pcl::PointCloud<pcl::PointXYZRGB> *obj_cloud_camera_frame;
@@ -153,6 +154,7 @@ protected:
 public:
     ViObject (ros::NodeHandle n_, std::string folder_) :
         n_(n_), it_(n_), folder(folder_), name(""), id(255), no_mesh(true),
+        mesh (new pcl::PolygonMesh),
         obj_cloud(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_transformed(new pcl::PointCloud<pcl::PointXYZRGB>),
         obj_cloud_camera_frame(new pcl::PointCloud<pcl::PointXYZRGB>),
@@ -251,7 +253,8 @@ public:
             pcl::io::loadPCDFile(cloud_fname, *(this->obj_cloud));
         } else if (fext == "ply") {
             std::cout << "Reading as .ply...\n";
-            pcl::io::loadPLYFile(cloud_fname, *(this->obj_cloud));
+            pcl::io::loadPLYFile(cloud_fname, *(this->mesh));
+            pcl::fromPCLPointCloud2(this->mesh->cloud, *(this->obj_cloud));
         } else {
             std::cout << _red("Unsupported file format: ") << fext << "!" << std::endl;
             this->id = -1;
@@ -295,6 +298,8 @@ public:
         cfg.close();
         settings.close();
     }
+
+    pcl::PolygonMesh::Ptr get_mesh() const {return this->mesh; }
 
     // Callbacks
     void vicon_pos_cb(const vicon::Subject& subject) {

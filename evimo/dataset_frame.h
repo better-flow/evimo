@@ -194,7 +194,7 @@ public:
 
         if (Dataset::background != nullptr) {
             auto cl = Dataset::background->transform_to_camframe(cam_tf);
-            this->project_cloud(cl, 0, nodist);
+            this->project_cloud(cl, pcl::PolygonMesh::Ptr(nullptr), 0, nodist);
         }
 
         // Generate mask and depth
@@ -212,7 +212,7 @@ public:
 
             auto obj_pose = this->_get_raw_object_pose(id);
             auto cl = obj.second->transform_to_camframe(cam_tf, obj_pose.pq);
-            this->project_cloud(cl, id, nodist);
+            this->project_cloud(cl, obj.second->get_mesh(), id, nodist);
         }
 
         // Add marker labels
@@ -315,45 +315,82 @@ protected:
     }
 
 
-    template<class T> void project_cloud(T cl, int oid, bool nodist=false) {
+    template<class T> void project_cloud(T cl, pcl::PolygonMesh::Ptr mesh, int oid, bool nodist=false) {
         if (cl->size() == 0)
             return;
 
-        for (auto &p: *cl) {
-            float rng = p.z;
-            if (rng < 0.001)
-                continue;
+        std::vector<int32_t> pt_u(cl->size());
+        std::vector<int32_t> pt_v(cl->size());
+        std::vector<float> rng(cl->size());
 
-            auto cols = this->depth.cols;
-            auto rows = this->depth.rows;
+        auto cols = this->depth.cols;
+        auto rows = this->depth.rows;
 
-            int u = -1, v = -1;
+        // project points to 2d
+        for (uint64_t i = 0; i < cl->size(); ++i) {
+            auto &p = (*cl)[i];
+            int32_t u = -1, v = -1;
             if (nodist) {
                 Dataset::project_point_nodist(p, u, v);
             } else {
                 Dataset::project_point(p, u, v);
             }
+            pt_u.at(i) = (int32_t)u;
+            pt_v.at(i) = (int32_t)v;
+            rng.at(i) = (float)p.z;
+        }
 
-            if (u < 0 || v < 0 || v >= cols || u >= rows)
-                continue;
+        const bool only_points = false;
 
-            int patch_size = 5;//int(1.0 / rng);
+        // project triangles
+        if (mesh && mesh->polygons.size() > 0 && !only_points) {
+            for (int i = 0; i < mesh->polygons.size(); ++i) {
+                auto u0 = pt_u[mesh->polygons[i].vertices[0]];
+                auto v0 = pt_v[mesh->polygons[i].vertices[0]];
+                auto z0 = rng[mesh->polygons[i].vertices[0]];
+                auto u1 = pt_u[mesh->polygons[i].vertices[1]];
+                auto v1 = pt_v[mesh->polygons[i].vertices[1]];
+                auto z1 = rng[mesh->polygons[i].vertices[1]];
+                auto u2 = pt_u[mesh->polygons[i].vertices[2]];
+                auto v2 = pt_v[mesh->polygons[i].vertices[2]];
+                auto z2 = rng[mesh->polygons[i].vertices[2]];
 
-            //if (oid == 0)
-            //    patch_size = int(5.0 / rng);
+                auto u_min = std::min(std::min(u0, u1), u2);
+                auto v_min = std::min(std::min(v0, v1), v2);
+                auto u_max = std::max(std::max(u0, u1), u2);
+                auto v_max = std::max(std::max(v0, v1), v2);
+                auto z_max = std::max(std::max(z0, z1), z2);
 
-            int u_lo = std::max(u - patch_size / 2, 0);
-            int u_hi = std::min(u + patch_size / 2, rows - 1);
-            int v_lo = std::max(v - patch_size / 2, 0);
-            int v_hi = std::min(v + patch_size / 2, cols - 1);
+                if (u_max < 0 || v_max < 0 || u_min >= rows || v_min >= cols) continue;
+                if (z_max < 0.001) continue;
 
-            for (int ii = u_lo; ii <= u_hi; ++ii) {
-                for (int jj = v_lo; jj <= v_hi; ++jj) {
-                    float base_rng = this->depth.at<float>(ii, jj);
-                    if (base_rng > rng || base_rng < 0.001) {
-                        this->depth.at<float>(ii, jj) = rng;
-                        this->mask.at<uint8_t>(ii, jj) = oid;
+                float z = (z0 + z1 + z2) / 3;
+
+                for (int uu = u_min; uu <= u_max; ++uu) {
+                    for (int vv = v_min; vv<= v_max; ++vv) {
+                        if (uu < 0 || vv < 0 || vv >= cols || uu >= rows) continue;
+
+                        auto d1 = (uu - u1) * (v0 - v1) - (vv - v1) * (u0 - u1);
+                        auto d2 = (uu - u2) * (v1 - v2) - (vv - v2) * (u1 - u2);
+                        auto d3 = (uu - u0) * (v2 - v0) - (vv - v0) * (u2 - u0);
+                        if (((d1 < 0) || (d2 < 0) || (d3 < 0)) && ((d1 > 0) || (d2 > 0) || (d3 > 0))) continue;
+
+                        this->mask.at<uint8_t>(uu, vv) = oid;
                     }
+                }
+            }
+        } else { // only project points
+            for (uint64_t i = 0; i < rng.size(); ++i) {
+                if (rng[i] < 0.001)
+                    continue;
+
+                if (pt_u[i] < 0 || pt_v[i] < 0 || pt_v[i] >= cols || pt_u[i] >= rows)
+                    continue;
+
+                float base_rng = this->depth.at<float>(pt_u[i], pt_v[i]);
+                if (base_rng > rng[i] || base_rng < 0.001) {
+                    this->depth.at<float>(pt_u[i], pt_v[i]) = rng[i];
+                    this->mask.at<uint8_t>(pt_u[i], pt_v[i]) = oid;
                 }
             }
         }
