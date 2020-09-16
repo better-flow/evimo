@@ -271,14 +271,27 @@ int main (int argc, char** argv) {
         }
 
         if (with_images && (m.getTopic() == Dataset::image_topic)) {
-            auto msg = m.instantiate<sensor_msgs::Image>();
-            auto timestamp = msg->header.stamp + ros::Duration(Dataset::get_time_offset_image_to_host());
+            auto msg_regular = m.instantiate<sensor_msgs::Image>();
+            if (msg_regular != NULL) {
+                auto timestamp = msg_regular->header.stamp + ros::Duration(Dataset::get_time_offset_image_to_host());
+                if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
+                if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
 
-            if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
-            if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+                images.push_back((cv_bridge::toCvShare(msg_regular, "bgr8")->image).clone());
+                image_ts.push_back(timestamp);
+                continue;
+            }
 
-            images.push_back((cv_bridge::toCvShare(msg, "bgr8")->image).clone());
-            image_ts.push_back(timestamp);
+            auto msg_compressed = m.instantiate<sensor_msgs::CompressedImage>();
+            if (msg_compressed != NULL) {
+                auto timestamp = msg_compressed->header.stamp + ros::Duration(Dataset::get_time_offset_image_to_host());
+                if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
+                if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+
+                images.push_back(cv::imdecode(cv::Mat(msg_compressed->data), 1).clone());
+                image_ts.push_back(timestamp);
+                continue;
+            }
         }
     }
 

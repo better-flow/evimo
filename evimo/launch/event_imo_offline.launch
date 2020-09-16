@@ -6,12 +6,17 @@
   <arg name="folder"         default="none"/>
   <arg name="fps"            default="40"/>
   <arg name="show"           default="-2"/>
+  <arg name="t_offset"       default="0"/>
+  <arg name="t_len"          default="-1"/>
+
 
   <node pkg="evimo" name="evimo_vis_offline" type="datagen_offline" output="$(arg output_type)" respawn="false" required="true">
     <param name="folder"         value="$(arg folder)"/>
     <param name="camera_name"    value="$(arg camera_name)"/>
     <param name="fps"            value="$(arg fps)"/>
     <param name="show"           value="$(arg show)"/>
+    <param name="start_time_offset"           value="$(arg t_offset)"/>
+    <param name="sequence_duration"           value="$(arg t_len)"/>
   </node>
 
   <!-- Start rviz visualization with preset config -->

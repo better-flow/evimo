@@ -50,7 +50,7 @@ public:
             cv::namedWindow(window_names[frame_ptr], cv::WINDOW_NORMAL);
         }
 
-        TjPlot plotter("Trajectories", 2000, 400);
+        TjPlot plotter("Trajectories", 1000, 100);
         plotter.add_trajectory_plot(Dataset::cam_tj);
         for (auto &tj : Dataset::obj_tjs)
             plotter.add_trajectory_plot(tj.second);
@@ -342,6 +342,8 @@ protected:
 
         const bool only_points = false;
 
+        //std::cout << frame_id << "\n";
+
         // project triangles
         if (mesh && mesh->polygons.size() > 0 && !only_points) {
             for (int i = 0; i < mesh->polygons.size(); ++i) {
@@ -361,10 +363,22 @@ protected:
                 auto v_max = std::max(std::max(v0, v1), v2);
                 auto z_max = std::max(std::max(z0, z1), z2);
 
+                if ((u0 == -1 && v0 == -1) || (u1 == -1 && v1 == -1) || (u2 == -1 && v2 == -1)) continue;
                 if (u_max < 0 || v_max < 0 || u_min >= rows || v_min >= cols) continue;
                 if (z_max < 0.001) continue;
 
                 float z = (z0 + z1 + z2) / 3;
+
+                /*
+                if (frame_id < 298) continue;
+                if (std::abs((v_max - v_min) * (u_max - u_min)) > 100) {
+                    std::cout << "\t" << (v_max - v_min) * (u_max - u_min) << "\t" << v_max << "\t" 
+                              << v_min << "\t" << u_max << "\t" << u_min << "\n";
+                    std::cout << u0 << " " << v0 << " " << z0 << "\n";
+                    std::cout << u1 << " " << v1 << " " << z1 << "\n";
+                    std::cout << u2 << " " << v2 << " " << z2 << "\n";
+                }
+                */
 
                 for (int uu = u_min; uu <= u_max; ++uu) {
                     for (int vv = v_min; vv<= v_max; ++vv) {
