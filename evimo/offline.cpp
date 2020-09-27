@@ -125,8 +125,8 @@ public:
 
             cv::imshow("Frames", img);
 
-            this->plotter.add_vertical(f.get_timestamp());
-            this->plotter.show();
+            //this->plotter.add_vertical(f.get_timestamp());
+            //this->plotter.show();
 
             if (enable_3D && !bp) {
                 bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.4, 200);
