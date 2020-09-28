@@ -88,6 +88,13 @@ target_link_libraries(datagen_offline
 )
 
 
+add_executable(bag_sanity bag_sanity/bag_sanity.cpp)
+target_link_libraries(bag_sanity
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+)
+
+
 find_package(X11 REQUIRED)
 add_executable(collect calib/collect.cpp)
 
