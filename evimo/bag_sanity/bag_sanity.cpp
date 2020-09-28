@@ -74,7 +74,7 @@ int main (int argc, char** argv) {
 
     std::vector<Event> event_array;
     event_array.reserve(n_events);
-
+    uint64_t critical_gap_ms = 10;
 
     uint64_t id = 0;
     ros::Time first_event_ts = ros::Time(0);
@@ -92,7 +92,7 @@ int main (int argc, char** argv) {
             int32_t x = e.x; 
             int32_t y = e.y;
             int polarity = e.polarity ? 1 : 0;
-            
+
             if (id == 0) {
                 first_event_ts = current_event_ts;
                 last_event_ts = current_event_ts;
@@ -105,7 +105,7 @@ int main (int argc, char** argv) {
                               << id << ": " << last_event_ts - first_event_ts << " -> "
                               << current_event_ts - first_event_ts << "\t("
                               << i + 1 << " / " << msize << ")" << std::endl;
-                } else if ((current_event_ts - last_event_ts).toNSec() > 1e6) {
+                } else if ((current_event_ts - last_event_ts).toNSec() > critical_gap_ms * 1e6) {
                     if (i == 0) std::cout << std::endl << "packet boundary" << std::endl;
                     std::cout << msg->header.stamp << "\t" << m.getTime() << "\t"
                               << _yellow("Events have a gap! ")
