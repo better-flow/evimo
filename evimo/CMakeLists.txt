@@ -94,6 +94,11 @@ target_link_libraries(bag_sanity
     ${OpenCV_LIBS}
 )
 
+add_executable(topic_sanity bag_sanity/topic_sanity.cpp)
+target_link_libraries(topic_sanity
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+)
 
 find_package(X11 REQUIRED)
 add_executable(collect calib/collect.cpp)
