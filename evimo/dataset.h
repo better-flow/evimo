@@ -60,6 +60,7 @@ public:
     // Other parameters
     static std::string window_name;
     static bool modified;
+    static bool window_initialized;
 
     // Folder names
     static std::string dataset_folder, camera_name, gt_folder;
@@ -100,15 +101,18 @@ public:
         cv::createTrackbar("z", Dataset::window_name, &value_tz, MAXVAL, on_trackbar);
         cv::createTrackbar("t_pos", Dataset::window_name, &pose_to_event_to_slider, MAXVAL, on_trackbar);
         cv::createTrackbar("t_img", Dataset::window_name, &image_to_event_to_slider, MAXVAL, on_trackbar);
+        Dataset::window_initialized = true;
     }
 
     static void reset_Intr_Sliders() {
-        cv::setTrackbarPos("R", Dataset::window_name, MAXVAL / 2);
-        cv::setTrackbarPos("P", Dataset::window_name, MAXVAL / 2);
-        cv::setTrackbarPos("Y", Dataset::window_name, MAXVAL / 2);
-        cv::setTrackbarPos("x", Dataset::window_name, MAXVAL / 2);
-        cv::setTrackbarPos("y", Dataset::window_name, MAXVAL / 2);
-        cv::setTrackbarPos("z", Dataset::window_name, MAXVAL / 2);
+        if(Dataset::window_initialized) {
+            cv::setTrackbarPos("R", Dataset::window_name, MAXVAL / 2);
+            cv::setTrackbarPos("P", Dataset::window_name, MAXVAL / 2);
+	    cv::setTrackbarPos("Y", Dataset::window_name, MAXVAL / 2);
+	    cv::setTrackbarPos("x", Dataset::window_name, MAXVAL / 2);
+	    cv::setTrackbarPos("y", Dataset::window_name, MAXVAL / 2);
+	    cv::setTrackbarPos("z", Dataset::window_name, MAXVAL / 2);
+        }
     }
 
     static void apply_Intr_Calib() {
