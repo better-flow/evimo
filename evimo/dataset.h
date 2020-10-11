@@ -292,6 +292,11 @@ public:
         return get_time_offset_image_to_host_correction() - get_time_offset_image_to_event_correction();
     }
 
+    static void on_trackbar(int, void*) {
+        Dataset::modified = true;
+        Dataset::update_cam_calib();
+    }
+
 private:
     // slider-controlled:
     static float get_time_offset_image_to_event() {
@@ -394,11 +399,6 @@ private:
         ifs.close();
         Dataset::update_cam_calib();
         return true;
-    }
-
-    static void on_trackbar(int, void*) {
-        Dataset::modified = true;
-        Dataset::update_cam_calib();
     }
 
     static float normval(int val, int maxval, int normval) {

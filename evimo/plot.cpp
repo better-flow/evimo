@@ -5,7 +5,7 @@
 //cv::Mat plot_erate(, int res_x, int res_y, float t0) {
 
 
-void TjPlot::add_trajectory_plot(Trajectory &tj) {
+void TjPlot::add_trajectory_plot(Trajectory &tj, float shift) {
     auto n_pts = tj.size();
     std::valarray<float> t(n_pts);
     std::valarray<float> x(n_pts);
@@ -16,7 +16,7 @@ void TjPlot::add_trajectory_plot(Trajectory &tj) {
     std::valarray<float> ry(n_pts);
     for (size_t i = 0; i < n_pts; ++i) {
         auto p = tj[i];
-        t[i] = p.get_ts_sec();
+        t[i] = p.get_ts_sec() - shift;
         auto T = p.getT();
         auto R = p.getR();
         x[i] = -T[0];
@@ -87,7 +87,7 @@ void TjPlot::add_trajectory_plot(Trajectory &tj) {
         #else
             auto line_type = cv::LINE_AA;
         #endif
-        
+
         cv::line(ret, {(int)t[i-1], (int)x[i-1]}, {(int)t[i], (int)x[i]},   cv::Scalar(0xb4, 0x77, 0x1f), 2, line_type);
         cv::line(ret, {(int)t[i-1], (int)y[i-1]}, {(int)t[i], (int)y[i]},   cv::Scalar(0x0e, 0x7f, 0xff), 2, line_type);
         cv::line(ret, {(int)t[i-1], (int)z[i-1]}, {(int)t[i], (int)z[i]},   cv::Scalar(0x2c, 0xa0, 0x2c), 2, line_type);

@@ -51,19 +51,21 @@ class FrameSequenceVisualizer {
 protected:
     std::vector<DatasetFrame> *frames;
     int frame_id;
+    float plot_t_offset;
 
     TjPlot plotter; // plot trajectories
 
 public:
     FrameSequenceVisualizer(std::vector<DatasetFrame> &frames)
-        : frame_id(0), plotter("Trajectories", 4000, 800) {
+        : frame_id(0), plotter("Trajectories", 2000, 400) {
         std::cout << "Frame Sequence Visuzlizer...\n";
         this->frames = &frames;
         //this->frame_id = this->frames->size() / 2;
 
-        this->plotter.add_trajectory_plot(Dataset::cam_tj);
+        this->plot_t_offset = Dataset::cam_tj[0].get_ts_sec();
+        this->plotter.add_trajectory_plot(Dataset::cam_tj, plot_t_offset);
         for (auto &tj : Dataset::obj_tjs)
-            this->plotter.add_trajectory_plot(tj.second);
+            this->plotter.add_trajectory_plot(tj.second, plot_t_offset);
 
         this->spin();
     }
@@ -78,9 +80,10 @@ public:
     void spin() {
         cv::namedWindow("Frames", cv::WINDOW_NORMAL);
         cv::createTrackbar("frame", "Frames", &frame_id, frames->size() - 1, on_trackbar);
+        cv::createTrackbar("t_pos", "Frames", &Dataset::pose_to_event_to_slider, Dataset::MAXVAL, Dataset::on_trackbar);
 
         Dataset::modified = true;
-        Dataset::init_GUI();
+        //Dataset::init_GUI(); // calibration control
         const uint8_t nmodes = 4;
         uint8_t vis_mode = 0;
         bool nodist = true;
@@ -125,7 +128,7 @@ public:
 
             cv::imshow("Frames", img);
 
-            //this->plotter.add_vertical(f.get_timestamp());
+            //this->plotter.add_vertical(f.get_timestamp() - plot_t_offset);
             //this->plotter.show();
 
             if (enable_3D && !bp) {

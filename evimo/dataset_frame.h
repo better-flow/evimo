@@ -51,9 +51,10 @@ public:
         }
 
         TjPlot plotter("Trajectories", 1000, 100);
-        plotter.add_trajectory_plot(Dataset::cam_tj);
+        float plot_t_offset = Dataset::cam_tj[0].get_ts_sec();
+        plotter.add_trajectory_plot(Dataset::cam_tj, plot_t_offset);
         for (auto &tj : Dataset::obj_tjs)
-            plotter.add_trajectory_plot(tj.second);
+            plotter.add_trajectory_plot(tj.second, plot_t_offset);
 
         Dataset::modified = true;
         Dataset::init_GUI();
@@ -85,7 +86,7 @@ public:
                     case 3: img = window.first->get_visualization_event_projection(true, nodist); break;
                 }
 
-                plotter.add_vertical(window.first->get_timestamp());
+                plotter.add_vertical(window.first->get_timestamp() - plot_t_offset);
                 cv::imshow(window.second, img);
             }
 

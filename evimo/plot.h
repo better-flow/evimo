@@ -13,14 +13,13 @@ protected:
     int res_x, res_y;
     double t_rng;
     float frame;
+    bool initialized;
 
 public:
     TjPlot(std::string name, int res_x, int res_y, float frame=10)
-        : name(name), res_x(res_x), res_y(res_y), t_rng(-1), frame(frame) {
-        cv::namedWindow(this->name, cv::WINDOW_NORMAL);
-    }
+        : name(name), res_x(res_x), res_y(res_y), t_rng(-1), frame(frame), initialized(false) {}
 
-    void add_trajectory_plot(Trajectory &tj);
+    void add_trajectory_plot(Trajectory &tj, float shift=0.0);
 
     void add_vertical(float t0, int p_id=-1) {
         t0 *= float(this->res_x) / this->t_rng;
@@ -43,6 +42,11 @@ public:
     }
 
     void show() {
+        if (!this->initialized) {
+            this->initialized = true;
+            cv::namedWindow(this->name, cv::WINDOW_NORMAL);
+        }
+
         auto plot = this->get_plot();
         cv::imshow(this->name, plot);
     }
