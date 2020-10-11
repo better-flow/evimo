@@ -368,7 +368,7 @@ protected:
                 if (u_max < 0 || v_max < 0 || u_min >= rows || v_min >= cols) continue;
                 if (z_max < 0.001) continue;
 
-                float z = (z0 + z1 + z2) / 3;
+                //float z = (z0 + z1 + z2) / 3;
 
                 /*
                 if (frame_id < 298) continue;
@@ -381,15 +381,27 @@ protected:
                 }
                 */
 
+                float x0 = u1 - u0, x1 = u2 - u0, y0 = v1 - v0, y1 = v2 - v0;
                 for (int uu = u_min; uu <= u_max; ++uu) {
                     for (int vv = v_min; vv<= v_max; ++vv) {
                         if (uu < 0 || vv < 0 || vv >= cols || uu >= rows) continue;
 
+                        // is it in triange?
                         auto d1 = (uu - u1) * (v0 - v1) - (vv - v1) * (u0 - u1);
                         auto d2 = (uu - u2) * (v1 - v2) - (vv - v2) * (u1 - u2);
                         auto d3 = (uu - u0) * (v2 - v0) - (vv - v0) * (u2 - u0);
                         if (((d1 < 0) || (d2 < 0) || (d3 < 0)) && ((d1 > 0) || (d2 > 0) || (d3 > 0))) continue;
 
+                        // compute depth
+                        float x = uu - u0, y = vv - v0;
+                        float denom = x0 * y1 - x1 * y0;
+                        if (std::fabs(denom) < 1e-5) continue;
+
+                        float alpha = (x * y1 - x1 * y) / denom;
+                        float beta  = (x0 * y - x * y0) / denom;
+                        float z = z0 + alpha * (z1 - z0) + beta * (z2 - z0);
+
+                        // update masks / depth
                         float base_rng = this->depth.at<float>(uu, vv);
                         if (base_rng > z || base_rng < 0.001) {
                             this->depth.at<float>(uu, vv) = z;
