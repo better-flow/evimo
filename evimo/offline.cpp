@@ -307,6 +307,7 @@ int main (int argc, char** argv) {
     ros::Time first_event_ts = ros::Time(0);
     ros::Time first_event_message_ts = ros::Time(0);
     ros::Time last_event_ts = ros::Time(0);
+    bool sort_events = false;
     for (auto &m : view) {
         if (m.getTopic() != Dataset::event_topic)
             continue;
@@ -338,7 +339,8 @@ int main (int argc, char** argv) {
                 first_event_message_ts = msg->header.stamp;// m.getTime();
             } else {
                 if (current_event_ts < last_event_ts) {
-                    std::cout << _red("Events are not sorted! ")
+                    sort_events = true;
+                    std::cout << _yellow("Events are not sorted! ")
                               << id << ": " << last_event_ts << " -> "
                               << current_event_ts << std::endl;
                 }
@@ -356,6 +358,30 @@ int main (int argc, char** argv) {
     }
     n_events = event_array.size();
 
+    // sort events
+    if (sort_events) {
+        std::cout << "Sorting events..." << std::endl;
+        std::sort(event_array.begin(), event_array.end(),
+            [](const Event &a, const Event &b) -> bool
+            { return a.timestamp < b.timestamp; });
+    }
+
+    // check trajectories
+    {
+        std::cout << "\tCamera trajectory is... ";
+        if (!cam_tj.is_sorted(true)) {
+            std::cout << _red("not sorted") << std::endl;
+            return 0;
+        } else {std::cout << _green("sorted") << std::endl; }
+    }
+    for (auto &obj_tj : obj_tjs) {
+        std::cout << "\t" << obj_tj.first << " trajectory is... ";
+        if (!obj_tj.second.is_sorted(true)) {
+            std::cout << _red("not sorted") << std::endl;
+            return 0;
+        } else {std::cout << _green("sorted") << std::endl; }
+    }
+
     std::cout << _green("Read ") << n_events << _green(" events") << std::endl;
     if (ignore_tj) {
         auto t0 = ros::Time(0);
@@ -363,7 +389,7 @@ int main (int argc, char** argv) {
         auto t1 = ros::Time(0);
         t1.fromNSec(event_array[event_array.size() - 1].timestamp);
         auto npos = int((t1 - t0).toSec() * 100);
-        std::cout << npos << "\t" << t0 << " - " << t1 << "\n";
+        std::cout << npos << "\t" << t0 << " - " << t1 << std::endl;
 
         for (size_t i = 0; i < npos; ++i)
             cam_tj.add(t0 + ros::Duration(float(i) / 100.0), tf::Transform());
@@ -391,11 +417,25 @@ int main (int argc, char** argv) {
     } else {
         //time_offset = first_event_message_ts + ros::Duration(Dataset::get_time_offset_event_to_host());
         time_offset.fromNSec(event_array[0].timestamp);
+        std::cout << "Event timestamp range (nsec):\t(" << event_array.front().timestamp 
+                  << " - " << event_array.back().timestamp << ")" << std::endl;
+    }
+
+    if (cam_tj.size() == 0) {
+        std::cout << _red("Camera trajectory size = 0!\n");
+        return 0;
+    } else {
+        std::cout << "Camera tj timestamp range:\t(" << cam_tj[0].ts
+                  << " - " << cam_tj[cam_tj.size() - 1].ts << ")" << std::endl;
     }
 
     cam_tj.subtract_time(time_offset);
-    for (auto &obj_tj : obj_tjs)
+    for (auto &obj_tj : obj_tjs) {
+        if (obj_tj.second.size() == 0) continue;
+        std::cout << obj_tj.first << " tj timestamp range:\t(" << obj_tj.second[0].ts
+                  << " - " << obj_tj.second[obj_tj.second.size() - 1].ts << ")" << std::endl;
         obj_tj.second.subtract_time(time_offset);
+    }
 
     // images
     while(image_ts.size() > 0 && *image_ts.begin() < time_offset) {
@@ -412,8 +452,21 @@ int main (int argc, char** argv) {
     std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec()))
               << std::endl << std::endl;
 
+    if (n_events > 0)
+        std::cout << "Event timestamp range:\t(" << double(event_array.front().timestamp) * 1e-9
+                  << " - " << double(event_array.back().timestamp) * 1e-9 << ")" << std::endl;
+    std::cout << "Camera tj timestamp range:\t(" << cam_tj[0].ts
+              << " - " << cam_tj[cam_tj.size() - 1].ts << ")" << std::endl;
+    for (auto &obj_tj : obj_tjs)
+        std::cout << obj_tj.first << " tj timestamp range:\t(" << obj_tj.second[0].ts
+                  << " - " << obj_tj.second[obj_tj.second.size() - 1].ts << ")" << std::endl;
+
     // Align the timestamps
-    double start_ts = 0.001;
+    double start_ts = std::max(double(event_array.front().timestamp) * 1e-9, cam_tj[0].ts.toSec());
+    for (auto &obj_tj : obj_tjs)
+        start_ts = std::max(start_ts, obj_tj.second[0].ts.toSec());
+    start_ts += 1e-3; // ensure the first pose is surrounded by events
+
     unsigned long int frame_id_real = 0;
     double dt = 1.0 / FPS;
     long int cam_tj_id = 0;
@@ -468,7 +521,13 @@ int main (int argc, char** argv) {
             continue;
         }
 
-        if (frames.size() > 0 && std::fabs(frames.back().get_timestamp() - ref_ts) < 1e-6) {
+        if (event_array.size() > 0 && event_high - event_low < 10) {
+            std::cout << _red("No events at: ") << ref_ts << " sec. skipping..." << std::endl;
+            frame_id_real ++;
+            continue;
+        }
+
+        if (frames.size() > 0 && std::fabs(frames.back().get_timestamp() - ref_ts) < 1e-4) {
             std::cout << _red("Duplicate frame encountered at: ") << ref_ts << " sec. skipping..." << std::endl;
             continue;
         }
@@ -490,12 +549,14 @@ int main (int argc, char** argv) {
             frame.add_object_pos_id(obj_tj.first, obj_tj_ids[obj_tj.first]);
         }
         std::cout << std::endl;
-
         frame_id_real ++;
     }
 
     std::cout << _blue("\nTimestamp alignment done") << std::endl;
     std::cout << "\tDataset contains " << frames.size() << " frames" << std::endl;
+    if (frames.size() == 0) {
+        return 0;
+    }
 
     // Visualization
     int step = std::max(int(frames.size()) / show, 1);

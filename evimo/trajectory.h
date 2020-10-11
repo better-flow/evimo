@@ -246,7 +246,24 @@ public:
     auto get_filtering_window_size() {return this->filtering_window_size; }
 
     template<class T> void add(ros::Time ts_, T pq_) {
+        if (this->poses.size() > 0 && this->poses.back().ts > ts_) {
+            std::cout << _yellow("Pose is added out of order:") << "last added ts: "
+                      << this->poses.back().ts << "; new ts: " << ts_ << std::endl;
+        }
         this->poses.push_back(Pose(ts_, pq_));
+    }
+
+    bool is_sorted(bool verbose=false) {
+        bool sorted = true;
+        for (size_t i = 1; i < this->poses.size(); ++i) {
+            if (this->poses[i - 1].ts < this->poses[i].ts) continue;
+            sorted = false;
+            if (!verbose) break;
+            std::cout << _yellow("Poses are not sorted! ")
+                      << i << ": " << this->poses[i - 1].ts << " -> "
+                      << this->poses[i].ts << std::endl;
+        }
+        return sorted;
     }
 
     void clear() {
@@ -267,7 +284,7 @@ public:
     }
 
     virtual void subtract_time(ros::Time t) final {
-        while (this->poses.begin()->ts < t)
+        while ((this->poses.size() > 0) && (this->poses.begin()->ts < t))
             this->poses.erase(this->poses.begin());
         for (auto &p : this->poses) p.ts = ros::Time((p.ts - t).toSec());
     }
