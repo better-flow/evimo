@@ -187,6 +187,9 @@ int main (int argc, char** argv) {
     if (!nh.getParam("with_images", with_images)) with_images = true;
     else std::cout << _yellow("With 'with_images' option, the datased will be generated at image framerate.") << std::endl;
 
+    float max_event_gap = 0.01; // in seconds
+    if (!nh.getParam("max_event_gap", max_event_gap)) max_event_gap = 0.01;
+
     // -- parse the dataset folder
     std::string bag_name = boost::filesystem::path(dataset_folder).stem().string();
     if (bag_name == ".") {
@@ -465,7 +468,9 @@ int main (int argc, char** argv) {
                   << " - " << obj_tj.second[obj_tj.second.size() - 1].ts << ")" << std::endl;
 
     // Align the timestamps
-    double start_ts = std::max(double(event_array.front().timestamp) * 1e-9, cam_tj[0].ts.toSec());
+    double start_ts = 0.0;
+    if (cam_tj.size() > 0) start_ts = cam_tj[0].ts.toSec();
+    if (event_array.size() > 0) start_ts = std::max(double(event_array.front().timestamp) * 1e-9, start_ts);
     for (auto &obj_tj : obj_tjs)
         start_ts = std::max(start_ts, obj_tj.second[0].ts.toSec());
     start_ts += 1e-3; // ensure the first pose is surrounded by events
@@ -522,6 +527,35 @@ int main (int argc, char** argv) {
             std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " / " << max_p2p_err << " skipping..." << std::endl;
             frame_id_real ++;
             continue;
+        }
+
+        if (event_array.size() > 0) {
+            bool to_skip = false;
+            auto de_low  = ts_low  > event_array[event_low ].timestamp ? ts_low  - event_array[event_low].timestamp :
+                                                                      event_array[event_low].timestamp - ts_low;
+            auto de_high = ts_high > event_array[event_high].timestamp ? ts_high - event_array[event_high].timestamp :
+                                                                      event_array[event_high].timestamp - ts_high;
+            if (de_low > max_event_gap * 1e9 || de_high > max_event_gap * 1e9) {
+                std::cout << _red("Gap in event window boundaries: ") << double(de_low) * 1e-9 << " / "
+                          << double(de_high) * 1e-9 << " sec. skipping..." << std::endl;
+                frame_id_real ++;
+                continue;
+            }
+
+            for (size_t event_id = event_low + 1; event_id <= event_high; event_id++) {
+                auto event_gap = event_array[event_id].timestamp - event_array[event_id - 1].timestamp;
+                if (event_gap > max_event_gap * 1e9) {
+                    std::cout << _red("Gap in events ") << event_id - 1 << " -> " << event_id << _red(" detected: ") 
+                              << double(event_gap) * 1e-9 << " sec. skipping..." << std::endl;
+                    to_skip = true;
+                    break;
+                }
+            }
+             
+            if (to_skip) {
+                frame_id_real ++;
+                continue;
+            }
         }
 
         if (event_array.size() > 0 && event_high - event_low < 10) {
