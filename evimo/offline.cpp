@@ -74,16 +74,19 @@ public:
         this->frame_id = id < this->frames->size() - 1 ? id : this->frames->size() - 1;
         this->frame_id = this->frame_id < 0 ? 0 : this->frame_id;
         cv::setTrackbarPos("frame", "Frames", this->frame_id);
-        Dataset::modified = true;
+        auto &f = this->frames->at(this->frame_id);
+        f.dataset_handle->modified = true;
     }
 
     void spin() {
         cv::namedWindow("Frames", cv::WINDOW_NORMAL);
-        cv::createTrackbar("frame", "Frames", &frame_id, frames->size() - 1, on_trackbar);
-        cv::createTrackbar("t_pos", "Frames", &Dataset::pose_to_event_to_slider, Dataset::MAXVAL, Dataset::on_trackbar);
+        cv::createTrackbar("frame", "Frames", &frame_id, frames->size() - 1, on_trackbar, this);
+        auto &f = this->frames->at(this->frame_id);
+        cv::createTrackbar("t_pos", "Frames", &f.dataset_handle->pose_to_event_to_slider,
+                           Dataset::MAXVAL, Dataset::on_trackbar, f.dataset_handle.get());
 
-        Dataset::modified = true;
-        //Dataset::init_GUI(); // calibration control
+        f.dataset_handle->modified = true;
+        //f.dataset_handle->init_GUI(); // calibration control
         const uint8_t nmodes = 4;
         uint8_t vis_mode = 0;
         bool nodist = true;
@@ -96,7 +99,8 @@ public:
             code = cv::waitKey(1);
             if (bp) bp->maybeViewerSpinOnce();
 
-            Dataset::handle_keys(code, vis_mode, nmodes);
+            auto &f = this->frames->at(this->frame_id);
+            f.dataset_handle->handle_keys(code, vis_mode, nmodes);
 
             if (code == 39) { // '''
                 this->set_slider(this->frame_id + 1);
@@ -107,14 +111,13 @@ public:
             }
 
             if (code == 99) { // 'c'
-                Dataset::modified = true;
+                f.dataset_handle->modified = true;
                 enable_3D = !enable_3D;
             }
 
-            if (!Dataset::modified) continue;
-            Dataset::modified = false;
+            if (!f.dataset_handle->modified) continue;
+            f.dataset_handle->modified = false;
 
-            auto &f = this->frames->at(this->frame_id);
             f.generate(nodist);
 
             cv::Mat img;
@@ -132,7 +135,7 @@ public:
             //this->plotter.show();
 
             if (enable_3D && !bp) {
-                bp = std::make_shared<Backprojector>(f.get_timestamp(), 0.4, 200);
+                bp = std::make_shared<Backprojector>(f.dataset_handle, f.get_timestamp(), 0.4, 200);
                 bp->initViewer();
             }
 
@@ -146,8 +149,10 @@ public:
         cv::destroyAllWindows();
     }
 
-    static void on_trackbar(int, void*) {
-        Dataset::modified = true;
+    static void on_trackbar(int v, void *object) {
+        FrameSequenceVisualizer *instance = (FrameSequenceVisualizer*)object;
+        auto &f = instance->frames->at(instance->frame_id);
+        f.dataset_handle->modified = true;
     }
 };
 
@@ -215,8 +220,9 @@ int main (int argc, char** argv) {
     std::string camera_name = "";
     if (!nh.getParam("camera_name", camera_name)) camera_name = "main_camera";
 
-    // Read datasset configuration files
-    if (!Dataset::init(nh, dataset_folder, camera_name))
+    // Read dataset configuration files
+    auto dataset = std::make_shared<Dataset>();
+    if (!dataset->init(nh, dataset_folder, camera_name))
         return -1;
 
     // Load 3D models
@@ -236,10 +242,10 @@ int main (int argc, char** argv) {
     ros::Time bag_start_ts = view.begin()->getTime();
     uint64_t n_events = 0;
     for (auto &m : view) {
-        if (m.getTopic() == Dataset::cam_pos_topic) {
+        if (m.getTopic() == dataset->cam_pos_topic) {
             auto msg = m.instantiate<vicon::Subject>();
             if (msg == NULL) continue;
-            auto timestamp = msg->header.stamp + ros::Duration(Dataset::get_time_offset_pose_to_host());
+            auto timestamp = msg->header.stamp + ros::Duration(dataset->get_time_offset_pose_to_host());
 
             if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
             if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
@@ -248,12 +254,12 @@ int main (int argc, char** argv) {
             continue;
         }
 
-        for (auto &p : Dataset::obj_pose_topics) {
+        for (auto &p : dataset->obj_pose_topics) {
             if (m.getTopic() != p.second) continue;
             auto msg = m.instantiate<vicon::Subject>();
             if (msg == NULL) break;
             if (msg->occluded) break;
-            auto timestamp = msg->header.stamp + ros::Duration(Dataset::get_time_offset_pose_to_host());
+            auto timestamp = msg->header.stamp + ros::Duration(dataset->get_time_offset_pose_to_host());
 
             if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
             if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
@@ -263,7 +269,7 @@ int main (int argc, char** argv) {
             break;
         }
 
-        if (m.getTopic() == Dataset::event_topic) {
+        if (m.getTopic() == dataset->event_topic) {
             auto msg = m.instantiate<dvs_msgs::EventArray>();
             auto timestamp = msg->header.stamp;
 
@@ -276,10 +282,10 @@ int main (int argc, char** argv) {
             continue;
         }
 
-        if (with_images && (m.getTopic() == Dataset::image_topic)) {
+        if (with_images && (m.getTopic() == dataset->image_topic)) {
             auto msg_regular = m.instantiate<sensor_msgs::Image>();
             if (msg_regular != NULL) {
-                auto timestamp = msg_regular->header.stamp + ros::Duration(Dataset::get_time_offset_image_to_host());
+                auto timestamp = msg_regular->header.stamp + ros::Duration(dataset->get_time_offset_image_to_host());
                 if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
                 if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
 
@@ -290,7 +296,7 @@ int main (int argc, char** argv) {
 
             auto msg_compressed = m.instantiate<sensor_msgs::CompressedImage>();
             if (msg_compressed != NULL) {
-                auto timestamp = msg_compressed->header.stamp + ros::Duration(Dataset::get_time_offset_image_to_host());
+                auto timestamp = msg_compressed->header.stamp + ros::Duration(dataset->get_time_offset_image_to_host());
                 if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
                 if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
 
@@ -315,7 +321,7 @@ int main (int argc, char** argv) {
     ros::Time last_event_ts = ros::Time(0);
     bool sort_events = false;
     for (auto &m : view) {
-        if (m.getTopic() != Dataset::event_topic)
+        if (m.getTopic() != dataset->event_topic)
             continue;
 
         auto msize = 0;
@@ -354,9 +360,9 @@ int main (int argc, char** argv) {
             }
 
             //auto ts = (first_event_message_ts + (current_event_ts - first_event_ts) +
-            //           ros::Duration(Dataset::get_time_offset_event_to_host())).toNSec();
+            //           ros::Duration(dataset->get_time_offset_event_to_host())).toNSec();
 
-            auto ts = (current_event_ts + ros::Duration(Dataset::get_time_offset_event_to_host())).toNSec();
+            auto ts = (current_event_ts + ros::Duration(dataset->get_time_offset_event_to_host())).toNSec();
 
             event_array.push_back(Event(y, x, ts, polarity));
             id ++;
@@ -421,7 +427,7 @@ int main (int argc, char** argv) {
     if (n_events == 0) {
         time_offset = cam_tj[0].ts;
     } else {
-        //time_offset = first_event_message_ts + ros::Duration(Dataset::get_time_offset_event_to_host());
+        //time_offset = first_event_message_ts + ros::Duration(dataset->get_time_offset_event_to_host());
         time_offset.fromNSec(event_array[0].timestamp);
         std::cout << "Event timestamp range (nsec):\t(" << event_array.front().timestamp 
                   << " - " << event_array.back().timestamp << ")" << std::endl;
@@ -501,8 +507,8 @@ int main (int argc, char** argv) {
         if (done) break;
 
         auto ref_ts = (with_images ? image_ts[frame_id_real].toSec() : cam_tj[cam_tj_id].ts.toSec());
-        uint64_t ts_low  = (ref_ts < Dataset::slice_width) ? 0 : (ref_ts - Dataset::slice_width / 2.0) * 1000000000;
-        uint64_t ts_high = (ref_ts + Dataset::slice_width / 2.0) * 1000000000;
+        uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
+        uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
 
         if (event_array.size() > 0) {
             while (event_low  < event_array.size() - 1 && event_array[event_low].timestamp  < ts_low)  event_low ++;
@@ -569,7 +575,7 @@ int main (int argc, char** argv) {
             continue;
         }
 
-        frames.emplace_back(cam_tj_id, ref_ts, frame_id_real);
+        frames.emplace_back(dataset, cam_tj_id, ref_ts, frame_id_real);
         auto &frame = frames.back();
 
         if (event_array.size() > 0) {
@@ -608,9 +614,9 @@ int main (int argc, char** argv) {
         FrameSequenceVisualizer fsv(frames);
 
     if (save_3d) {
-        std::string save_dir = Dataset::dataset_folder + '/' + Dataset::camera_name + "/3D_data/";
-        Dataset::create_ground_truth_folder(save_dir);
-        Backprojector bp(-1, -1, -1);
+        std::string save_dir = dataset->dataset_folder + '/' + dataset->camera_name + "/3D_data/";
+        dataset->create_ground_truth_folder(save_dir);
+        Backprojector bp(dataset, -1, -1, -1);
         bp.save_clouds(save_dir);
     }
 
@@ -634,14 +640,14 @@ int main (int argc, char** argv) {
     std::cout << std::endl;
 
     // Create / clear ground truth folder
-    Dataset::create_ground_truth_folder();
+    dataset->create_ground_truth_folder();
 
     // Save ground truth
     std::cout << std::endl << _yellow("Writing depth and mask ground truth") << std::endl;
-    std::string meta_fname = Dataset::gt_folder + "/meta.txt";
+    std::string meta_fname = dataset->gt_folder + "/meta.txt";
     std::ofstream meta_file(meta_fname, std::ofstream::out);
     meta_file << "{\n";
-    meta_file << Dataset::meta_as_dict() + "\n";
+    meta_file << dataset->meta_as_dict() + "\n";
     meta_file << ", 'frames': [\n";
     for (uint64_t i = 0; i < frames.size(); ++i) {
         frames[i].save_gt_images();
@@ -657,7 +663,7 @@ int main (int argc, char** argv) {
     std::cout << std::endl << _yellow("Writing full trajectory") << std::endl;
     meta_file << ", 'full_trajectory': [\n";
     for (uint64_t i = 0; i < Dataset::cam_tj.size(); ++i) {
-        DatasetFrame frame(i, Dataset::cam_tj[i].ts.toSec(), -1);
+        DatasetFrame frame(dataset, i, Dataset::cam_tj[i].ts.toSec(), -1);
 
         for (auto &obj_tj : Dataset::obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
@@ -677,7 +683,7 @@ int main (int argc, char** argv) {
     meta_file.close();
 
     // Save events.txt
-    Dataset::write_eventstxt(Dataset::gt_folder + "/events.txt");
+    Dataset::write_eventstxt(dataset->gt_folder + "/events.txt");
     std::cout << _green("Done!") << std::endl;
     return 0;
 }

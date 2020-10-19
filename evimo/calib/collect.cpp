@@ -72,6 +72,7 @@ public:
     }
 
     virtual void start_accumulating() {this->accumulating = true;}
+
     virtual void save() {
         if (!this->accumulating) {
             std::cout << _red("Trying to save with no accumulation") << std::endl;
@@ -83,7 +84,13 @@ public:
         cv::imwrite(img_name, this->get_accumulated_image());
         this->cnt += 1;
     }
+
     virtual cv::Mat get_accumulated_image() {return this->accumulated_image;}
+
+    // Advanced functionality - like projecting vicon points
+    virtual bool try_register_dataset(std::string dataset_folder) {
+        //return Dataset::init(nh, dataset_folder, camera_name);
+    }
 };
 
 int Imager::uid = 0;
@@ -389,6 +396,10 @@ int main (int argc, char** argv) {
     bool detect_wand = false;
     if (!nh.getParam("d", detect_wand)) detect_wand = false;
 
+    // Show wand from vicon
+    bool show_wand = false;
+    if (!nh.getParam("show_wand", show_wand)) show_wand = false;
+
     int e_fps = 40;
     if (!nh.getParam("fps", e_fps)) e_fps = 40;
 
@@ -436,6 +447,19 @@ int main (int argc, char** argv) {
         std::cout << _green("Read source:\t") << cam_name << ":\t" << cam_type << "\t" << topic_name << std::endl;
     }
     ifs.close();
+
+    // Load intrinsics/extrinsics if requested
+    std::string dataset_folder = path_to_self + "/config/"; // default
+    if (show_wand && !nh.getParam("folder", dataset_folder)) {
+        std::cout << _yellow("No configuration folder specified! Using:")
+                  << dataset_folder << std::endl;
+    }
+
+    if (show_wand) {
+        for (auto &im : imagers) {
+            im->try_register_dataset(dataset_folder);
+        }
+    }
 
     // Creating directories
     for (auto &i : imagers) {

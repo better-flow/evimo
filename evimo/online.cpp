@@ -64,8 +64,8 @@ protected:
     std::mutex mutex;
 
 public:
-    RGBCameraVisualizer(ros::NodeHandle &nh, float FPS, std::string topic_, std::string event_topic_)
-        : frame(0, 0, 0), r(FPS), topic(topic_), event_topic(event_topic_), images_received(0) {
+    RGBCameraVisualizer(ros::NodeHandle &nh, float FPS, std::shared_ptr<Dataset> &dataset)
+        : frame(dataset, 0, 0, 0), r(FPS), topic(dataset->image_topic), event_topic(dataset->event_topic), images_received(0) {
         this->window_name = "RGBFrames_" + std::to_string(uid);
         uid += 1;
         this->sub = nh.subscribe(this->topic, 0, &RGBCameraVisualizer::sub_cb, this);
@@ -101,8 +101,8 @@ public:
     void spin() {
         cv::namedWindow(this->window_name, cv::WINDOW_NORMAL);
 
-        Dataset::modified = true;
-        Dataset::init_GUI();
+        this->frame.dataset_handle->modified = true;
+        this->frame.dataset_handle->init_GUI();
         const uint8_t nmodes = 4;
         uint8_t vis_mode = 0;
 
@@ -112,8 +112,8 @@ public:
             const std::lock_guard<std::mutex> lock(this->mutex);
             code = cv::waitKey(1);
 
-            Dataset::handle_keys(code, vis_mode, nmodes);
-            Dataset::modified = true;
+            this->frame.dataset_handle->handle_keys(code, vis_mode, nmodes);
+            this->frame.dataset_handle->modified = true;
 
             // Register data
             for (auto &cl : Dataset::clouds) {
@@ -127,8 +127,8 @@ public:
             }
 
             if (this->images_received > 0) {
-                Dataset::res_x = Dataset::images[0].rows;
-                Dataset::res_y = Dataset::images[0].cols;
+                this->frame.dataset_handle->res_x = Dataset::images[0].rows;
+                this->frame.dataset_handle->res_y = Dataset::images[0].cols;
                 this->frame.add_img(Dataset::images[0]);
             }
 
@@ -204,7 +204,8 @@ int main (int argc, char** argv) {
     if (!nh.getParam("camera_name", camera_name)) camera_name = "main_camera";
 
     // Read dataset configuration files
-    if (!Dataset::init(nh, dataset_folder, camera_name))
+    auto dataset = std::make_shared<Dataset>();
+    if (!dataset->init(nh, dataset_folder, camera_name))
         return -1;
 
     image_transport::ImageTransport it(nh);
@@ -218,8 +219,8 @@ int main (int argc, char** argv) {
         Dataset::background->transform(Dataset::bg_E);
     }
 
-    ros::Subscriber cam_sub = nh.subscribe(Dataset::cam_pos_topic, 0, camera_pos_cb);
-    RGBCameraVisualizer(nh, FPS, Dataset::image_topic, Dataset::event_topic);
+    ros::Subscriber cam_sub = nh.subscribe(dataset->cam_pos_topic, 0, camera_pos_cb);
+    RGBCameraVisualizer(nh, FPS, dataset);
 
     ros::shutdown();
     return 0;

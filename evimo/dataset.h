@@ -31,202 +31,228 @@ public:
     static std::map<int, Trajectory> obj_tjs;
 
     // Camera params
-    static std::string dist_model;
-    static std::string image_topic, event_topic, cam_pos_topic;
+    std::string dist_model;
+    std::string image_topic, event_topic, cam_pos_topic;
 
     // Calibration matrix
-    static float fx, fy, cx, cy, k1, k2, k3, k4, p1, p2;
+    float fx, fy, cx, cy, k1, k2, k3, k4, p1, p2;
 
     // Camera resolution
-    static unsigned int res_x, res_y;
+    unsigned int res_x, res_y;
 
     // Camera center to vicon
-    static float rr0, rp0, ry0, tx0, ty0, tz0;
-    static tf::Transform cam_E;
+    float rr0, rp0, ry0, tx0, ty0, tz0;
+    tf::Transform cam_E;
 
     // Background to vicon
     static tf::Transform bg_E;
 
     // Time offset
-    static float image_to_event_to, pose_to_event_to;
-    static int image_to_event_to_slider, pose_to_event_to_slider;
+    float image_to_event_to, pose_to_event_to;
+    int image_to_event_to_slider, pose_to_event_to_slider;
 
     // Event slice width, for visualization
-    static float slice_width;
+    float slice_width;
 
     // Pose filtering window, in seconds
-    static float pose_filtering_window;
+    float pose_filtering_window;
+
+    // Instance counter for this class
+    static uint32_t instance_id;
 
     // Other parameters
-    static std::string window_name;
-    static bool modified;
-    static bool window_initialized;
+    std::string window_name;
+    bool modified;
+    bool window_initialized;
 
     // Folder names
-    static std::string dataset_folder, camera_name, gt_folder;
+    std::string dataset_folder, camera_name, gt_folder;
 
     static constexpr float MAXVAL = 1000;
     static constexpr float INT_LIN_SC = 10.0;
     static constexpr float INT_ANG_SC = 10.0;
     static constexpr float INT_TIM_SC = 5;
 
-    static int value_rr, value_rp, value_ry;
-    static int value_tx, value_ty, value_tz;
+    int value_rr, value_rp, value_ry;
+    int value_tx, value_ty, value_tz;
 
-    static bool init(ros::NodeHandle &n_, std::string dataset_folder, std::string camera_name) {
-        Dataset::dataset_folder = dataset_folder;
-        Dataset::camera_name = camera_name;
+    // Constructor
+    Dataset()
+        : dist_model(""), image_topic(""), event_topic(""), cam_pos_topic("")
+        , fx(0), fy(0), cx(0), cy(0), k1(0), k2(0), k3(0), k4(0), p1(0), p2(0)
+        , res_x(0), res_y(0)
+        , rr0(0), rp0(0), ry0(0), tx0(0), ty0(0), tz0(0) 
+        , image_to_event_to(0), pose_to_event_to(0)
+        , image_to_event_to_slider(Dataset::MAXVAL / 2), pose_to_event_to_slider(Dataset::MAXVAL / 2)
+        , value_rr(Dataset::MAXVAL / 2), value_rp(Dataset::MAXVAL / 2), value_ry(Dataset::MAXVAL / 2)
+        , value_tx(Dataset::MAXVAL / 2), value_ty(Dataset::MAXVAL / 2), value_tz(Dataset::MAXVAL / 2)
+        , slice_width(0.04)
+        , pose_filtering_window(-1) // pose filtering window, in seconds
+        , window_name("")
+        , modified(false), window_initialized(false)
+        , dataset_folder(""), camera_name(""), gt_folder("") {
+        this->cam_E.setIdentity();
+        Dataset::instance_id++;
+    }
 
-        auto gt_dir_path = boost::filesystem::path(Dataset::dataset_folder);
+    bool init(ros::NodeHandle &n_, std::string dataset_folder, std::string camera_name) {
+        this->dataset_folder = dataset_folder;
+        this->camera_name = camera_name;
+
+        auto gt_dir_path = boost::filesystem::path(this->dataset_folder);
         gt_dir_path /= camera_name;
         gt_dir_path /= "ground_truth";
-        Dataset::gt_folder = gt_dir_path.string();
+        this->gt_folder = gt_dir_path.string();
 
-        bool ret = Dataset::read_params(Dataset::dataset_folder + "/" + camera_name + "/params.txt");
-        ret &= Dataset::read_cam_intr(Dataset::dataset_folder + "/" + camera_name + "/calib.txt");
-        ret &= Dataset::read_extr(Dataset::dataset_folder + "/" + camera_name + "/extrinsics.txt");
-        ret &= Dataset::load_objects(n_, Dataset::dataset_folder + "/objects.txt");
+        bool ret = this->read_params(this->dataset_folder + "/" + camera_name + "/params.txt");
+        ret &= this->read_cam_intr(this->dataset_folder + "/" + camera_name + "/calib.txt");
+        ret &= this->read_extr(this->dataset_folder + "/" + camera_name + "/extrinsics.txt");
+        ret &= this->load_objects(n_, this->dataset_folder + "/objects.txt");
         return ret;
     }
 
-    static void init_GUI() {
-        Dataset::window_name = "Calibration Control";
+    void init_GUI() {
+        this->window_name = "Calibration Control " + std::to_string(Dataset::instance_id - 1);
         cv::namedWindow("Trajectories", cv::WINDOW_AUTOSIZE);
-        cv::namedWindow(Dataset::window_name, cv::WINDOW_AUTOSIZE);
-        cv::createTrackbar("R", Dataset::window_name, &value_rr, MAXVAL, on_trackbar);
-        cv::createTrackbar("P", Dataset::window_name, &value_rp, MAXVAL, on_trackbar);
-        cv::createTrackbar("Y", Dataset::window_name, &value_ry, MAXVAL, on_trackbar);
-        cv::createTrackbar("x", Dataset::window_name, &value_tx, MAXVAL, on_trackbar);
-        cv::createTrackbar("y", Dataset::window_name, &value_ty, MAXVAL, on_trackbar);
-        cv::createTrackbar("z", Dataset::window_name, &value_tz, MAXVAL, on_trackbar);
-        cv::createTrackbar("t_pos", Dataset::window_name, &pose_to_event_to_slider, MAXVAL, on_trackbar);
-        cv::createTrackbar("t_img", Dataset::window_name, &image_to_event_to_slider, MAXVAL, on_trackbar);
-        Dataset::window_initialized = true;
+        cv::namedWindow(this->window_name, cv::WINDOW_AUTOSIZE);
+        cv::createTrackbar("R", this->window_name, &this->value_rr, Dataset::MAXVAL, Dataset::on_trackbar, this);
+        cv::createTrackbar("P", this->window_name, &this->value_rp, Dataset::MAXVAL, Dataset::on_trackbar, this);
+        cv::createTrackbar("Y", this->window_name, &this->value_ry, Dataset::MAXVAL, Dataset::on_trackbar, this);
+        cv::createTrackbar("x", this->window_name, &this->value_tx, Dataset::MAXVAL, Dataset::on_trackbar, this);
+        cv::createTrackbar("y", this->window_name, &this->value_ty, Dataset::MAXVAL, Dataset::on_trackbar, this);
+        cv::createTrackbar("z", this->window_name, &this->value_tz, Dataset::MAXVAL, Dataset::on_trackbar, this);
+        cv::createTrackbar("t_pos", this->window_name, &this->pose_to_event_to_slider, Dataset::MAXVAL, Dataset::on_trackbar, this);
+        cv::createTrackbar("t_img", this->window_name, &this->image_to_event_to_slider, Dataset::MAXVAL, Dataset::on_trackbar, this);
+        this->window_initialized = true;
     }
 
-    static void reset_Intr_Sliders() {
-        if(Dataset::window_initialized) {
-            cv::setTrackbarPos("R", Dataset::window_name, MAXVAL / 2);
-            cv::setTrackbarPos("P", Dataset::window_name, MAXVAL / 2);
-	    cv::setTrackbarPos("Y", Dataset::window_name, MAXVAL / 2);
-	    cv::setTrackbarPos("x", Dataset::window_name, MAXVAL / 2);
-	    cv::setTrackbarPos("y", Dataset::window_name, MAXVAL / 2);
-	    cv::setTrackbarPos("z", Dataset::window_name, MAXVAL / 2);
-        }
+    void reset_Intr_Sliders() {
+        if(!this->window_initialized) return;
+        cv::setTrackbarPos("R", this->window_name, Dataset::MAXVAL / 2);
+        cv::setTrackbarPos("P", this->window_name, Dataset::MAXVAL / 2);
+	    cv::setTrackbarPos("Y", this->window_name, Dataset::MAXVAL / 2);
+	    cv::setTrackbarPos("x", this->window_name, Dataset::MAXVAL / 2);
+	    cv::setTrackbarPos("y", this->window_name, Dataset::MAXVAL / 2);
+	    cv::setTrackbarPos("z", this->window_name, Dataset::MAXVAL / 2);
     }
 
-    static void apply_Intr_Calib() {
-        auto pose = Pose(ros::Time(0), Dataset::cam_E);
+    void apply_Intr_Calib() {
+        auto pose = Pose(ros::Time(0), this->cam_E);
         auto T = pose.getT();
         auto R = pose.getR();
 
-        tx0 = T[0]; ty0 = T[1]; tz0 = T[2];
-        rr0 = R[0]; rp0 = R[1]; ry0 = R[2];
+        this->tx0 = T[0]; this->ty0 = T[1]; this->tz0 = T[2];
+        this->rr0 = R[0]; this->rp0 = R[1]; this->ry0 = R[2];
 
-        Dataset::reset_Intr_Sliders();
-        Dataset::printCalib();
+        this->reset_Intr_Sliders();
+        this->printCalib();
     }
 
-    static void set_sliders(float Tx, float Ty, float Tz,
-                            float Rx, float Ry, float Rz) {
-        Dataset::modified = true;
+    void set_sliders(float Tx, float Ty, float Tz,
+                     float Rx, float Ry, float Rz) {
+        this->modified = true;
+        this->value_rr = Dataset::normval_inv(Dataset::normval(
+                this->value_rr, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC) + Rx,
+                Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC);
+        this->value_rp = Dataset::normval_inv(Dataset::normval(
+                this->value_rp, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC) + Ry,
+                Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC);
+        this->value_ry = Dataset::normval_inv(Dataset::normval(
+                this->value_ry, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC) + Rz,
+                Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC);
+        this->value_tx = Dataset::normval_inv(Dataset::normval(
+                this->value_tx, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC) + Tx,
+                Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC);
+        this->value_ty = Dataset::normval_inv(Dataset::normval(
+                this->value_ty, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC) + Ty,
+                Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC);
+        this->value_tz = Dataset::normval_inv(Dataset::normval(
+                this->value_tz, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC) + Tz,
+                Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC);
 
-        value_rr = normval_inv(normval(value_rr, MAXVAL, MAXVAL * INT_ANG_SC) + Rx,
-                               MAXVAL, MAXVAL * INT_ANG_SC);
-        value_rp = normval_inv(normval(value_rp, MAXVAL, MAXVAL * INT_ANG_SC) + Ry,
-                               MAXVAL, MAXVAL * INT_ANG_SC);
-        value_ry = normval_inv(normval(value_ry, MAXVAL, MAXVAL * INT_ANG_SC) + Rz,
-                               MAXVAL, MAXVAL * INT_ANG_SC);
+        cv::setTrackbarPos("R", this->window_name, this->value_rr);
+        cv::setTrackbarPos("P", this->window_name, this->value_rp);
+        cv::setTrackbarPos("Y", this->window_name, this->value_ry);
+        cv::setTrackbarPos("x", this->window_name, this->value_tx);
+        cv::setTrackbarPos("y", this->window_name, this->value_ty);
+        cv::setTrackbarPos("z", this->window_name, this->value_tz);
 
-        value_tx = normval_inv(normval(value_tx, MAXVAL, MAXVAL * INT_LIN_SC) + Tx,
-                               MAXVAL, MAXVAL * INT_LIN_SC);
-        value_ty = normval_inv(normval(value_ty, MAXVAL, MAXVAL * INT_LIN_SC) + Ty,
-                               MAXVAL, MAXVAL * INT_LIN_SC);
-        value_tz = normval_inv(normval(value_tz, MAXVAL, MAXVAL * INT_LIN_SC) + Tz,
-                               MAXVAL, MAXVAL * INT_LIN_SC);
-
-        cv::setTrackbarPos("R", Dataset::window_name, value_rr);
-        cv::setTrackbarPos("P", Dataset::window_name, value_rp);
-        cv::setTrackbarPos("Y", Dataset::window_name, value_ry);
-        cv::setTrackbarPos("x", Dataset::window_name, value_tx);
-        cv::setTrackbarPos("y", Dataset::window_name, value_ty);
-        cv::setTrackbarPos("z", Dataset::window_name, value_tz);
-
-        Dataset::update_cam_calib();
+        this->update_cam_calib();
     }
 
-    static void handle_keys(int code, uint8_t &vis_mode, const uint8_t nmodes) {
+    void handle_keys(int code, uint8_t &vis_mode, const uint8_t nmodes) {
         if (code == 32) {
             vis_mode = (vis_mode + 1) % nmodes;
-            Dataset::modified = true;
+            this->modified = true;
         }
 
         if (code == 49) { // '1'
             vis_mode = 0;
-            Dataset::modified = true;
+            this->modified = true;
         }
 
         if (code == 50) { // '2'
             vis_mode = 1;
-            Dataset::modified = true;
+            this->modified = true;
         }
 
         if (code == 51) { // '3'
             vis_mode = 2;
-            Dataset::modified = true;
+            this->modified = true;
         }
 
         if (code == 52) { // '4'
             vis_mode = 3;
-            Dataset::modified = true;
+            this->modified = true;
         }
 
         if (code == 91) { // '['
-            Dataset::slice_width = std::max(0.0, Dataset::slice_width - 0.002);
-            Dataset::modified = true;
+            this->slice_width = std::max(0.0, this->slice_width - 0.002);
+            this->modified = true;
         }
 
         if (code == 93) { // ']'
-            Dataset::slice_width += 0.002;
-            Dataset::modified = true;
+            this->slice_width += 0.002;
+            this->modified = true;
         }
 
         if (code == 111) { // 'o'
-            Dataset::pose_filtering_window = std::max(0.0, Dataset::pose_filtering_window - 0.01);
-            Dataset::modified = true;
+            this->pose_filtering_window = std::max(0.0, this->pose_filtering_window - 0.01);
+            this->modified = true;
         }
 
         if (code == 112) { // 'p'
-            Dataset::pose_filtering_window += 0.01;
-            Dataset::modified = true;
+            this->pose_filtering_window += 0.01;
+            this->modified = true;
         }
 
         if (code == 99) { // 'c'
-            Dataset::reset_Intr_Sliders();
-            Dataset::modified = true;
+            this->reset_Intr_Sliders();
+            this->modified = true;
         }
 
         if (code == 115) { // 's'
-            Dataset::apply_Intr_Calib();
-            Dataset::modified = true;
+            this->apply_Intr_Calib();
+            this->modified = true;
         }
     }
 
-    static void printCalib() {
+    void printCalib() {
         std::cout << std::endl << _blue("Transforms:") << std::endl;
         std::cout << "Vicon -> Camcenter (X Y Z R P Y):" << std::endl;
-        std::cout << "\t" << tx0 << "\t" << ty0 << "\t" << tz0 << "\t" << rr0 << "\t" << rp0 << "\t" << ry0 << std::endl;
+        std::cout << "\t" << this->tx0 << "\t" << this->ty0 << "\t" << this->tz0 
+                  << "\t" << this->rr0 << "\t" << this->rp0 << "\t" << this->ry0 << std::endl;
         //std::cout << "Vicon -> Background (X Y Z Qw Qx Qy Qz):" << std::endl;
         //auto T = room_scan->get_static().getOrigin();
         //auto Q = room_scan->get_static().getRotation();
         //std::cout << "\t" << T.getX() << "\t" << T.getY() << "\t" << T.getZ()
         //          << "\t" << Q.getW() <<"\t" << Q.getX() << "\t" << Q.getY() << "\t" << Q.getZ() << std::endl << std::endl;
-        std::cout << "time offset pose to events:  " << get_time_offset_pose_to_event() << std::endl;
-        std::cout << "time offset image to events: " << get_time_offset_image_to_event() << std::endl;
+        std::cout << "time offset pose to events:  " << this->get_time_offset_pose_to_event() << std::endl;
+        std::cout << "time offset image to events: " << this->get_time_offset_image_to_event() << std::endl;
     }
 
-    static void create_ground_truth_folder(std::string folder="") {
-        if (folder=="") folder=Dataset::gt_folder;
+    void create_ground_truth_folder(std::string folder="") {
+        if (folder == "") folder = this->gt_folder;
         auto gt_dir_path = boost::filesystem::path(folder);
         std::cout << _blue("Removing old: " + gt_dir_path.string()) << std::endl;
         boost::filesystem::remove_all(gt_dir_path);
@@ -237,15 +263,16 @@ public:
     static void write_eventstxt(std::string efname) {
         std::cout << std::endl << _yellow("Writing events.txt") << std::endl;
         std::stringstream ss;
-        for (uint64_t i = 0; i < event_array.size(); ++i) {
-            if (i % 10000 == 0 || i == event_array.size() - 1) {
-                std::cout << "\tPreparing\t" << i + 1 << "\t/\t" << event_array.size() << "\t\r" << std::flush;
+        for (uint64_t i = 0; i < Dataset::event_array.size(); ++i) {
+            if (i % 10000 == 0 || i == Dataset::event_array.size() - 1) {
+                std::cout << "\tPreparing\t" << i + 1 << "\t/\t" 
+                          << Dataset::event_array.size() << "\t\r" << std::flush;
             }
 
             ss << std::fixed << std::setprecision(9)
-               << event_array[i].get_ts_sec()
-               << " " << event_array[i].fr_y << " " << event_array[i].fr_x
-               << " " << int(event_array[i].polarity) << std::endl;
+               << Dataset::event_array[i].get_ts_sec()
+               << " " << Dataset::event_array[i].fr_y << " " << Dataset::event_array[i].fr_x
+               << " " << int(Dataset::event_array[i].polarity) << std::endl;
         }
         std::cout << std::endl;
         std::cout << std::endl << _yellow("Writing to file...") << std::endl;
@@ -254,73 +281,74 @@ public:
         event_file.close();
     }
 
-    static std::string meta_as_dict() {
-        return "'meta': {'fx': " + std::to_string(Dataset::fx)
-                    + ", 'fy': " + std::to_string(Dataset::fy)
-                    + ", 'cx': " + std::to_string(Dataset::cx)
-                    + ", 'cy': " + std::to_string(Dataset::cy)
-                    + ", 'k1': " + std::to_string(Dataset::k1)
-                    + ", 'k2': " + std::to_string(Dataset::k2)
-                    + ", 'k3': " + std::to_string(Dataset::k3)
-                    + ", 'k4': " + std::to_string(Dataset::k4)
-                    + ", 'p1': " + std::to_string(Dataset::p1)
-                    + ", 'p2': " + std::to_string(Dataset::p2)
-                    + ", 'res_x': " + std::to_string(Dataset::res_y) // FIXME!
-                    + ", 'res_y': " + std::to_string(Dataset::res_x)
-                    + ", 'dist_model': '" + Dataset::dist_model + "'"
+    std::string meta_as_dict() {
+        return "'meta': {'fx': " + std::to_string(this->fx)
+                    + ", 'fy': " + std::to_string(this->fy)
+                    + ", 'cx': " + std::to_string(this->cx)
+                    + ", 'cy': " + std::to_string(this->cy)
+                    + ", 'k1': " + std::to_string(this->k1)
+                    + ", 'k2': " + std::to_string(this->k2)
+                    + ", 'k3': " + std::to_string(this->k3)
+                    + ", 'k4': " + std::to_string(this->k4)
+                    + ", 'p1': " + std::to_string(this->p1)
+                    + ", 'p2': " + std::to_string(this->p2)
+                    + ", 'res_x': " + std::to_string(this->res_y) // FIXME!
+                    + ", 'res_y': " + std::to_string(this->res_x)
+                    + ", 'dist_model': '" + this->dist_model + "'"
                     + "}";
     }
 
     // Time offset getters
-    static float get_time_offset_image_to_host() {
+    float get_time_offset_image_to_host() {
         return 0.0;
     }
 
-    static float get_time_offset_image_to_host_correction() {
+    float get_time_offset_image_to_host_correction() {
         return 0.0;
     }
 
-    static float get_time_offset_pose_to_host() {
-        return get_time_offset_event_to_host() + get_time_offset_pose_to_event();
+    float get_time_offset_pose_to_host() {
+        return this->get_time_offset_event_to_host() + this->get_time_offset_pose_to_event();
     }
 
-    static float get_time_offset_pose_to_host_correction() {
-        return get_time_offset_event_to_host_correction() + get_time_offset_pose_to_event_correction();
+    float get_time_offset_pose_to_host_correction() {
+        return this->get_time_offset_event_to_host_correction() + this->get_time_offset_pose_to_event_correction();
     }
 
-    static float get_time_offset_event_to_host() {
-        return get_time_offset_image_to_host() - get_time_offset_image_to_event();
+    float get_time_offset_event_to_host() {
+        return this->get_time_offset_image_to_host() - this->get_time_offset_image_to_event();
     }
 
-    static float get_time_offset_event_to_host_correction() {
-        return get_time_offset_image_to_host_correction() - get_time_offset_image_to_event_correction();
+    float get_time_offset_event_to_host_correction() {
+        return this->get_time_offset_image_to_host_correction() - this->get_time_offset_image_to_event_correction();
     }
 
-    static void on_trackbar(int, void*) {
-        Dataset::modified = true;
-        Dataset::update_cam_calib();
+    static void on_trackbar(int v, void *object) {
+        Dataset *instance = (Dataset*)object;
+        instance->modified = true;
+        instance->update_cam_calib();
     }
 
 private:
     // slider-controlled:
-    static float get_time_offset_image_to_event() {
-        return Dataset::image_to_event_to + get_time_offset_image_to_event_correction();
+    float get_time_offset_image_to_event() {
+        return this->image_to_event_to + this->get_time_offset_image_to_event_correction();
     }
 
-    static float get_time_offset_image_to_event_correction() {
-        return normval(image_to_event_to_slider, MAXVAL, MAXVAL * INT_TIM_SC);
+    float get_time_offset_image_to_event_correction() {
+        return Dataset::normval(this->image_to_event_to_slider, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_TIM_SC);
     }
 
-    static float get_time_offset_pose_to_event() {
-        return Dataset::pose_to_event_to + get_time_offset_pose_to_event_correction();
+    float get_time_offset_pose_to_event() {
+        return this->pose_to_event_to + get_time_offset_pose_to_event_correction();
     }
 
-    static float get_time_offset_pose_to_event_correction() {
-        return normval(pose_to_event_to_slider, MAXVAL, MAXVAL * INT_TIM_SC);
+    float get_time_offset_pose_to_event_correction() {
+        return Dataset::normval(this->pose_to_event_to_slider, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_TIM_SC);
     }
 
 private:
-    static bool read_params (std::string path) {
+    bool read_params(std::string path) {
         std::ifstream ifs;
         ifs.open(path, std::ifstream::in);
         if (!ifs.is_open()) {
@@ -342,35 +370,35 @@ private:
             value = trim(value);
 
             if (key == "res_x")
-                Dataset::res_x = std::stoi(value);
+                this->res_x = std::stoi(value);
 
             if (key == "res_y")
-                Dataset::res_y = std::stoi(value);
+                this->res_y = std::stoi(value);
 
             if (key == "dist_model")
-                Dataset::dist_model = value;
+                this->dist_model = value;
 
             if (key == "ros_image_topic")
-                Dataset::image_topic = value;
+                this->image_topic = value;
 
             if (key == "ros_event_topic")
-                Dataset::event_topic = value;
+                this->event_topic = value;
 
             if (key == "ros_pos_topic")
-                Dataset::cam_pos_topic = value;
+                this->cam_pos_topic = value;
         }
         ifs.close();
 
         std::cout << _green("Read camera parameters: \n")
-                  << "\tres:\t" << Dataset::res_y << " x " << Dataset::res_x << "\n"
-                  << "\tdistortion model:\t" << Dataset::dist_model << "\n"
-                  << "\tros image topic:\t" << Dataset::image_topic << "\n"
-                  << "\tros event topic:\t" << Dataset::event_topic << "\n"
-                  << "\tros camera pose topic:\t" << Dataset::cam_pos_topic << "\n";
+                  << "\tres:\t" << this->res_y << " x " << this->res_x << "\n"
+                  << "\tdistortion model:\t" << this->dist_model << "\n"
+                  << "\tros image topic:\t" << this->image_topic << "\n"
+                  << "\tros event topic:\t" << this->event_topic << "\n"
+                  << "\tros camera pose topic:\t" << this->cam_pos_topic << "\n";
         return true;
     }
 
-    static bool read_cam_intr(std::string path) {
+    bool read_cam_intr(std::string path) {
         std::ifstream ifs;
         ifs.open(path, std::ifstream::in);
         if (!ifs.is_open()) {
@@ -379,29 +407,29 @@ private:
             return false;
         }
 
-        ifs >> fx >> fy >> cx >> cy;
+        ifs >> this->fx >> this->fy >> this->cx >> this->cy;
         if (!ifs.good()) {
             std::cout << _red("Camera calibration read error:") << " Expected a file with a single line, containing "
                       << "fx fy cx cy {k1 k2 k3 k4} ({} are optional)" << std::endl;
             return false;
         }
 
-        k1 = k2 = k3 = k4 = p1 = p2 = 0;
+        this->k1 = this->k2 = this->k3 = this->k4 = this->p1 = this->p2 = 0;
 
         if (Dataset::dist_model == "radtan") {
-            ifs >> k1 >> k2 >> p1 >> p2;
+            ifs >> this->k1 >> this->k2 >> this->p1 >> this->p2;
         } else if (Dataset::dist_model == "equidistant") {
-            ifs >> k1 >> k2 >> k3 >> k4;
+            ifs >> this->k1 >> this->k2 >> this->k3 >> this->k4;
         } else {
-            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+            std::cout << _red("Unknown distortion model! ") << this->dist_model << std::endl;
         }
 
         std::cout << _green("Read camera calibration: (fx fy cx cy {k1 k2 k3 k4} {p1 p2}): ")
-                  << fx << " " << fy << " " << cx << " " << cy << " "
-                  << k1 << " " << k2 << " " << k3 << " " << k4 << " "
-                  << p1 << " " << p2 << std::endl;
+                  << this->fx << " " << this->fy << " " << this->cx << " " << this->cy << " "
+                  << this->k1 << " " << this->k2 << " " << this->k3 << " " << this->k4 << " "
+                  << this->p1 << " " << this->p2 << std::endl;
         ifs.close();
-        Dataset::update_cam_calib();
+        this->update_cam_calib();
         return true;
     }
 
@@ -413,7 +441,7 @@ private:
         return val * float(normval) + float(maxval / 2);
     }
 
-    static bool read_extr(std::string path) {
+    bool read_extr(std::string path) {
         std::ifstream ifs;
         ifs.open(path, std::ifstream::in);
         if (!ifs.is_open()) {
@@ -422,7 +450,7 @@ private:
             return false;
         }
 
-        ifs >> tx0 >> ty0 >> tz0 >> rr0 >> rp0 >> ry0;
+        ifs >> this->tx0 >> this->ty0 >> this->tz0 >> this->rr0 >> this->rp0 >> this->ry0;
         if (!ifs.good()) {
             std::cout << _red("Camera -> Vicon is suppposed to be in <x y z R P Y> format!") << std::endl;
             return false;
@@ -435,16 +463,16 @@ private:
             return false;
         }
 
-        ifs >> pose_to_event_to;
+        ifs >> this->pose_to_event_to;
         if (!ifs.good()) {
-            Dataset::pose_to_event_to = 0;
-            std::cout << _yellow("Time offset (pos) is not specified;") << " setting to " << Dataset::pose_to_event_to << std::endl;
+            this->pose_to_event_to = 0;
+            std::cout << _yellow("Time offset (pos) is not specified;") << " setting to " << this->pose_to_event_to << std::endl;
         }
 
-        ifs >> image_to_event_to;
+        ifs >> this->image_to_event_to;
         if (!ifs.good()) {
-            Dataset::image_to_event_to = 0;
-            std::cout << _yellow("Time offset (img) is not specified;") << " setting to " << Dataset::image_to_event_to << std::endl;
+            this->image_to_event_to = 0;
+            std::cout << _yellow("Time offset (img) is not specified;") << " setting to " << this->image_to_event_to << std::endl;
         }
 
         ifs.close();
@@ -453,10 +481,10 @@ private:
         tf::Quaternion Q(bg_qx, bg_qy, bg_qz, bg_qw);
         T.setValue(bg_tx, bg_ty, bg_tz);
 
-        bg_E.setRotation(Q);
-        bg_E.setOrigin(T);
+        Dataset::bg_E.setRotation(Q);
+        Dataset::bg_E.setOrigin(T);
 
-        // Old extrinsic format
+        // Old extrinsic format (evimo1)
         bool old_ext_format = false;
         if (old_ext_format) {
             Eigen::Matrix4f T1;
@@ -472,20 +500,20 @@ private:
                      0,      0,     0,     1;
 
             tf::Transform E_;
-            tf::Vector3 T_(tx0, ty0, tz0);
+            tf::Vector3 T_(this->tx0, this->ty0, this->tz0);
             tf::Quaternion q_;
-            q_.setRPY(rr0, rp0, ry0);
+            q_.setRPY(this->rr0, this->rp0, this->ry0);
             E_.setRotation(q_);
             E_.setOrigin(T_);
 
-            Dataset::cam_E = ViObject::mat2tf(T1) * E_ * ViObject::mat2tf(T2);
+            this->cam_E = ViObject::mat2tf(T1) * E_ * ViObject::mat2tf(T2);
 
-            auto pose = Pose(ros::Time(0), Dataset::cam_E);
+            auto pose = Pose(ros::Time(0), this->cam_E);
             auto T = pose.getT();
             auto R = pose.getR();
 
-            tx0 = T[0]; ty0 = T[1]; tz0 = T[2];
-            rr0 = R[0]; rp0 = R[1]; ry0 = R[2];
+            this->tx0 = T[0]; this->ty0 = T[1]; this->tz0 = T[2];
+            this->rr0 = R[0]; this->rp0 = R[1]; this->ry0 = R[2];
         }
 
         return true;
@@ -523,41 +551,41 @@ private:
     }
 
 public:
-    static void update_cam_calib() {
+    void update_cam_calib() {
         tf::Transform E_;
         tf::Vector3 T_;
         tf::Quaternion q_;
-        q_.setRPY(normval(value_rr, MAXVAL, MAXVAL * INT_ANG_SC),
-                  normval(value_rp, MAXVAL, MAXVAL * INT_ANG_SC),
-                  normval(value_ry, MAXVAL, MAXVAL * INT_ANG_SC));
-        T_.setValue(normval(value_tx, MAXVAL, MAXVAL * INT_LIN_SC),
-                    normval(value_ty, MAXVAL, MAXVAL * INT_LIN_SC),
-                    normval(value_tz, MAXVAL, MAXVAL * INT_LIN_SC));
+        q_.setRPY(Dataset::normval(this->value_rr, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC),
+                  Dataset::normval(this->value_rp, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC),
+                  Dataset::normval(this->value_ry, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_ANG_SC));
+        T_.setValue(Dataset::normval(this->value_tx, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC),
+                    Dataset::normval(this->value_ty, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC),
+                    Dataset::normval(this->value_tz, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_LIN_SC));
         E_.setRotation(q_);
         E_.setOrigin(T_);
 
-        tf::Transform E0;
-        tf::Vector3 T0(tx0, ty0, tz0);
         tf::Quaternion q0;
-        q0.setRPY(rr0, rp0, ry0);
+        tf::Vector3 T0(this->tx0, this->ty0, this->tz0);
+        q0.setRPY(this->rr0, this->rp0, this->ry0);
+        tf::Transform E0;
         E0.setRotation(q0);
         E0.setOrigin(T0);
 
-        Dataset::cam_E = E0 * E_;
+        this->cam_E = E0 * E_;
     }
 
     // Project 3D point in camera frame to pixel
-    template<class T> static void project_point(T p, int &u, int &v) {
-        if (Dataset::dist_model == "radtan") {
-            Dataset::project_point_radtan(p, u, v);
-        } else if (Dataset::dist_model == "equidistant") {
-            Dataset::project_point_equi(p, u, v);
+    template<class T> void project_point(T p, int &u, int &v) {
+        if (this->dist_model == "radtan") {
+            this->project_point_radtan(p, u, v);
+        } else if (this->dist_model == "equidistant") {
+            this->project_point_equi(p, u, v);
         } else {
-            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+            std::cout << _red("Unknown distortion model! ") << this->dist_model << std::endl;
         }
     }
 
-    template<class T> static void project_point_nodist(T p, int &u, int &v) {
+    template<class T> void project_point_nodist(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
@@ -565,11 +593,11 @@ public:
         float x_ = p.x / p.z;
         float y_ = p.y / p.z;
 
-        v = Dataset::fx * x_ + Dataset::cx;
-        u = Dataset::fy * y_ + Dataset::cy;
+        v = this->fx * x_ + this->cx;
+        u = this->fy * y_ + this->cy;
     }
 
-    template<class T> static void project_point_radtan(T p, int &u, int &v) {
+    template<class T> void project_point_radtan(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.001)
             return;
@@ -577,25 +605,25 @@ public:
         float x_ = p.x / p.z;
         float y_ = p.y / p.z;
 
-        float rng_th = std::max(Dataset::res_x, Dataset::res_y);
-        float v__ = Dataset::fx * x_ + Dataset::cx;
-        float u__ = Dataset::fy * y_ + Dataset::cy;
+        float rng_th = std::max(this->res_x, this->res_y);
+        float v__ = this->fx * x_ + this->cx;
+        float u__ = this->fy * y_ + this->cy;
         if ((v__ > rng_th * 1.2) || (v__ < -rng_th * 0.2)) return;
         if ((u__ > rng_th * 1.2) || (u__ < -rng_th * 0.2)) return;
 
         float r2 = x_ * x_ + y_ * y_;
         float r4 = r2 * r2;
         float r6 = r2 * r2 * r2;
-        float dist = (1.0 + Dataset::k1 * r2 + Dataset::k2 * r4 +
-                            Dataset::k3 * r6) / (1 + Dataset::k4 * r2);
-        float x__ = x_ * dist + 2.0 * Dataset::p1 * x_ * y_ + Dataset::p2 * (r2 + 2.0 * x_ * x_);
-        float y__ = y_ * dist + 2.0 * Dataset::p2 * x_ * y_ + Dataset::p1 * (r2 + 2.0 * y_ * y_);
+        float dist = (1.0 + this->k1 * r2 + this->k2 * r4 +
+                            this->k3 * r6) / (1 + this->k4 * r2);
+        float x__ = x_ * dist + 2.0 * this->p1 * x_ * y_ + this->p2 * (r2 + 2.0 * x_ * x_);
+        float y__ = y_ * dist + 2.0 * this->p2 * x_ * y_ + this->p1 * (r2 + 2.0 * y_ * y_);
 
-        v = Dataset::fx * x__ + Dataset::cx;
-        u = Dataset::fy * y__ + Dataset::cy;
+        v = this->fx * x__ + this->cx;
+        u = this->fy * y__ + this->cy;
     }
 
-    template<class T> static void project_point_equi(T p, int &u, int &v) {
+    template<class T> void project_point_equi(T p, int &u, int &v) {
         u = -1; v = -1;
         if (p.z < 0.001)
             return;
@@ -609,7 +637,7 @@ public:
         float th4 = th2 * th2;
         float th6 = th2 * th2 * th2;
         float th8 = th4 * th4;
-        float th_d = th * (1 + Dataset::k1 * th2 + Dataset::k2 * th4 + Dataset::k3 * th6 + Dataset::k4 * th8);
+        float th_d = th * (1 + this->k1 * th2 + this->k2 * th4 + this->k3 * th6 + this->k4 * th8);
 
         float x__ = x_;
         float y__ = y_;
@@ -618,26 +646,26 @@ public:
             y__ = (th_d / r) * y_;
         }
 
-        v = Dataset::fx * x__ + Dataset::cx;
-        u = Dataset::fy * y__ + Dataset::cy;
+        v = this->fx * x__ + this->cx;
+        u = this->fy * y__ + this->cy;
     }
 
-    static cv::Mat undistort(cv::Mat &img) {
+    cv::Mat undistort(cv::Mat &img) {
         if (img.rows == 0 or img.cols == 0) {
             return img;
         }
 
         cv::Mat ret;
-        cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
+        cv::Mat K = (cv::Mat1d(3, 3) << this->fx, 0, this->cx, 0, this->fy, this->cy, 0, 0, 1);
 
-        if (Dataset::dist_model == "radtan") {
-            cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::p1, Dataset::p2);
+        if (this->dist_model == "radtan") {
+            cv::Mat D = (cv::Mat1d(1, 4) << this->k1, this->k2, this->p1, this->p2);
             cv::undistort(img, ret, K, D, 1.0 * K);
-        } else if (Dataset::dist_model == "equidistant") {
-            cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
+        } else if (this->dist_model == "equidistant") {
+            cv::Mat D = (cv::Mat1d(1, 4) << this->k1, this->k2, this->k3, this->k4);
             cv::fisheye::undistortImage(img, ret, K, D, 1.0 * K);
         } else {
-            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+            std::cout << _red("Unknown distortion model! ") << this->dist_model << std::endl;
         }
 
         return ret;

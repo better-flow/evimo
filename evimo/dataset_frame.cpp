@@ -1,6 +1,5 @@
 #include <dataset_frame.h>
 #include <event_vis.h>
-#include <dataset.h>
 
 cv::Mat DatasetFrame::get_visualization_event_projection(bool timg, bool nodist) {
     cv::Mat img;
@@ -11,14 +10,14 @@ cv::Mat DatasetFrame::get_visualization_event_projection(bool timg, bool nodist)
         auto ev_slice = Slice<std::vector<Event>>(Dataset::event_array,
                                                   this->event_slice_ids);
         if (timg) {
-            img = EventFile::color_time_img(&ev_slice, 1, Dataset::res_x, Dataset::res_y);
+            img = EventFile::color_time_img(&ev_slice, 1, this->dataset_handle->res_x, this->dataset_handle->res_y);
         } else {
-            img = EventFile::projection_img(&ev_slice, 1, Dataset::res_x, Dataset::res_y);
+            img = EventFile::projection_img(&ev_slice, 1, this->dataset_handle->res_x, this->dataset_handle->res_y);
         }
     }
 
     if (nodist)
-        img = Dataset::undistort(img);
+        img = this->dataset_handle->undistort(img);
     return img;
 }
 
@@ -49,7 +48,7 @@ cv::Mat DatasetFrame::get_visualization_mask(bool overlay_events, bool nodist) {
     auto rgb_img  = this->img.clone();
 
     if (nodist)
-        rgb_img = Dataset::undistort(rgb_img);
+        rgb_img = this->dataset_handle->undistort(rgb_img);
 
     cv::Mat img_pr = this->get_visualization_event_projection(false, nodist);
     auto ret = cv::Mat(mask_img.rows, mask_img.cols, CV_8UC3, cv::Scalar(0, 0, 0));

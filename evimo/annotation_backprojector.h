@@ -23,6 +23,7 @@
 
 class Backprojector {
 protected:
+    std::shared_ptr<Dataset> dataset;
     double timestamp;
     double window_size;
     float px_scale, time_scale;
@@ -36,8 +37,8 @@ protected:
     std::unordered_map<int, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> roi_pointclouds;
 
 public:
-    Backprojector(double timestamp, double window_size, double framerate)
-        : timestamp(timestamp), window_size(window_size), px_scale(1.0/200.0), time_scale(2)
+    Backprojector(std::shared_ptr<Dataset> &dataset, double timestamp, double window_size, double framerate)
+        : dataset(dataset), timestamp(timestamp), window_size(window_size), px_scale(1.0/200.0), time_scale(2)
         , event_pc(new pcl::PointCloud<pcl::PointXYZRGBNormal>)
         , event_pc_roi(new pcl::PointCloud<pcl::PointXYZRGBNormal>)
         , mask_pc(new pcl::PointCloud<pcl::PointXYZRGBNormal>) {
@@ -65,7 +66,7 @@ public:
         uint64_t last_cam_pos_id = 0;
         std::pair<uint64_t, uint64_t> last_event_slice_ids(0, 0);
         for (auto &ts : ts_arr) {
-            frames.emplace_back(last_cam_pos_id, ts, i);
+            frames.emplace_back(this->dataset, last_cam_pos_id, ts, i);
             auto &frame = frames.back();
             last_cam_pos_id = frame.cam_pose_id;
 
@@ -175,23 +176,23 @@ public:
         // Save everything in .npz format
         std::string npz_name = dir + "/dataset.npz";
         { // Meta
-        cnpy::npz_save(npz_name, "fx", &Dataset::fx, {1}, "w");
-        cnpy::npz_save(npz_name, "fy", &Dataset::fy, {1}, "a");
-        cnpy::npz_save(npz_name, "cx", &Dataset::cx, {1}, "a");
-        cnpy::npz_save(npz_name, "cy", &Dataset::cy, {1}, "a");
+        cnpy::npz_save(npz_name, "fx", &this->dataset->fx, {1}, "w");
+        cnpy::npz_save(npz_name, "fy", &this->dataset->fy, {1}, "a");
+        cnpy::npz_save(npz_name, "cx", &this->dataset->cx, {1}, "a");
+        cnpy::npz_save(npz_name, "cy", &this->dataset->cy, {1}, "a");
         cnpy::npz_save(npz_name, "px_factor", &px_scale, {1}, "a");
         cnpy::npz_save(npz_name, "time_factor", &time_scale, {1}, "a");
-        cnpy::npz_save(npz_name, "res_x", &Dataset::res_y, {1}, "a"); // FIXME
-        cnpy::npz_save(npz_name, "res_y", &Dataset::res_x, {1}, "a");
-        cnpy::npz_save(npz_name, "dist_model", Dataset::dist_model.c_str(), {Dataset::dist_model.length()}, "a");
-        std::vector<float> K = {Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1};
+        cnpy::npz_save(npz_name, "res_x", &this->dataset->res_y, {1}, "a"); // FIXME
+        cnpy::npz_save(npz_name, "res_y", &this->dataset->res_x, {1}, "a");
+        cnpy::npz_save(npz_name, "dist_model", this->dataset->dist_model.c_str(), {this->dataset->dist_model.length()}, "a");
+        std::vector<float> K = {this->dataset->fx, 0, this->dataset->cx, 0, this->dataset->fy, this->dataset->cy, 0, 0, 1};
         std::vector<float> D;
-        if (Dataset::dist_model == "radtan") {
-            D = {Dataset::k1, Dataset::k2, Dataset::p1, Dataset::p2};
-        } else if (Dataset::dist_model == "equidistant") {
-            D = {Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4};
+        if (this->dataset->dist_model == "radtan") {
+            D = {this->dataset->k1, this->dataset->k2, this->dataset->p1, this->dataset->p2};
+        } else if (this->dataset->dist_model == "equidistant") {
+            D = {this->dataset->k1, this->dataset->k2, this->dataset->k3, this->dataset->k4};
         } else {
-            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+            std::cout << _red("Unknown distortion model! ") << this->dataset->dist_model << std::endl;
         }
         cnpy::npz_save(npz_name, "K", &K[0], {3,3}, "a");
         cnpy::npz_save(npz_name, "D", &D[0], {4}, "a");
@@ -305,10 +306,10 @@ return;
     std::string get_full_meta_as_string() {
         std::cout << std::endl << _yellow("3D: Writing full trajectory") << std::endl;
         std::string ret = "{\n";
-        ret += Dataset::meta_as_dict() + "\n";
+        ret += this->dataset->meta_as_dict() + "\n";
         ret += ", 'full_trajectory': [\n";
         for (uint64_t i = 0; i < Dataset::cam_tj.size(); ++i) {
-            DatasetFrame frame(i, Dataset::cam_tj[i].ts.toSec(), -1);
+            DatasetFrame frame(this->dataset, i, Dataset::cam_tj[i].ts.toSec(), -1);
 
             for (auto &obj_tj : Dataset::obj_tjs) {
                 if (obj_tj.second.size() == 0) continue;
@@ -354,19 +355,19 @@ return;
             i += 1;
         }
 
-        std::cout << "fx, fy, cx, cy, res_x, res_y, max_x, max_y = " << Dataset::fx << "\t" << Dataset::fy << "\t"
-                  << Dataset::cx << "\t" << Dataset::cy << "\t" << Dataset::res_x << "\t" << Dataset::res_y << "\t"
+        std::cout << "fx, fy, cx, cy, res_x, res_y, max_x, max_y = " << this->dataset->fx << "\t" << this->dataset->fy << "\t"
+                  << this->dataset->cx << "\t" << this->dataset->cy << "\t" << this->dataset->res_x << "\t" << this->dataset->res_y << "\t"
                   << max_x << "\t" << max_y << "\n";
 
-        cv::Mat K = (cv::Mat1d(3, 3) << Dataset::fx, 0, Dataset::cx, 0, Dataset::fy, Dataset::cy, 0, 0, 1);
-        if (Dataset::dist_model == "radtan") {
-            cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::p1, Dataset::p2);
+        cv::Mat K = (cv::Mat1d(3, 3) << this->dataset->fx, 0, this->dataset->cx, 0, this->dataset->fy, this->dataset->cy, 0, 0, 1);
+        if (this->dataset->dist_model == "radtan") {
+            cv::Mat D = (cv::Mat1d(1, 4) << this->dataset->k1, this->dataset->k2, this->dataset->p1, this->dataset->p2);
             cv::undistortPoints(src, dst, K, D, cv::noArray(), K);
-        } else if (Dataset::dist_model == "equidistant") {
-            cv::Mat D = (cv::Mat1d(1, 4) << Dataset::k1, Dataset::k2, Dataset::k3, Dataset::k4);
+        } else if (this->dataset->dist_model == "equidistant") {
+            cv::Mat D = (cv::Mat1d(1, 4) << this->dataset->k1, this->dataset->k2, this->dataset->k3, this->dataset->k4);
             cv::fisheye::undistortPoints(src, dst, K, D, cv::noArray(), K);
         } else {
-            std::cout << _red("Unknown distortion model! ") << Dataset::dist_model << std::endl;
+            std::cout << _red("Unknown distortion model! ") << this->dataset->dist_model << std::endl;
             return;
         }
 
@@ -488,29 +489,29 @@ return;
         //std::valarray<float> T = {0, 0, 0};
         //std::valarray<float> R = {0, 0, 0};
 
-        Dataset::set_sliders(0.001, 0, 0, 0, 0, 0);
+        this->dataset->set_sliders(0.001, 0, 0, 0, 0, 0);
         generate();
 
         if (this->inverse_score() > initial) {
-            Dataset::set_sliders(-0.002, 0, 0, 0, 0, 0);
+            this->dataset->set_sliders(-0.002, 0, 0, 0, 0, 0);
             generate();
         }
 
         if (this->inverse_score() > initial) {
-            Dataset::set_sliders(0.001, 0, 0, 0, 0, 0);
+            this->dataset->set_sliders(0.001, 0, 0, 0, 0, 0);
             generate();
         }
 
-        Dataset::set_sliders(0, 0.001, 0, 0, 0, 0);
+        this->dataset->set_sliders(0, 0.001, 0, 0, 0, 0);
         generate();
 
         if (this->inverse_score() > initial) {
-            Dataset::set_sliders(0, -0.002, 0, 0, 0, 0);
+            this->dataset->set_sliders(0, -0.002, 0, 0, 0, 0);
             generate();
         }
 
         if (this->inverse_score() > initial) {
-            Dataset::set_sliders(0, 0.001, 0, 0, 0, 0);
+            this->dataset->set_sliders(0, 0.001, 0, 0, 0, 0);
             generate();
         }
 
@@ -565,7 +566,7 @@ return;
 
         for (auto &f : this->frames) {
             auto cl = this->mask_to_cloud(f.mask, this->ts_to_z(f.get_timestamp() +
-                                Dataset::get_time_offset_pose_to_host_correction()));
+                                this->dataset->get_time_offset_pose_to_host_correction()));
             for (auto &oid : cl) {
                 if (!this->mask_pointclouds[oid.first]) this->mask_pointclouds[oid.first] =
                     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr(new pcl::PointCloud<pcl::PointXYZRGBNormal>);

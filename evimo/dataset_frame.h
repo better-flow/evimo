@@ -23,7 +23,10 @@ protected:
 
     // Thread handle
     std::thread thread_handle;
+    bool async_gen_in_progress;
 public:
+    std::shared_ptr<Dataset> dataset_handle;
+
     uint64_t cam_pose_id;
     std::map<int, uint64_t> obj_pose_ids;
     unsigned long int frame_id;
@@ -56,8 +59,11 @@ public:
         for (auto &tj : Dataset::obj_tjs)
             plotter.add_trajectory_plot(tj.second, plot_t_offset);
 
-        Dataset::modified = true;
-        Dataset::init_GUI();
+        for (auto &window : window_names) {
+            window.first->dataset_handle->modified = true;
+            window.first->dataset_handle->init_GUI();
+        }
+
         const uint8_t nmodes = 3;
         uint8_t vis_mode = 0;
 
@@ -65,17 +71,21 @@ public:
         int code = 0; // Key code
         while (code != 27) {
             code = cv::waitKey(1);
-            Dataset::handle_keys(code, vis_mode, nmodes);
 
-            if (!Dataset::modified) continue;
-            Dataset::modified = false;
-
+            size_t threads_running = 0;
             for (auto &window : window_names) {
+                window.first->dataset_handle->handle_keys(code, vis_mode, nmodes);
+                if (!window.first->dataset_handle->modified) continue;
+
+                threads_running ++;
                 window.first->generate_async(nodist);
             }
 
+            if (threads_running == 0) continue;
+
             for (auto &window : window_names) {
                 window.first->join();
+                window.first->dataset_handle->modified = false;
 
                 cv::Mat img;
                 switch (vis_mode) {
@@ -101,10 +111,11 @@ public:
     }
 
     // ---------
-    DatasetFrame(uint64_t cam_p_id, double ref_ts, unsigned long int fid)
-        : cam_pose_id(cam_p_id), timestamp(ref_ts), frame_id(fid), event_slice_ids(0, 0),
-          depth(Dataset::res_x, Dataset::res_y, CV_32F, cv::Scalar(0)),
-          mask(Dataset::res_x, Dataset::res_y, CV_8U, cv::Scalar(0)) {
+    DatasetFrame(std::shared_ptr<Dataset> &dataset_handle, uint64_t cam_p_id, double ref_ts, unsigned long int fid)
+        : dataset_handle(dataset_handle), async_gen_in_progress(false)
+        , cam_pose_id(cam_p_id), timestamp(ref_ts), frame_id(fid), event_slice_ids(0, 0)
+        , depth(dataset_handle->res_x, dataset_handle->res_y, CV_32F, cv::Scalar(0))
+        , mask(dataset_handle->res_x, dataset_handle->res_y, CV_8U, cv::Scalar(0)) {
         if (Dataset::cam_tj.size() > 0)
             this->cam_pose_id = TimeSlice(Dataset::cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
         this->gt_img_name  = "depth_mask_" + std::to_string(this->frame_id) + ".png";
@@ -119,14 +130,14 @@ public:
     void add_event_slice_ids(uint64_t event_low, uint64_t event_high) {
         this->event_slice_ids = std::make_pair(event_low, event_high);
         this->event_slice_ids = TimeSlice(Dataset::event_array,
-            std::make_pair(this->timestamp - Dataset::get_time_offset_event_to_host_correction() - Dataset::slice_width / 2.0,
-                           this->timestamp - Dataset::get_time_offset_event_to_host_correction() + Dataset::slice_width / 2.0),
+            std::make_pair(this->timestamp - this->dataset_handle->get_time_offset_event_to_host_correction() - this->dataset_handle->slice_width / 2.0,
+                           this->timestamp - this->dataset_handle->get_time_offset_event_to_host_correction() + this->dataset_handle->slice_width / 2.0),
             this->event_slice_ids).get_indices();
     }
 
     void add_img(cv::Mat &img_) {
         this->img = img_;
-        //this->img = Dataset::undistort(img_);
+        //this->img = this->dataset_handle->undistort(img_);
         this->depth = cv::Mat(this->img.rows, this->img.cols, CV_32F, cv::Scalar(0));
         this->mask  = cv::Mat(this->img.rows, this->img.cols, CV_8U, cv::Scalar(0));
     }
@@ -137,13 +148,13 @@ public:
 
     Pose get_true_camera_pose() {
         auto cam_pose = this->_get_raw_camera_pose();
-        auto cam_tf = cam_pose.pq * Dataset::cam_E;
+        auto cam_tf = cam_pose.pq * this->dataset_handle->cam_E;
         return Pose(cam_pose.ts, cam_tf);
     }
 
     Pose get_camera_velocity() {
         auto vel = Dataset::cam_tj.get_velocity(this->cam_pose_id);
-        vel.pq = Dataset::cam_E.inverse() * vel.pq * Dataset::cam_E;
+        vel.pq = this->dataset_handle->cam_E.inverse() * vel.pq * this->dataset_handle->cam_E;
         return vel;
     }
 
@@ -162,7 +173,7 @@ public:
     }
 
     float get_timestamp() {
-        return this->timestamp - Dataset::get_time_offset_pose_to_host_correction();
+        return this->timestamp - this->dataset_handle->get_time_offset_pose_to_host_correction();
     }
 
     std::string get_info() {
@@ -180,17 +191,17 @@ public:
         this->depth = cv::Mat(this->depth.rows, this->depth.cols, CV_32F, cv::Scalar(0));
         this->mask  = cv::Mat(this->mask.rows, this->mask.cols, CV_8U, cv::Scalar(0));
 
-        Dataset::update_cam_calib();
-        Dataset::cam_tj.set_filtering_window_size(Dataset::pose_filtering_window);
-        this->cam_pose_id = TimeSlice(Dataset::cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
+        this->dataset_handle->update_cam_calib();
+        Dataset::cam_tj.set_filtering_window_size(this->dataset_handle->pose_filtering_window);
+        this->cam_pose_id = TimeSlice(this->dataset_handle->cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
         auto cam_tf = this->get_true_camera_pose();
         // FIXME
         auto corrected_ts = cam_tf.ts.toSec() - this->get_timestamp();
 
         if (Dataset::event_array.size() > 0)
             this->event_slice_ids = TimeSlice(Dataset::event_array,
-                std::make_pair(this->timestamp + corrected_ts - Dataset::get_time_offset_event_to_host_correction() - Dataset::slice_width / 2.0,
-                               this->timestamp + corrected_ts - Dataset::get_time_offset_event_to_host_correction() + Dataset::slice_width / 2.0),
+                std::make_pair(this->timestamp + corrected_ts - this->dataset_handle->get_time_offset_event_to_host_correction() - this->dataset_handle->slice_width / 2.0,
+                               this->timestamp + corrected_ts - this->dataset_handle->get_time_offset_event_to_host_correction() + this->dataset_handle->slice_width / 2.0),
                 this->event_slice_ids).get_indices();
 
         if (Dataset::background != nullptr) {
@@ -202,7 +213,7 @@ public:
         for (auto &obj : Dataset::clouds) {
             //if (obj.second->has_no_mesh()) continue;
             auto id = obj.first;
-            Dataset::obj_tjs.at(id).set_filtering_window_size(Dataset::pose_filtering_window);
+            Dataset::obj_tjs.at(id).set_filtering_window_size(this->dataset_handle->pose_filtering_window);
             this->obj_pose_ids[id] = TimeSlice(Dataset::obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
 
             if (this->obj_pose_ids.find(id) == this->obj_pose_ids.end()) {
@@ -225,10 +236,13 @@ public:
 
     void generate_async(bool nodist=false) {
         this->thread_handle = std::thread(&DatasetFrame::generate, this, nodist);
+        this->async_gen_in_progress = true;
     }
 
     void join() {
+        if (!this->async_gen_in_progress) return;
         this->thread_handle.join();
+        this->async_gen_in_progress = false;
     }
 
     // Visualization helpers
@@ -247,7 +261,7 @@ public:
         // Represent camera poses in the frame of the initial camera pose (p0)
         auto p0 = Dataset::cam_tj[0];
         auto cam_pose = this->_get_raw_camera_pose();
-        auto cam_tf = Dataset::cam_E.inverse() * (cam_pose - p0).pq * Dataset::cam_E;
+        auto cam_tf = this->dataset_handle->cam_E.inverse() * (cam_pose - p0).pq * this->dataset_handle->cam_E;
         ret += "\t'pos': " + Pose(cam_pose.ts, cam_tf).as_dict() + ",\n";
         ret += "\t'ts': " + std::to_string(this->get_true_camera_pose().ts.toSec()) + "},\n";
 
@@ -278,10 +292,10 @@ public:
         cv::merge(ch, gt_frame_i16);
 
         gt_frame_i16.convertTo(gt_frame_i16, CV_16UC3);
-        cv::imwrite(Dataset::gt_folder + "/" + this->gt_img_name, gt_frame_i16);
+        cv::imwrite(this->dataset_handle->gt_folder + "/" + this->gt_img_name, gt_frame_i16);
 
         if (this->img.rows == this->mask.rows && this->img.cols == this->mask.cols) {
-            cv::imwrite(Dataset::gt_folder + "/" + this->rgb_img_name, this->img);
+            cv::imwrite(this->dataset_handle->gt_folder + "/" + this->rgb_img_name, this->img);
         }
     }
 
@@ -302,9 +316,9 @@ protected:
 
             int u = -1, v = -1;
             if (nodist) {
-                Dataset::project_point_nodist(p, u, v);
+                this->dataset_handle->project_point_nodist(p, u, v);
             } else {
-                Dataset::project_point(p, u, v);
+                this->dataset_handle->project_point(p, u, v);
             }
 
             if (u < 0 || v < 0 || v >= cols || u >= rows) {
@@ -332,9 +346,9 @@ protected:
             auto &p = (*cl)[i];
             int32_t u = -1, v = -1;
             if (nodist) {
-                Dataset::project_point_nodist(p, u, v);
+                this->dataset_handle->project_point_nodist(p, u, v);
             } else {
-                Dataset::project_point(p, u, v);
+                this->dataset_handle->project_point(p, u, v);
             }
             pt_u.at(i) = (int32_t)u;
             pt_v.at(i) = (int32_t)v;
