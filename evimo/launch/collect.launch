@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="output_dir"       default="/tmp/collect"/>
+  <arg name="config"           default="$(find evimo)/calib/collect.cfg"/>
+  <arg name="detect_wand"      default="false"/>
+  <arg name="show_wand"        default="false"/>
+  <arg name="fps"              default="40"/>
+  <arg name="dataset_folder"   default="$(find evimo)/config"/>
+
+  <node pkg="evimo" name="collect" type="collect" output="screen" respawn="false" required="true">
+    <param name="dir"          value="$(arg output_dir)"/>
+    <param name="detect_wand"  value="$(arg detect_wand)"/>
+    <param name="show_wand"    value="$(arg show_wand)"/>
+    <param name="fps"          value="$(arg fps)"/>
+    <param name="conf"         value="$(arg config)"/>
+    <param name="folder"       value="$(arg dataset_folder)"/>
+  </node>
+
+  <!-- Start rviz visualization with preset config -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find evimo)/launch/collect.rviz" required="true"/>
+</launch>

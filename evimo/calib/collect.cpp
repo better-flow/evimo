@@ -8,7 +8,6 @@
 #include <iostream>
 #include <mutex>
 #include <boost/filesystem.hpp>
-#include <X11/Xlib.h>
 
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -25,6 +24,8 @@
 #include <common.h>
 #include <event.h>
 #include <event_vis.h>
+#include <dataset.h>
+#include <object.h>
 
 // VICON
 #include <vicon/Subject.h>
@@ -35,16 +36,19 @@
 
 // Detect Vicon Wand
 #include "detect_wand.h"
-
+#include <X11/Xlib.h>
 
 class Imager {
 protected:
     static int uid;
 
+    std::shared_ptr<Dataset> dataset;
     uint32_t res_x, res_y;
     ros::Subscriber sub;
     std::string root_dir, name, window_name, topic;
     bool headless;
+
+    std::mutex mutex;
 
     uint64_t cnt;
     bool accumulating;
@@ -64,6 +68,8 @@ public:
         if (!this->headless) cv::destroyWindow(this->window_name);
     }
 
+    virtual std::string get_name() {return this->name; }
+
     virtual bool create_dir() {
         auto out_dir_path = boost::filesystem::path(this->root_dir + '/' + this->name);
         std::cout << "Creating: " << _green(out_dir_path.string()) << std::endl;
@@ -80,16 +86,19 @@ public:
         }
 
         this->accumulating = false;
-        std::string img_name = this->root_dir + '/' + this->name + '/' + std::to_string(this->cnt * 7 + 7) + "0000000.png";
-        cv::imwrite(img_name, this->get_accumulated_image());
+        if (this->res_x * this->res_y > 0) {
+            std::string img_name = this->root_dir + '/' + this->name + '/' + std::to_string(this->cnt * 7 + 7) + "0000000.png";
+            cv::imwrite(img_name, this->get_accumulated_image());
+        }
         this->cnt += 1;
     }
 
     virtual cv::Mat get_accumulated_image() {return this->accumulated_image;}
 
-    // Advanced functionality - like projecting vicon points
+    // Enables advanced functionality - like projecting vicon points on image plane
     virtual bool try_register_dataset(std::string dataset_folder) {
-        //return Dataset::init(nh, dataset_folder, camera_name);
+        this->dataset = std::make_shared<Dataset>();
+        return this->dataset->init_no_objects(dataset_folder, this->get_name());
     }
 };
 
@@ -122,7 +131,13 @@ public:
     }
 
     void pose_cb(const vicon::Subject& subject) {
+        const std::lock_guard<std::mutex> lock(this->mutex);
         this->last_pos = subject;
+    }
+
+    vicon::Subject get_last_pos() {
+        const std::lock_guard<std::mutex> lock(this->mutex);
+        return this->last_pos;
     }
 
     void save() override {
@@ -131,7 +146,7 @@ public:
             return;
         }
 
-        auto &p = this->last_pos;
+        auto p = this->get_last_pos();
         this->accumulating = false;
         this->ofile << this->cnt << " "
                     << p.position.x << " " << p.position.y << " " << p.position.z << " "
@@ -151,22 +166,105 @@ public:
 };
 
 
-// Visuzlize and collect frames from regular cameras
-class RGBImager : public Imager {
+class CameraImager : public Imager {
 protected:
     std::shared_ptr<image_transport::ImageTransport> it_ptr;
     image_transport::Publisher img_pub;
     bool detect_wand;
 
+    std::shared_ptr<ViconImager> camera_vicon_handle;
+    std::map<std::string, std::shared_ptr<ViconImager>> vicon_handles;
+
+    cv::Mat trail_accumulator;
+
 public:
-    RGBImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, bool detect_wand_=false)
+    CameraImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, bool detect_wand_=false)
         : Imager(root_dir_, name_, topic_) {
         this->detect_wand = detect_wand_;
         this->it_ptr = std::make_shared<image_transport::ImageTransport>(nh);
-        this->img_pub = it_ptr->advertise(this->window_name + "/image_raw", 1);
-        this->sub = nh.subscribe(this->topic, 1, &RGBImager::frame_cb, this);
+        this->img_pub = it_ptr->advertise(this->get_name() + "/collect/image_raw", 1);
     }
 
+    // associate this class with the current camera position
+    virtual void register_rig_imager(std::shared_ptr<ViconImager> &v) {
+        this->camera_vicon_handle = v;
+    }
+
+    // these objects are projected on the camera
+    virtual void register_vicon_object(std::shared_ptr<ViconImager> &v) {
+        this->vicon_handles.insert({v->get_name(), v});
+    }
+
+    virtual std::vector<cv::Point2f> project_object(std::string n) {
+        std::vector<cv::Point2f> ret;
+        if (!this->dataset || !this->camera_vicon_handle || this->vicon_handles.size() == 0) return ret;
+
+        vicon::Subject cam_subject = this->camera_vicon_handle->get_last_pos();
+        vicon::Subject obj_subject = this->vicon_handles[n]->get_last_pos();
+
+        auto raw_cam_tf = ViObject::subject2tf(cam_subject);
+        auto cam_tf = raw_cam_tf * this->dataset->cam_E;
+        auto inv_cam = cam_tf.inverse();
+
+        ret.reserve(obj_subject.markers.size());
+        for (auto &marker : obj_subject.markers) {
+            auto p = inv_cam({marker.position.x, marker.position.y, marker.position.z});
+
+            float u = -1, v = -1;
+            if (p.z() > 0.001) {
+                struct pXYZ {double x, y, z; };
+                this->dataset->project_point(pXYZ{p.x(), p.y(), p.z()}, u, v);
+            }
+            ret.push_back({v, u});
+        }
+
+        return ret;
+    }
+
+    virtual std::vector<cv::Point2f> project_objects() {
+        std::vector<cv::Point2f> ret;
+        for (auto &obj : this->vicon_handles) {
+            auto pts = this->project_object(obj.first);
+            ret.insert(ret.end(), pts.begin(), pts.end());
+        }
+        return ret;
+    }
+
+    // a convenience drawing function
+    virtual void add_vicon_object_projections(cv::Mat &img, std::string n="", bool reset_trails=false) {
+        std::vector<cv::Point2f> pts;
+        if (n == "") pts = this->project_objects();
+        else pts = this->project_object(n);
+        if (pts.size() == 0) return;
+
+        if (reset_trails || this->trail_accumulator.rows == 0) {
+            this->trail_accumulator = img.clone() * 0;
+        }
+
+        float relative_size = float(std::max(img.rows, img.cols)) / 640.0;
+        for (auto &m_p : pts) {
+            //cv::drawMarker(img, m_p, {0, 255, 0}, cv::MARKER_CROSS, relative_size * 20);
+            cv::circle(this->trail_accumulator, m_p, relative_size * 5, {0, 255, 0}, -1);
+        }
+
+        cv::addWeighted(img, 0.5, this->trail_accumulator, 0.5, 0, img);
+    }
+};
+
+
+// Visuzlize and collect frames from regular cameras
+class RGBImager : public CameraImager {
+public:
+    RGBImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, bool detect_wand_=false)
+        : CameraImager(nh, root_dir_, name_, topic_, detect_wand_) {
+        if (this->topic.find("compressed") != std::string::npos) {
+            this->sub = nh.subscribe(this->topic, 1, &RGBImager::compressed_frame_cb, this);
+        } else {
+            this->sub = nh.subscribe(this->topic, 1, &RGBImager::frame_cb, this);
+        }
+    }
+
+    
     void frame_cb(const sensor_msgs::ImageConstPtr& msg) {
         cv::Mat img;
         if (msg->encoding == "8UC1") {
@@ -176,8 +274,23 @@ public:
         } else {
             img = cv_bridge::toCvShare(msg, "bgr8")->image;
         }
-        this->res_y = msg->height;
-        this->res_x = msg->width;
+
+        std::cout << msg->height << " " << msg->width
+                  << img.rows << " " << img.cols << "\n";
+
+        //this->res_y = msg->height;
+        //this->res_x = msg->width;
+        this->process_frame(img);
+    }
+
+    void compressed_frame_cb(const sensor_msgs::CompressedImageConstPtr& msg) {
+        cv::Mat img = cv::imdecode(cv::Mat(msg->data), 1).clone();
+        this->process_frame(img);
+    }
+
+    void process_frame(cv::Mat img) {
+        this->res_y = img.rows;
+        this->res_x = img.cols;
         this->accumulated_image = img.clone();
 
         cv::Mat vis_img = this->accumulated_image.clone();
@@ -187,13 +300,13 @@ public:
             vis_img = wand::draw_wand(vis_img, wand_points);
         }
 
+        // draw vicon markers
+        this->add_vicon_object_projections(vis_img);
+
+
+        // rescale
         float scale = 640.0 / float(this->accumulated_image.cols);
         if (scale < 1.1) cv::resize(vis_img, vis_img, cv::Size(), scale, scale);
-
-        //if (this->accumulated_image.cols > 1200 || this->accumulated_image.rows > 1200)
-        //    cv::resize(vis_img, vis_img, cv::Size(), 0.5, 0.5);
-        //cv::imshow(this->window_name, vis_img);
-        //cv::waitKey(1);
 
         sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", vis_img).toImageMsg();
         this->img_pub.publish(img_msg);
@@ -202,27 +315,19 @@ public:
 
 
 // Visualize and accumulate data from event cameras
-class EventStreamImager : public Imager {
+class EventStreamImager : public CameraImager {
 protected:
     ros::Rate r;
-    std::mutex mutex;
     std::thread thread_handle;
     cv::Mat vis_img;
 
     // Buffer for incoming events (aka 'slice')
-    // 1e8 == 0.1 sec
-    CircularArray<Event, 100000, 50000000> ev_buffer;
-
-    std::shared_ptr<image_transport::ImageTransport> it_ptr;
-    image_transport::Publisher img_pub;
-    bool detect_wand;
+    //             Type  #max events  1e9 == 1.0 sec
+    CircularArray<Event,    300000,    50'000'000> ev_buffer;
 
 public:
     EventStreamImager(ros::NodeHandle &nh, std::string root_dir_, std::string name_, std::string topic_, float fps_=40, bool detect_wand_=false)
-        : Imager(root_dir_, name_, topic_), r(fps_) {
-        this->detect_wand = detect_wand_;
-        this->it_ptr = std::make_shared<image_transport::ImageTransport>(nh);
-        this->img_pub = it_ptr->advertise(this->window_name + "/image_raw", 1);
+        : CameraImager(nh, root_dir_, name_, topic_, detect_wand_), r(fps_) {
         this->sub = nh.subscribe(this->topic, 1,
                                  &EventStreamImager::event_cb<dvs_msgs::EventArray::ConstPtr>, this);
         this->thread_handle = std::thread(&EventStreamImager::vis_spin, this);
@@ -245,11 +350,13 @@ public:
 
     void vis_spin() {
         while (ros::ok()) {
+            r.sleep();
             cv::Mat img;
             if (this->accumulating) {
                 img = this->get_accumulated_image();
             } else {
                 const std::lock_guard<std::mutex> lock(this->mutex);
+                if (this->res_y * this->res_x == 0) continue;
                 img = EventFile::color_time_img(&ev_buffer, 1, this->res_y, this->res_x);
             }
             if (img.cols == 0 || img.rows == 0)
@@ -261,12 +368,11 @@ public:
                 this->vis_img = wand::draw_wand(this->vis_img, wand_points);
             }
 
-            //cv::imshow(this->window_name, this->vis_img);
-            //cv::waitKey(1);
+            // draw vicon markers
+            this->add_vicon_object_projections(this->vis_img);
 
             sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->vis_img).toImageMsg();
             this->img_pub.publish(img_msg);
-            r.sleep();
         }
     }
 
@@ -394,17 +500,20 @@ int main (int argc, char** argv) {
 
     // Detect wand
     bool detect_wand = false;
-    if (!nh.getParam("d", detect_wand)) detect_wand = false;
+    if (!nh.getParam("detect_wand", detect_wand)) detect_wand = false;
 
     // Show wand from vicon
     bool show_wand = false;
     if (!nh.getParam("show_wand", show_wand)) show_wand = false;
 
+    std::string rig_cam_name = "rig_0";
+    if (!nh.getParam("rig_cam_name", rig_cam_name)) rig_cam_name = "rig_0";
+
     int e_fps = 40;
     if (!nh.getParam("fps", e_fps)) e_fps = 40;
 
     // Data processors
-    std::vector<std::shared_ptr<Imager>> imagers;
+    std::map<std::string, std::shared_ptr<Imager>> imagers;
 
     // parse config
     std::string path_to_self = ros::package::getPath("evimo");
@@ -435,11 +544,11 @@ int main (int argc, char** argv) {
         std::string topic_name = trim(line.substr(sep + 1));
 
         if (cam_type == "event") {
-            imagers.push_back(std::make_shared<EventStreamImager>(nh, result_path, cam_name, topic_name, e_fps, detect_wand));
+            imagers.insert({cam_name, std::make_shared<EventStreamImager>(nh, result_path, cam_name, topic_name, e_fps, detect_wand)});
         } else if (cam_type == "rgb") {
-            imagers.push_back(std::make_shared<RGBImager>(nh, result_path, cam_name, topic_name, detect_wand));
+            imagers.insert({cam_name, std::make_shared<RGBImager>(nh, result_path, cam_name, topic_name, detect_wand)});
         } else if (cam_type == "vicon") {
-            imagers.push_back(std::make_shared<ViconImager>(nh, result_path, cam_name, topic_name));
+            imagers.insert({cam_name, std::make_shared<ViconImager>(nh, result_path, cam_name, topic_name)});
         } else {
             std::cout << _red("unknown camera type:\t") << cam_type << std::endl;
         }
@@ -451,19 +560,46 @@ int main (int argc, char** argv) {
     // Load intrinsics/extrinsics if requested
     std::string dataset_folder = path_to_self + "/config/"; // default
     if (show_wand && !nh.getParam("folder", dataset_folder)) {
-        std::cout << _yellow("No configuration folder specified! Using:")
+        std::cout << _yellow("No configuration folder specified! Using: ")
                   << dataset_folder << std::endl;
     }
 
     if (show_wand) {
         for (auto &im : imagers) {
-            im->try_register_dataset(dataset_folder);
+            auto object_vicon_imager = std::dynamic_pointer_cast<ViconImager>(im.second);
+            if (object_vicon_imager) continue; // dataset initialization is unsupported for vicon
+
+            if (!im.second->try_register_dataset(dataset_folder)) {
+                std::cout << _yellow("Could not initialize the dataset for: ")
+                          << im.second->get_name() << std::endl;
+            }
+        }
+
+        for (auto &im : imagers) {
+            auto c_im = std::dynamic_pointer_cast<CameraImager>(im.second);
+            if (!c_im) continue;
+
+            // add camera (rig) vicon imager to the camera
+            auto cam_rig_imager = std::dynamic_pointer_cast<ViconImager>(imagers[rig_cam_name]);
+            if (!cam_rig_imager) {
+                std::cout << _yellow("Could not add vicon imager with name ")
+                          << rig_cam_name << std::endl;
+            }
+            c_im->register_rig_imager(cam_rig_imager);
+
+            // add all remaining vicon objects to camera
+            for (auto &vicon_im : imagers) {
+                if (vicon_im.first == rig_cam_name) continue;
+                auto object_vicon_imager = std::dynamic_pointer_cast<ViconImager>(vicon_im.second);
+                if (!object_vicon_imager) continue;
+                c_im->register_vicon_object(object_vicon_imager);
+            }
         }
     }
 
     // Creating directories
     for (auto &i : imagers) {
-        if (!i->create_dir()) return -1;
+        if (!i.second->create_dir()) return -1;
     }
 
     // Create a flicker pattern
@@ -478,7 +614,7 @@ int main (int argc, char** argv) {
             begin = ros::Time::now();
             fpattern->cnte();
             for (auto &i : imagers)
-                i->start_accumulating();
+                i.second->start_accumulating();
         }
 
         if (code == 115) { // 's'
@@ -487,7 +623,7 @@ int main (int argc, char** argv) {
             ros::Duration(0.3).sleep();
             ros::spinOnce();
             for (auto &i : imagers)
-                i->save();
+                i.second->save();
         }
 
         ros::spinOnce();

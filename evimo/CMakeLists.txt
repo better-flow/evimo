@@ -101,11 +101,13 @@ target_link_libraries(topic_sanity
 )
 
 find_package(X11 REQUIRED)
-add_executable(collect calib/collect.cpp)
+add_executable(collect calib/collect.cpp
+                       dataset.cpp)
 
 target_link_libraries(collect
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
+    ${PCL_LIBRARIES}
     ${Boost_LIBRARIES}
     ${X11_LIBRARIES}
 )

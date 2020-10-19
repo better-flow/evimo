@@ -96,6 +96,12 @@ public:
     }
 
     bool init(ros::NodeHandle &n_, std::string dataset_folder, std::string camera_name) {
+        bool ret = this->init_no_objects(dataset_folder, camera_name);
+        ret &= this->load_objects(n_, this->dataset_folder + "/objects.txt");
+        return ret;
+    }
+
+    bool init_no_objects(std::string dataset_folder, std::string camera_name) {
         this->dataset_folder = dataset_folder;
         this->camera_name = camera_name;
 
@@ -107,7 +113,6 @@ public:
         bool ret = this->read_params(this->dataset_folder + "/" + camera_name + "/params.txt");
         ret &= this->read_cam_intr(this->dataset_folder + "/" + camera_name + "/calib.txt");
         ret &= this->read_extr(this->dataset_folder + "/" + camera_name + "/extrinsics.txt");
-        ret &= this->load_objects(n_, this->dataset_folder + "/objects.txt");
         return ret;
     }
 
@@ -484,6 +489,8 @@ private:
         Dataset::bg_E.setRotation(Q);
         Dataset::bg_E.setOrigin(T);
 
+        this->update_cam_calib();
+
         // Old extrinsic format (evimo1)
         bool old_ext_format = false;
         if (old_ext_format) {
@@ -575,7 +582,7 @@ public:
     }
 
     // Project 3D point in camera frame to pixel
-    template<class T> void project_point(T p, int &u, int &v) {
+    template<class T, class Q> void project_point(T p, Q &u, Q &v) {
         if (this->dist_model == "radtan") {
             this->project_point_radtan(p, u, v);
         } else if (this->dist_model == "equidistant") {
@@ -585,7 +592,7 @@ public:
         }
     }
 
-    template<class T> void project_point_nodist(T p, int &u, int &v) {
+    template<class T, class Q> void project_point_nodist(T p, Q &u, Q &v) {
         u = -1; v = -1;
         if (p.z < 0.00001)
             return;
@@ -597,7 +604,7 @@ public:
         u = this->fy * y_ + this->cy;
     }
 
-    template<class T> void project_point_radtan(T p, int &u, int &v) {
+    template<class T, class Q> void project_point_radtan(T p, Q &u, Q &v) {
         u = -1; v = -1;
         if (p.z < 0.001)
             return;
@@ -623,7 +630,7 @@ public:
         u = this->fy * y__ + this->cy;
     }
 
-    template<class T> void project_point_equi(T p, int &u, int &v) {
+    template<class T, class Q> void project_point_equi(T p, Q &u, Q &v) {
         u = -1; v = -1;
         if (p.z < 0.001)
             return;
