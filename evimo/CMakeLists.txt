@@ -100,10 +100,19 @@ target_link_libraries(topic_sanity
     ${OpenCV_LIBS}
 )
 
+
+
+add_executable(refine calib/refine_calibration.cpp
+                      dataset.cpp)
+target_link_libraries(refine
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+)
+
+
 find_package(X11 REQUIRED)
 add_executable(collect calib/collect.cpp
                        dataset.cpp)
-
 target_link_libraries(collect
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}

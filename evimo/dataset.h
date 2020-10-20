@@ -95,6 +95,10 @@ public:
         Dataset::instance_id++;
     }
 
+    bool read_bag_file(std::string bag_name,
+                       float start_time_offset = 0.0, float sequence_duration = -1.0,
+                       bool with_images=true, bool ignore_tj=false);
+
     bool init(ros::NodeHandle &n_, std::string dataset_folder, std::string camera_name) {
         bool ret = this->init_no_objects(dataset_folder, camera_name);
         ret &= this->load_objects(n_, this->dataset_folder + "/objects.txt");
