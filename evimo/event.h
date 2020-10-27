@@ -14,7 +14,7 @@ public:
     Event (uint x_, uint y_, ull t_) : fr_x(x_), fr_y(y_), polarity(1), timestamp(t_) {}
     Event (uint x_, uint y_, ull t_, char pol) : fr_x(x_), fr_y(y_), polarity(pol), timestamp(t_) {}
 
-    double get_ts_sec () {return (long double)timestamp / 1000000000.0; }
+    double get_ts_sec () {return (long double)timestamp * 1e-9; }
     inline uint get_x () const {return this->fr_x; }
     inline uint get_y () const {return this->fr_y; }
 

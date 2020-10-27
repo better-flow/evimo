@@ -264,7 +264,6 @@ public:
         }
     }
 
-    
     void frame_cb(const sensor_msgs::ImageConstPtr& msg) {
         cv::Mat img;
         if (msg->encoding == "8UC1") {

@@ -110,7 +110,6 @@ public:
             idx += step;
         }
 
-        idx += step;
         if (idx >= 0 && idx < this->data->size() && std::fabs(ts - this->get_ts(idx)) < best_error) {
             best_error = std::fabs(ts - this->get_ts(idx));
             best_idx = idx;
@@ -130,6 +129,7 @@ public:
     ros::Time ts;
     tf::Transform pq;
     float occlusion;
+    std::vector<std::tuple<float, float, float, std::string>> markers;
 
     Pose()
         : ts(0), occlusion(std::numeric_limits<double>::quiet_NaN()) {this->pq.setIdentity(); }
@@ -142,9 +142,15 @@ public:
             return;
         }
 
+        this->markers.reserve(p.markers.size());
         this->pq = ViObject::subject2tf(p);
-        for (auto &marker : p.markers)
+        for (auto &marker : p.markers) {
             if (marker.occluded) this->occlusion ++;
+            this->markers.emplace_back(marker.position.x,
+                                       marker.position.y,
+                                       marker.position.z,
+                                       marker.name);
+        }
         this->occlusion = this->occlusion / float(p.markers.size());
     }
 
@@ -183,7 +189,14 @@ public:
     Pose operator-(const Pose &p) {
         Pose ret(this->ts, this->pq);
         ret.occlusion = std::max(this->occlusion, p.occlusion);
-        ret.pq = p.pq.inverse() * this->pq;
+        auto inv_tf = p.pq.inverse();
+        ret.pq = inv_tf * this->pq;
+        ret.markers.reserve(this->markers.size());
+        for (auto &m : this->markers) {
+            auto new_p = inv_tf({std::get<0>(m), std::get<1>(m), std::get<2>(m)});
+            ret.markers.emplace_back(new_p.x(), new_p.y(), new_p.z(), std::get<3>(m));
+        }
+
         return ret;
     }
 

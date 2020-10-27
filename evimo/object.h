@@ -536,6 +536,24 @@ public:
         transform.setRotation(q);
         return transform;
     }
+
+    template <typename T1, typename T2>
+    static tf::Transform  estimate_tf(T1 points_src, T2 points_dst) {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr src(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr dst(new pcl::PointCloud<pcl::PointXYZ>);
+        for (auto &p : points_src) {
+            src->emplace_back(pcl::PointXYZ(p[0],p[1],p[2]));
+        }
+
+        for (auto &p : points_dst) {;
+            dst->emplace_back(pcl::PointXYZ(p[0],p[1],p[2]));
+        }
+
+        Eigen::Matrix4f SVD;
+        const pcl::registration::TransformationEstimationSVD<pcl::PointXYZ, pcl::PointXYZ> trans_est_svd;
+        trans_est_svd.estimateRigidTransformation(*src, *dst, SVD);
+        return ViObject::mat2tf(SVD);
+    }
 };
 
 #endif // OBJECT_H

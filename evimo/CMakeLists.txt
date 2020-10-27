@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.12)
 project(evimo)
 
 #set(CMAKE_C_COMPILER "/usr/bin/clang-6.0")
@@ -102,11 +102,16 @@ target_link_libraries(topic_sanity
 
 
 
+find_package(Python3 COMPONENTS Development NumPy)
 add_executable(refine calib/refine_calibration.cpp
                       dataset.cpp)
+
+target_include_directories(refine PRIVATE ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
 target_link_libraries(refine
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
+    Python3::Python
+    Python3::NumPy
 )
 
 

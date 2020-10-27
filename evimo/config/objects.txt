@@ -1,4 +1,4 @@
-#objects/wand
+objects/wand
 #objects/box_00
 #objects/box_01
 #objects/box_03
@@ -11,12 +11,12 @@
 #objects/marker_02
 #objects/marker_03
 #objects/box_02
-objects/can_00
+#objects/can_00
 #objects/car_00
 #objects/drone_00
 #objects/drone_01
 #objects/knife_00
-objects/plane_00
+#objects/plane_00
 #objects/plane_01
 #objects/toy_00
 #objects/wheel_00

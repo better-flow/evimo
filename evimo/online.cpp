@@ -67,15 +67,21 @@ public:
     RGBCameraVisualizer(ros::NodeHandle &nh, float FPS, std::shared_ptr<Dataset> &dataset)
         : frame(dataset, 0, 0, 0), r(FPS), topic(dataset->image_topic), event_topic(dataset->event_topic), images_received(0) {
         this->window_name = "RGBFrames_" + std::to_string(uid);
-        uid += 1;
-        this->sub = nh.subscribe(this->topic, 0, &RGBCameraVisualizer::sub_cb, this);
+        RGBCameraVisualizer::uid += 1;
+
+        if (this->topic.find("compressed") != std::string::npos) {
+            this->sub = nh.subscribe(this->topic, 0, &RGBCameraVisualizer::compressed_frame_cb, this);
+        } else {
+            this->sub = nh.subscribe(this->topic, 0, &RGBCameraVisualizer::frame_cb, this);
+        }
+
         this->event_sub = nh.subscribe(this->event_topic, 0,
                                        &RGBCameraVisualizer::event_cb<dvs_msgs::EventArray::ConstPtr>, this);
         this->spin();
     }
 
     // Callbacks
-    void sub_cb(const sensor_msgs::ImageConstPtr& msg) {
+    void frame_cb(const sensor_msgs::ImageConstPtr& msg) {
         const std::lock_guard<std::mutex> lock(this->mutex);
         Dataset::images.resize(1);
         if (msg->encoding == "8UC1") {
@@ -85,6 +91,13 @@ public:
         } else {
             Dataset::images[0] = (cv_bridge::toCvShare(msg, "bgr8")->image).clone();
         }
+        this->images_received ++;
+    }
+
+    void compressed_frame_cb(const sensor_msgs::CompressedImageConstPtr& msg) {
+        Dataset::images.resize(1);
+        cv::Mat img = cv::imdecode(cv::Mat(msg->data), 1).clone();
+        Dataset::images[0] = img;
         this->images_received ++;
     }
 
