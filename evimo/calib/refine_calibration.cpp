@@ -376,7 +376,7 @@ public:
 
     // brute-force cross-correlator: will try all offsets in [-wsize/2, wsize/2] with a step 'step'
     template <typename T>
-    static double correlate(const Track<T> &ref_track, const Track<T> &target_track, double step=1e-3, double wsize=1.0) {
+    static double correlate(const Track<T> &ref_track, const Track<T> &target_track, double step=1e-3, double wsize=0.4) {
         std::valarray<double> ref_ts(ref_track.size());
         std::vector<double> ref_val(ref_track.size());
         for (size_t i = 0; i < ref_track.size(); ++i) {
@@ -491,7 +491,7 @@ public:
     static void calibrate(std::shared_ptr<Dataset> &dataset,
                           const std::map<int, Track<std::tuple<float, float>>> &src,
                           const std::map<int, Track<std::tuple<float, float, float>>> &tgt,
-                          double time_offset = 0.0) {
+                          double time_offset = 0.0, bool extr_only=false, bool plot=true) {
 
         // for visualization only
         std::vector<double> src_val;
@@ -530,28 +530,31 @@ public:
                     dataset->project_point(pXYZ{std::get<0>(point_3d), std::get<1>(point_3d), std::get<2>(point_3d)}, u, v);
                 }
 
-                if (u >= 0 && v >= 0) {
+                if (plot && u >= 0 && v >= 0) {
                     src_val.push_back(tuple_foreach::hypot(s_tt[i].pose));
                     tgt_val.push_back(std::sqrt(u * u + v * v));
                 }
             }
         }
 
-        std::vector<std::vector<cv::Point2f>> imagePoints = {image_pts};
-        std::vector<std::vector<cv::Point3f> > objectPoints = {object_pts};
+        // optimization
         std::vector<cv::Mat> rvecs, tvecs;
-		cv::Mat stdDeviationsIntrinsics, stdDeviationsExtrinsics, rms_error;
-        
+		//cv::Mat stdDeviationsIntrinsics, stdDeviationsExtrinsics, rms_error;
+
         int flags = cv::CALIB_USE_INTRINSIC_GUESS; 
         flags += cv::CALIB_FIX_K3 + cv::CALIB_FIX_K4 + cv::CALIB_FIX_K5 + cv::CALIB_FIX_K6;
-        flags += cv::CALIB_FIX_PRINCIPAL_POINT + cv::CALIB_FIX_ASPECT_RATIO + cv::CALIB_FIX_K1 + cv::CALIB_FIX_K2;
+        if (extr_only)
+            flags += cv::CALIB_FIX_PRINCIPAL_POINT + cv::CALIB_FIX_ASPECT_RATIO + cv::CALIB_FIX_K1 + cv::CALIB_FIX_K2;
 
         cv::Mat K = (cv::Mat1d(3, 3) << dataset->fx, 0, dataset->cx, 0, dataset->fy, dataset->cy, 0, 0, 1);
         cv::Mat D;
         if (dataset->dist_model == "radtan") {
             D = (cv::Mat1d(1, 4) << dataset->k1, dataset->k2, dataset->p1, dataset->p2);
-            cv::calibrateCamera(objectPoints, imagePoints, {dataset->res_x, dataset->res_y}, K, D, rvecs, tvecs,
-                                stdDeviationsIntrinsics, stdDeviationsExtrinsics, rms_error, flags);
+            std::vector<std::vector<cv::Point2f>> imagePoints = {image_pts};
+            std::vector<std::vector<cv::Point3f> > objectPoints = {object_pts};
+            //cv::calibrateCamera(objectPoints, imagePoints, {(int)dataset->res_x, (int)dataset->res_y}, K, D, rvecs, tvecs,
+            //                    stdDeviationsIntrinsics, stdDeviationsExtrinsics, rms_error, flags);
+            cv::calibrateCamera(objectPoints, imagePoints, {(int)dataset->res_x, (int)dataset->res_y}, K, D, rvecs, tvecs, flags);
         } else {
             std::cout << _red("Unknown distortion model! ") << dataset->dist_model << std::endl;
         }
@@ -563,29 +566,100 @@ public:
         assert(D.depth() == CV_64F);
         assert(rvec.depth() == CV_64F);
         assert(tvec.depth() == CV_64F);
-        assert(rms_error.depth() == CV_64F);
-        
+        //assert(rms_error.depth() == CV_64F);
+
+        /*
         std::cout << K.at<double>(0) << "\t" << K.at<double>(4) << "\t" << K.at<double>(2) << "\t" << K.at<double>(5) << "\n";
         std::cout << D.at<double>(0) << "\t" << D.at<double>(1) << "\t" << D.at<double>(2) << "\t" << D.at<double>(3) << "\n";
         std::cout << rvec.at<double>(0) << "\t" << rvec.at<double>(1) << "\t" << rvec.at<double>(2) << "\n";
         std::cout << tvec.at<double>(0) << "\t" << tvec.at<double>(1) << "\t" << tvec.at<double>(2) << "\n";
         std::cout << rms_error.at<double>(1) << "\n";
+        */
 
+        // update dataset
+        auto E_correction = rvec_tvec2tf(rvec, tvec).inverse();
+        dataset->cam_E = dataset->cam_E * E_correction;
+        dataset->fx = K.at<double>(0);
+        dataset->fy = K.at<double>(4);
+        dataset->cx = K.at<double>(2);
+        dataset->cy = K.at<double>(5);
+        if (!extr_only) {
+            if (dataset->dist_model == "radtan") {
+                dataset->k1 = D.at<double>(0);
+                dataset->k2 = D.at<double>(1);
+                dataset->k3 = 0;
+                dataset->k4 = 0;
+                dataset->p1 = D.at<double>(2);
+                dataset->p2 = D.at<double>(3);
+            } else {
+                std::cout << _red("Unknown distortion model! ") << dataset->dist_model << std::endl;
+            }
+        }
+        dataset->apply_Intr_Calib();
 
-    //R = Rotation.from_rotvec(np.array(rvecs).reshape(3)).inv()
-    //T = np.array(tvecs).reshape(3, 1)
-    //T = -R.as_dcm() @ T
-    //print(np.hstack((T.reshape(3), R.as_euler('xyz'))))
+        // plot
+        if (plot) {
+            std::vector<double> src_val_corrected;
+            std::vector<double> tgt_val_corrected;
+
+            assert(image_pts.size() == object_pts.size());
+            for (size_t i = 0; i < object_pts.size(); ++i) {
+                auto &p3d = object_pts[i];
+                auto p3d_ = (E_correction.inverse())({p3d.x, p3d.y, p3d.z});
+
+                float u = -1, v = -1;
+                if (p3d_.z() > 0.001) {
+                    struct pXYZ {double x, y, z; };
+                    dataset->project_point(pXYZ{p3d_.x(), p3d_.y(), p3d_.z()}, u, v);
+                }
+
+                if (u >= 0 && v >= 0) {
+                    src_val_corrected.push_back(std::hypot(image_pts[i].x, image_pts[i].y));
+                    tgt_val_corrected.push_back(std::hypot(u, v));
+                }
+            }
 
             namespace plt = matplotlibcpp;
             plt::figure_size(1200, 780);
+            plt::subplot(2,1,1);
             plt::named_plot("detections", src_val, ".");
-            plt::named_plot("vicon",    tgt_val, ".");
+            plt::named_plot("vicon",      tgt_val, ".");
+
+            plt::subplot(2,1,2);
+            plt::named_plot("detections", src_val_corrected, ".");
+            plt::named_plot("vicon",      tgt_val_corrected, ".");
+
             plt::title("Spatial calibrator");
             plt::legend();
             plt::show();
 
+        }
+    }
 
+protected:
+    static tf::Quaternion rvec2q(cv::Mat &rvec) {
+        assert(rvec.depth() == CV_64F);
+        double ax = rvec.at<double>(0), ay = rvec.at<double>(1), az = rvec.at<double>(2);
+        double angle = std::sqrt(ax * ax + ay * ay + az * az);
+        if (angle > 1e-6) {
+            ax /= angle;
+            ay /= angle;
+            az /= angle;
+        }
+
+        tf::Quaternion q({ax, ay, az}, angle);
+        q.normalize();
+        return q;
+    }
+
+    static tf::Transform rvec_tvec2tf(cv::Mat &rvec, cv::Mat &tvec) {
+        assert(tvec.depth() == CV_64F);
+        auto q = rvec2q(rvec);
+        tf::Vector3 T(tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2));
+        tf::Transform E;
+        E.setRotation(q);
+        E.setOrigin(T);
+        return E;
     }
 };
 
@@ -726,7 +800,6 @@ int main (int argc, char** argv) {
     } std::cout << std::endl;
     }
 
-
     std::vector<double> image_timestamps;
 
     // Generate images from events
@@ -830,58 +903,15 @@ int main (int argc, char** argv) {
 
 
     // align time
-    auto time_offset = -0.099;//ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix);
+    //auto time_offset = -0.099;//ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix);
+    auto time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix);
     std::cout << _green("Time Offset: ") << time_offset << std::endl;
 
     // compute spatial calibration
     ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset);
 
 
-    // plot stuff
-    {
-
-    namespace plt = matplotlibcpp;
-    std::vector<double> x(wand_red_pix[1].size()), y(wand_red_pix[1].size());
-
-    for(int i = 0; i < wand_red_pix[1].size(); ++i)
-    {
-        x[i] = wand_red_pix[1][i].get_ts_sec();
-        y[i] = std::get<0>(wand_red_pix[1][i].pose);
-    }
-
-
-    std::vector<double> x1(wand_detected_pix[1].size()), y1(wand_detected_pix[1].size());
-    for(int i = 0; i < x1.size(); ++i) {
-        x1[i] = wand_detected_pix[1][i].get_ts_sec();
-        y1[i] = std::get<0>(wand_detected_pix[1][i].pose);
-    }
-    //auto w1_ret = wand_red_pix[1].evaluate(x1);
-
-
-    plt::figure_size(1200, 780);
-    plt::named_plot("log(x)", x, y, ".");
-    plt::named_plot("lll", x1, y1, ".");
-    // Set x-axis to interval [0,1000000]
-    //plt::xlim(0, 1000*1000);
-    // Add graph title
-    plt::title("Sample figure");
-    // Enable legend.
-    plt::legend();
-    plt::show();
-
-
-    }
-
-
-
-
     return 0;
-
-
-
-
-
-
 
 
 

@@ -247,6 +247,15 @@ public:
     }
 
     void printCalib() {
+        std::cout << std::endl << _blue("Intrinsics ") << "(" << this->dist_model << "):" << std::endl;
+        std::cout << this->fx << " " << this->fy << " " << this->cx << " " << this->cy << " ";
+        if (this->dist_model == "radtan") {
+            std::cout << this->k1 << " " << this->k2 << " " << this->p1 << " " << this->p2 << std::endl;
+        } else if (this->dist_model == "equidistant") {
+            std::cout << this->k1 << " " << this->k2 << " " << this->k3 << " " << this->k4 << std::endl;
+        } else {
+            std::cout << _red("Unknown distortion model! ") << this->dist_model << std::endl;
+        }
         std::cout << std::endl << _blue("Transforms:") << std::endl;
         std::cout << "Vicon -> Camcenter (X Y Z R P Y):" << std::endl;
         std::cout << "\t" << this->tx0 << "\t" << this->ty0 << "\t" << this->tz0 
