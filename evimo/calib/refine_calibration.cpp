@@ -338,6 +338,22 @@ public:
         return this->track[idx];
     }
 
+    void apply_tf(const tf::Transform &t) {
+        if constexpr (std::tuple_size<T>::value == 3) {
+            for (size_t i = 0; i < this->size(); ++i) {
+                auto &p = this->track[i].pose;
+                auto ret_p = t({std::get<0>(p), std::get<1>(p), std::get<2>(p)});
+                std::get<0>(p) = ret_p.x();
+                std::get<1>(p) = ret_p.y();
+                std::get<2>(p) = ret_p.z();
+            }
+        }
+    }
+
+    void apply_time_offset(double to) {
+        for (size_t i = 0; i < this->size(); ++i) this->track[i].ts += to;
+    }
+
     template<typename TS_T>
     Track evaluate(TS_T timestamps) const {
         Track<T> ret;
@@ -376,7 +392,7 @@ public:
 
     // brute-force cross-correlator: will try all offsets in [-wsize/2, wsize/2] with a step 'step'
     template <typename T>
-    static double correlate(const Track<T> &ref_track, const Track<T> &target_track, double step=1e-3, double wsize=0.4) {
+    static double correlate(const Track<T> &ref_track, const Track<T> &target_track, double step=1e-2, double wsize=1.0) {
         std::valarray<double> ref_ts(ref_track.size());
         std::vector<double> ref_val(ref_track.size());
         for (size_t i = 0; i < ref_track.size(); ++i) {
@@ -479,8 +495,9 @@ public:
 class ViconWandTimeAligner : public CrossCorrelator {
 public:
     static double align(const std::map<int, Track<std::tuple<float, float>>> &src,
-                        const std::map<int, Track<std::tuple<float, float>>> &tgt) {    
-        return correlate(src.at(2), tgt.at(2)); // just align label 2
+                        const std::map<int, Track<std::tuple<float, float>>> &tgt,
+                        double step=1e-2, double wsize=1.0) {    
+        return correlate(src.at(2), tgt.at(2), step, wsize); // just align label 2
     }
 };
 
@@ -488,7 +505,7 @@ public:
 class ViconWandSpatialCalibrator {
 public:
     ViconWandSpatialCalibrator() {}
-    static void calibrate(std::shared_ptr<Dataset> &dataset,
+    static tf::Transform calibrate(std::shared_ptr<Dataset> &dataset,
                           const std::map<int, Track<std::tuple<float, float>>> &src,
                           const std::map<int, Track<std::tuple<float, float, float>>> &tgt,
                           double time_offset = 0.0, bool extr_only=false, bool plot=true) {
@@ -577,8 +594,8 @@ public:
         */
 
         // update dataset
-        auto E_correction = rvec_tvec2tf(rvec, tvec).inverse();
-        dataset->cam_E = dataset->cam_E * E_correction;
+        auto E_correction = rvec_tvec2tf(rvec, tvec);
+        dataset->cam_E = dataset->cam_E * E_correction.inverse();
         dataset->fx = K.at<double>(0);
         dataset->fy = K.at<double>(4);
         dataset->cx = K.at<double>(2);
@@ -605,7 +622,7 @@ public:
             assert(image_pts.size() == object_pts.size());
             for (size_t i = 0; i < object_pts.size(); ++i) {
                 auto &p3d = object_pts[i];
-                auto p3d_ = (E_correction.inverse())({p3d.x, p3d.y, p3d.z});
+                auto p3d_ = E_correction({p3d.x, p3d.y, p3d.z});
 
                 float u = -1, v = -1;
                 if (p3d_.z() > 0.001) {
@@ -632,8 +649,9 @@ public:
             plt::title("Spatial calibrator");
             plt::legend();
             plt::show();
-
         }
+
+        return E_correction;
     }
 
 protected:
@@ -902,13 +920,49 @@ int main (int argc, char** argv) {
     }
 
 
-    // align time
-    //auto time_offset = -0.099;//ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix);
-    auto time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix);
-    std::cout << _green("Time Offset: ") << time_offset << std::endl;
+    double time_offset = 0;
+    tf::Transform E_corr;
+    double to_step = 2 * 1e-2, to_wsize = 2.0;
 
-    // compute spatial calibration
-    ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset);
+    //time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize);
+    //std::cout << _green("Time Offset Error: ") << time_offset << std::endl;
+    for (size_t n_iter = 0; n_iter < 20; ++n_iter) {
+        // compute spatial calibration
+        E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, false, false);
+
+        // apply correction to wand red 3d and 2d points:
+        for (auto &lbl_pair : wand_red_3d) {
+            wand_red_pix[lbl_pair.first] = Track<std::tuple<float, float>>();
+            lbl_pair.second.apply_tf(E_corr);
+            lbl_pair.second.apply_time_offset(-time_offset);
+            for (size_t i = 0; i < lbl_pair.second.size(); ++i) {
+                auto &ps = lbl_pair.second[i];
+
+                float u = -1, v = -1;
+                if (std::get<2>(ps.pose) > 0.001) {
+                    struct pXYZ {double x, y, z; };
+                    dataset->project_point(pXYZ{std::get<0>(ps.pose), std::get<1>(ps.pose), std::get<2>(ps.pose)}, u, v);
+                }
+
+                if (u >= 0 && v >= 0) wand_red_pix[lbl_pair.first].push_back(ps.get_ts_sec(), {v, u});
+            }
+        }
+
+        // align time
+        time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize);
+        std::cout << _green("Time Offset Error: ") << time_offset << std::endl;
+
+        if (std::fabs(time_offset) < to_wsize / 4) {
+            to_step /= 2;
+            to_wsize /= 2;
+        }
+
+        if (std::fabs(time_offset) < 1e-6) break;
+    }
+
+    time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step / 10, to_wsize);
+    std::cout << _green("\n\nTime Offset Error: ") << time_offset << std::endl;
+    E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, false, true);
 
 
     return 0;
