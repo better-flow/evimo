@@ -97,6 +97,10 @@ public:
                 }
 
                 plotter.add_vertical(window.first->get_timestamp() - plot_t_offset);
+
+                // rescale
+                float scale = 1280.0 / float(img.cols);
+                if (scale < 1.1) cv::resize(img, img, cv::Size(), scale, scale);
                 cv::imshow(window.second, img);
             }
 

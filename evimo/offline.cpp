@@ -129,6 +129,9 @@ public:
                 case 3: img = f.get_visualization_event_projection(true, nodist); break;
             }
 
+            // rescale
+            float scale = 1280.0 / float(img.cols);
+            if (scale < 1.1) cv::resize(img, img, cv::Size(), scale, scale);
             cv::imshow("Frames", img);
 
             //this->plotter.add_vertical(f.get_timestamp() - plot_t_offset);

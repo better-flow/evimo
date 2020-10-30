@@ -71,7 +71,7 @@ public:
     static constexpr float MAXVAL = 1000;
     static constexpr float INT_LIN_SC = 1.0;
     static constexpr float INT_ANG_SC = 1.0;
-    static constexpr float INT_TIM_SC = 5;
+    static constexpr float INT_TIM_SC = 1.0;
 
     int value_rr, value_rp, value_ry;
     int value_tx, value_ty, value_tz;
