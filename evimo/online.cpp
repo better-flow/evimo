@@ -91,6 +91,8 @@ public:
         } else {
             Dataset::images[0] = (cv_bridge::toCvShare(msg, "bgr8")->image).clone();
         }
+
+        std::cout << "Image ts = " << msg->header.stamp << "\n";
         this->images_received ++;
     }
 
@@ -98,6 +100,8 @@ public:
         Dataset::images.resize(1);
         cv::Mat img = cv::imdecode(cv::Mat(msg->data), 1).clone();
         Dataset::images[0] = img;
+
+        std::cout << "Image ts = " << msg->header.stamp << "\n";
         this->images_received ++;
     }
 
@@ -109,6 +113,7 @@ public:
             Event e(msg->events[i].y, msg->events[i].x, time);
             Dataset::event_array.push_back(e);
         }
+        std::cout << "Event ts = " << msg->header.stamp << "\n";
     }
 
     void spin() {
@@ -180,12 +185,14 @@ public:
     }
 };
 
+
 int RGBCameraVisualizer::uid = 0;
 
 
 void camera_pos_cb(const vicon::Subject& subject) {
     Dataset::cam_tj.clear();
     Dataset::cam_tj.add(ros::Time(0), subject);
+    std::cout << "Vicon ts = " << subject.header.stamp << "\n";
 }
 
 

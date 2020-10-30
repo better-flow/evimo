@@ -101,7 +101,9 @@ public:
     // helper print for a given timestamp (idx)
     void print_stats(size_t idx) {
         auto &kptd = this->keypoint_detections[idx];
-        std::cout << "\n" << idx << ":\n";
+        if (kptd.raw_keypoints.size() == 0) return;
+
+        std::cout << idx << ":\n";
         for (size_t j = 0; j < kptd.raw_keypoints.size(); ++j) {
             std::cout << "\t" << j << " " << (kptd.is_noise[j] ? "noise" : "  +  ") << ":\t";
             for (auto &lbl : kptd.labels[j]) {
@@ -157,24 +159,26 @@ public:
             for (size_t j = 0; j < this->keypoint_detections[i].raw_keypoints.size(); ++j) {
                 if (this->keypoint_detections[i].is_noise[j]) continue;
                 if (this->keypoint_detections[i].labels.size() == 0) continue;
+                if (this->keypoint_detections[i].labels.at(j).size() == 0) continue;
 
-                auto max_lbl = this->keypoint_detections[i].labels[j].begin()->first;
-                size_t max_cnt = this->keypoint_detections[i].labels[j].begin()->second;
-                for (auto &lbl : this->keypoint_detections[i].labels[j]) {
+                auto max_lbl = this->keypoint_detections[i].labels.at(j).begin()->first;
+                size_t max_cnt = this->keypoint_detections[i].labels.at(j).begin()->second;
+                for (auto &lbl : this->keypoint_detections[i].labels.at(j)) {
                     if (lbl.second < max_cnt) continue;
                     max_cnt = lbl.second;
                     max_lbl = lbl.first;
                 }
-                
+
                 if (max_counts.find(max_lbl) == max_counts.end()) {
                     max_counts[max_lbl] = max_cnt;
                 }
                 max_counts[max_lbl] = std::max(max_counts[max_lbl], max_cnt);
-                this->keypoint_detections[i].labels[j] = {{max_lbl, max_cnt}};
+                this->keypoint_detections[i].labels.at(j) = {{max_lbl, max_cnt}};
             }
 
             for (size_t j = 0; j < this->keypoint_detections[i].raw_keypoints.size(); ++j) {
-                auto &lbl = *(this->keypoint_detections[i].labels[j].begin());
+                if (this->keypoint_detections[i].labels.at(j).size() == 0) continue;
+                auto &lbl = *(this->keypoint_detections[i].labels.at(j).begin());
                 if (max_counts[lbl.first] > lbl.second) this->label_track_as_noise(i, j);
             }
         }
@@ -307,9 +311,6 @@ struct tuple_foreach {
         return std::sqrt(data);
     }
 };
-
-
-
 
 
 template <typename T> class Track {
@@ -496,8 +497,17 @@ class ViconWandTimeAligner : public CrossCorrelator {
 public:
     static double align(const std::map<int, Track<std::tuple<float, float>>> &src,
                         const std::map<int, Track<std::tuple<float, float>>> &tgt,
-                        double step=1e-2, double wsize=1.0) {    
-        return correlate(src.at(2), tgt.at(2), step, wsize); // just align label 2
+                        double step=1e-2, double wsize=1.0) {
+
+        for (auto &label : std::vector({1,2,3,4,5})) {
+            if (src.find(label) == src.end()) continue;
+            if (tgt.find(label) == tgt.end()) continue;
+            std::cout << "Time-aligning label " << label << std::endl;
+            return correlate(src.at(label), tgt.at(label), step, wsize);
+        }
+
+        std::cout << _red("time algnemnt failed! no tracks available") << std::endl;
+        return 0;
     }
 };
 
@@ -519,6 +529,8 @@ public:
         std::vector<cv::Point3f> object_pts;
 
         for (auto &label : std::vector({1,2,3,4,5})) {
+            if (src.find(label) == src.end()) continue;
+
             auto n_points = src.at(label).size();
             auto &s_tt = src.at(label);
 
@@ -568,7 +580,7 @@ public:
         if (dataset->dist_model == "radtan") {
             D = (cv::Mat1d(1, 4) << dataset->k1, dataset->k2, dataset->p1, dataset->p2);
             std::vector<std::vector<cv::Point2f>> imagePoints = {image_pts};
-            std::vector<std::vector<cv::Point3f> > objectPoints = {object_pts};
+            std::vector<std::vector<cv::Point3f>> objectPoints = {object_pts};
             //cv::calibrateCamera(objectPoints, imagePoints, {(int)dataset->res_x, (int)dataset->res_y}, K, D, rvecs, tvecs,
             //                    stdDeviationsIntrinsics, stdDeviationsExtrinsics, rms_error, flags);
             cv::calibrateCamera(objectPoints, imagePoints, {(int)dataset->res_x, (int)dataset->res_y}, K, D, rvecs, tvecs, flags);
@@ -828,7 +840,8 @@ int main (int argc, char** argv) {
         Dataset::images.reserve(to_reserve);
         image_timestamps.reserve(to_reserve);
 
-        EventSlice2DFrequencyFilter eff(dataset->res_y, dataset->res_x, ull(e_slice_width * 1e9), 190, 210);
+        EventSlice2DFrequencyFilter eff(dataset->res_y, dataset->res_x, ull(e_slice_width * 1e9), 150, 250);
+        //EventSlice2D eff(dataset->res_y, dataset->res_x, ull(e_slice_width * 1e9));
 
         double start_ts = Dataset::event_array.front().get_ts_sec();
         for (size_t i = 0; i < Dataset::event_array.size(); ++i) {
@@ -843,9 +856,21 @@ int main (int argc, char** argv) {
                 auto img = (cv::Mat)eff;
                 auto ts = (current_ts + start_ts) / 2.0;
 
-                Dataset::images.push_back(img.clone());
                 image_timestamps.push_back(ts);
 
+/*
+        cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                    cv::Size(5, 5),
+                                                    cv::Point(2, 2));
+        cv::dilate(img, img, element);
+        //cv::erode(img, img, element);
+
+        //cv::imshow("img", img);
+        //auto code = cv::waitKey(0);
+        //if (code == 27) break;
+*/
+
+                Dataset::images.push_back(img.clone());
                 start_ts = current_ts;
             }
         } std::cout << std::endl;
@@ -895,9 +920,20 @@ int main (int argc, char** argv) {
         auto wand_line_idx = wand::find_all_3lines(std::get<0>(keypoint_tuple), 0.2);
         auto wand_idx = wand::detect_wand_internal_idx(std::get<0>(keypoint_tuple), wand_line_idx, wand::wand_red_mapping, 0.5, 0.5, 0.5);
         auto kpt_idx = std::get<2>(keypoint_tuple);
+
         for (int label = 0; label < wand_idx.size(); ++label) {
             kpt_tracker.propagate_track_label(i, kpt_idx[wand_idx[label]], label + 1); // wand labels are 1..5
         }
+
+/*
+        cv::Mat img = img_.clone();
+        cv::drawKeypoints(img, std::get<0>(keypoint_tuple), img, cv::Scalar(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+        cv::imshow("img", img);
+        auto code = cv::waitKey(0);
+        if (code == 27) break;
+*/
+
     }
 
     // pick best labels for each keypoint
@@ -925,10 +961,12 @@ int main (int argc, char** argv) {
     double to_step = 2 * 1e-2, to_wsize = 2.0;
 
     //time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize);
-    //std::cout << _green("Time Offset Error: ") << time_offset << std::endl;
+    //E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, false, true);
+
+    std::cout << _green("Time Offset Error: ") << time_offset << std::endl;
     for (size_t n_iter = 0; n_iter < 20; ++n_iter) {
         // compute spatial calibration
-        E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, false, false);
+        E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, true, true);
 
         // apply correction to wand red 3d and 2d points:
         for (auto &lbl_pair : wand_red_3d) {

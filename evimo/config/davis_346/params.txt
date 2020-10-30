@@ -1,0 +1,5 @@
+res_x: 260
+res_y: 346
+dist_model: radtan
+ros_event_topic: /dvs/events
+ros_pos_topic: /vicon/DVS346

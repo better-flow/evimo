@@ -1,0 +1,5 @@
+id: 1
+name: car_01
+mesh: model.ply
+unit: m
+ros_pos_topic: /vicon/Object_1

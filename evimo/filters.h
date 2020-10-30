@@ -42,7 +42,6 @@ protected:
     void remove_outside_window() {
         if (this->timestamp <= window_size) return;
         auto cutoff_ts = this->timestamp - window_size;
-
         while (this->events.size() > 0 && this->events.front().timestamp < cutoff_ts) {
             this->polarity_sum -= (events.front().polarity > 0) ? 1 : -1;
             this->events.pop_front();
