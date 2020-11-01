@@ -521,8 +521,10 @@ public:
                           double time_offset = 0.0, bool extr_only=false, bool plot=true) {
 
         // for visualization only
-        std::vector<double> src_val;
-        std::vector<double> tgt_val;
+        std::vector<double> src_val_x;
+        std::vector<double> src_val_y;
+        std::vector<double> tgt_val_x;
+        std::vector<double> tgt_val_y;
 
         // used in optimization
         std::vector<cv::Point2f> image_pts;
@@ -560,16 +562,16 @@ public:
                 }
 
                 if (plot && u >= 0 && v >= 0) {
-                    src_val.push_back(tuple_foreach::hypot(s_tt[i].pose));
-                    tgt_val.push_back(std::sqrt(u * u + v * v));
+                    src_val_x.push_back(std::get<0>(s_tt[i].pose));
+                    src_val_y.push_back(std::get<1>(s_tt[i].pose));
+                    tgt_val_x.push_back(v);
+                    tgt_val_y.push_back(u);
                 }
             }
         }
 
         // optimization
         std::vector<cv::Mat> rvecs, tvecs;
-		//cv::Mat stdDeviationsIntrinsics, stdDeviationsExtrinsics, rms_error;
-
         int flags = cv::CALIB_USE_INTRINSIC_GUESS; 
         flags += cv::CALIB_FIX_K3 + cv::CALIB_FIX_K4 + cv::CALIB_FIX_K5 + cv::CALIB_FIX_K6;
         if (extr_only)
@@ -577,13 +579,19 @@ public:
 
         cv::Mat K = (cv::Mat1d(3, 3) << dataset->fx, 0, dataset->cx, 0, dataset->fy, dataset->cy, 0, 0, 1);
         cv::Mat D;
+
         if (dataset->dist_model == "radtan") {
             D = (cv::Mat1d(1, 4) << dataset->k1, dataset->k2, dataset->p1, dataset->p2);
-            std::vector<std::vector<cv::Point2f>> imagePoints = {image_pts};
-            std::vector<std::vector<cv::Point3f>> objectPoints = {object_pts};
-            //cv::calibrateCamera(objectPoints, imagePoints, {(int)dataset->res_x, (int)dataset->res_y}, K, D, rvecs, tvecs,
-            //                    stdDeviationsIntrinsics, stdDeviationsExtrinsics, rms_error, flags);
-            cv::calibrateCamera(objectPoints, imagePoints, {(int)dataset->res_x, (int)dataset->res_y}, K, D, rvecs, tvecs, flags);
+
+            if (extr_only) {
+                cv::solvePnPGeneric(object_pts, image_pts, K, D, rvecs, tvecs);
+                //cv::solvePnPRansac(object_pts, image_pts, K, D, rvecs, tvecs);
+            }
+            else {
+                std::vector<std::vector<cv::Point2f>> imagePoints = {image_pts};
+                std::vector<std::vector<cv::Point3f>> objectPoints = {object_pts};
+                cv::calibrateCamera(objectPoints, imagePoints, {(int)dataset->res_x, (int)dataset->res_y}, K, D, rvecs, tvecs, flags);
+            }
         } else {
             std::cout << _red("Unknown distortion model! ") << dataset->dist_model << std::endl;
         }
@@ -595,15 +603,6 @@ public:
         assert(D.depth() == CV_64F);
         assert(rvec.depth() == CV_64F);
         assert(tvec.depth() == CV_64F);
-        //assert(rms_error.depth() == CV_64F);
-
-        /*
-        std::cout << K.at<double>(0) << "\t" << K.at<double>(4) << "\t" << K.at<double>(2) << "\t" << K.at<double>(5) << "\n";
-        std::cout << D.at<double>(0) << "\t" << D.at<double>(1) << "\t" << D.at<double>(2) << "\t" << D.at<double>(3) << "\n";
-        std::cout << rvec.at<double>(0) << "\t" << rvec.at<double>(1) << "\t" << rvec.at<double>(2) << "\n";
-        std::cout << tvec.at<double>(0) << "\t" << tvec.at<double>(1) << "\t" << tvec.at<double>(2) << "\n";
-        std::cout << rms_error.at<double>(1) << "\n";
-        */
 
         // update dataset
         auto E_correction = rvec_tvec2tf(rvec, tvec);
@@ -626,10 +625,16 @@ public:
         }
         dataset->apply_Intr_Calib();
 
+        
+        std::vector<cv::Point2f> tgt_pts;
+        cv::projectPoints(object_pts, rvec, tvec, K, D, tgt_pts);
+
         // plot
         if (plot) {
-            std::vector<double> src_val_corrected;
-            std::vector<double> tgt_val_corrected;
+            std::vector<double> src_val_x_corrected;
+            std::vector<double> src_val_y_corrected;
+            std::vector<double> tgt_val_x_corrected;
+            std::vector<double> tgt_val_y_corrected;
 
             assert(image_pts.size() == object_pts.size());
             for (size_t i = 0; i < object_pts.size(); ++i) {
@@ -642,21 +647,33 @@ public:
                     dataset->project_point(pXYZ{p3d_.x(), p3d_.y(), p3d_.z()}, u, v);
                 }
 
-                if (u >= 0 && v >= 0) {
-                    src_val_corrected.push_back(std::hypot(image_pts[i].x, image_pts[i].y));
-                    tgt_val_corrected.push_back(std::hypot(u, v));
-                }
+                //if (u >= 0 && v >= 0) {
+                    src_val_x_corrected.push_back(image_pts[i].x);
+                    src_val_y_corrected.push_back(image_pts[i].y);
+                    tgt_val_x_corrected.push_back(v);
+                    tgt_val_y_corrected.push_back(u);
+                    //tgt_val_x_corrected.push_back(tgt_pts[i].x);
+                    //tgt_val_y_corrected.push_back(tgt_pts[i].y);
+                //}
             }
 
             namespace plt = matplotlibcpp;
             plt::figure_size(1200, 780);
-            plt::subplot(2,1,1);
-            plt::named_plot("detections", src_val, ".");
-            plt::named_plot("vicon",      tgt_val, ".");
+            plt::subplot(2,2,1);
+            plt::named_plot("detections", src_val_x, ".");
+            plt::named_plot("vicon",      tgt_val_x, ".");
 
-            plt::subplot(2,1,2);
-            plt::named_plot("detections", src_val_corrected, ".");
-            plt::named_plot("vicon",      tgt_val_corrected, ".");
+            plt::subplot(2,2,2);
+            plt::named_plot("detections", src_val_y, ".");
+            plt::named_plot("vicon",      tgt_val_y, ".");
+
+            plt::subplot(2,2,3);
+            plt::named_plot("detections", src_val_x_corrected, ".");
+            plt::named_plot("vicon",      tgt_val_x_corrected, ".");
+
+            plt::subplot(2,2,4);
+            plt::named_plot("detections", src_val_y_corrected, ".");
+            plt::named_plot("vicon",      tgt_val_y_corrected, ".");
 
             plt::title("Spatial calibrator");
             plt::legend();
@@ -960,8 +977,9 @@ int main (int argc, char** argv) {
     tf::Transform E_corr;
     double to_step = 2 * 1e-2, to_wsize = 2.0;
 
-    //time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize);
-    //E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, false, true);
+    time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize);
+    E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, false, true);
+    return 0;
 
     std::cout << _green("Time Offset Error: ") << time_offset << std::endl;
     for (size_t n_iter = 0; n_iter < 20; ++n_iter) {
