@@ -513,22 +513,35 @@ public:
 
 
 class ViconWandSpatialCalibrator {
+protected:
+    std::shared_ptr<Dataset> dataset;
+
+    // for visualization only
+    std::vector<double> src_val_x;
+    std::vector<double> src_val_y;
+    std::vector<double> tgt_val_x;
+    std::vector<double> tgt_val_y;
+
+    // used in optimization
+    std::vector<cv::Point2f> image_pts;
+    std::vector<cv::Point3f> object_pts;
+
+
 public:
-    ViconWandSpatialCalibrator() {}
-    static tf::Transform calibrate(std::shared_ptr<Dataset> &dataset,
-                          const std::map<int, Track<std::tuple<float, float>>> &src,
-                          const std::map<int, Track<std::tuple<float, float, float>>> &tgt,
-                          double time_offset = 0.0, bool extr_only=false, bool plot=true) {
+    ViconWandSpatialCalibrator(std::shared_ptr<Dataset> &dataset) : dataset(dataset) {}
 
-        // for visualization only
-        std::vector<double> src_val_x;
-        std::vector<double> src_val_y;
-        std::vector<double> tgt_val_x;
-        std::vector<double> tgt_val_y;
+    void reset() {
+        image_pts.clear();
+        object_pts.clear();
 
-        // used in optimization
-        std::vector<cv::Point2f> image_pts;
-        std::vector<cv::Point3f> object_pts;
+        src_val_x.clear();
+        src_val_y.clear();
+        tgt_val_x.clear();
+        tgt_val_y.clear();
+    }
+
+    void add_tracks(const std::map<int, Track<std::tuple<float, float>>> &src,
+                    const std::map<int, Track<std::tuple<float, float, float>>> &tgt) {
 
         for (auto &label : std::vector({1,2,3,4,5})) {
             if (src.find(label) == src.end()) continue;
@@ -536,11 +549,9 @@ public:
             auto n_points = src.at(label).size();
             auto &s_tt = src.at(label);
 
-            std::vector<double> src_ts(n_points);
             std::vector<double> tgt_ts(n_points);
             for (size_t i = 0; i < n_points; ++i) {
-                src_ts[i] = s_tt[i].get_ts_sec();
-                tgt_ts[i] = s_tt[i].get_ts_sec() + time_offset;
+                tgt_ts[i] = s_tt[i].get_ts_sec();
             }
 
             auto t_tt = tgt.at(label).evaluate(tgt_ts);
@@ -550,9 +561,10 @@ public:
                 if (std::fabs(std::get<0>(t_tt[i].pose)) < 1e-3 && std::fabs(std::get<1>(t_tt[i].pose)) < 1e-3 &&
                     std::fabs(std::get<2>(t_tt[i].pose)) < 1e-3) continue;
                 auto point_3d = t_tt[i].pose;
+
                 // add input points
-                image_pts.push_back({std::get<0>(s_tt[i].pose), std::get<1>(s_tt[i].pose)});
-                object_pts.push_back({std::get<0>(t_tt[i].pose), std::get<1>(t_tt[i].pose), std::get<2>(t_tt[i].pose)});
+                this->image_pts.push_back({std::get<0>(s_tt[i].pose), std::get<1>(s_tt[i].pose)});
+                this->object_pts.push_back({std::get<0>(t_tt[i].pose), std::get<1>(t_tt[i].pose), std::get<2>(t_tt[i].pose)});
 
                 // project points for visualization
                 float u = -1, v = -1;
@@ -561,15 +573,17 @@ public:
                     dataset->project_point(pXYZ{std::get<0>(point_3d), std::get<1>(point_3d), std::get<2>(point_3d)}, u, v);
                 }
 
-                if (plot && u >= 0 && v >= 0) {
-                    src_val_x.push_back(std::get<0>(s_tt[i].pose));
-                    src_val_y.push_back(std::get<1>(s_tt[i].pose));
-                    tgt_val_x.push_back(v);
-                    tgt_val_y.push_back(u);
+                if (u >= 0 && v >= 0) {
+                    this->src_val_x.push_back(std::get<0>(s_tt[i].pose));
+                    this->src_val_y.push_back(std::get<1>(s_tt[i].pose));
+                    this->tgt_val_x.push_back(v);
+                    this->tgt_val_y.push_back(u);
                 }
             }
         }
+    }
 
+    tf::Transform calibrate(bool extr_only=false, bool plot=true) {
         // optimization
         std::vector<cv::Mat> rvecs, tvecs;
         int flags = cv::CALIB_USE_INTRINSIC_GUESS; 
@@ -584,12 +598,12 @@ public:
             D = (cv::Mat1d(1, 4) << dataset->k1, dataset->k2, dataset->p1, dataset->p2);
 
             if (extr_only) {
-                cv::solvePnPGeneric(object_pts, image_pts, K, D, rvecs, tvecs);
-                //cv::solvePnPRansac(object_pts, image_pts, K, D, rvecs, tvecs);
+                cv::solvePnPGeneric(this->object_pts, this->image_pts, K, D, rvecs, tvecs);
+                //cv::solvePnPRansac(this->object_pts, this->image_pts, K, D, rvecs, tvecs);
             }
             else {
-                std::vector<std::vector<cv::Point2f>> imagePoints = {image_pts};
-                std::vector<std::vector<cv::Point3f>> objectPoints = {object_pts};
+                std::vector<std::vector<cv::Point2f>> imagePoints = {this->image_pts};
+                std::vector<std::vector<cv::Point3f>> objectPoints = {this->object_pts};
                 cv::calibrateCamera(objectPoints, imagePoints, {(int)dataset->res_x, (int)dataset->res_y}, K, D, rvecs, tvecs, flags);
             }
         } else {
@@ -625,20 +639,19 @@ public:
         }
         dataset->apply_Intr_Calib();
 
-        
-        std::vector<cv::Point2f> tgt_pts;
-        cv::projectPoints(object_pts, rvec, tvec, K, D, tgt_pts);
-
         // plot
         if (plot) {
+            std::vector<cv::Point2f> tgt_pts;
+            cv::projectPoints(this->object_pts, rvec, tvec, K, D, tgt_pts);
+
             std::vector<double> src_val_x_corrected;
             std::vector<double> src_val_y_corrected;
             std::vector<double> tgt_val_x_corrected;
             std::vector<double> tgt_val_y_corrected;
 
-            assert(image_pts.size() == object_pts.size());
-            for (size_t i = 0; i < object_pts.size(); ++i) {
-                auto &p3d = object_pts[i];
+            assert(this->image_pts.size() == this->object_pts.size());
+            for (size_t i = 0; i < this->object_pts.size(); ++i) {
+                auto &p3d = this->object_pts[i];
                 auto p3d_ = E_correction({p3d.x, p3d.y, p3d.z});
 
                 float u = -1, v = -1;
@@ -648,12 +661,12 @@ public:
                 }
 
                 //if (u >= 0 && v >= 0) {
-                    src_val_x_corrected.push_back(image_pts[i].x);
-                    src_val_y_corrected.push_back(image_pts[i].y);
-                    tgt_val_x_corrected.push_back(v);
-                    tgt_val_y_corrected.push_back(u);
-                    //tgt_val_x_corrected.push_back(tgt_pts[i].x);
-                    //tgt_val_y_corrected.push_back(tgt_pts[i].y);
+                    src_val_x_corrected.push_back(this->image_pts[i].x);
+                    src_val_y_corrected.push_back(this->image_pts[i].y);
+                    //tgt_val_x_corrected.push_back(v);
+                    //tgt_val_y_corrected.push_back(u);
+                    tgt_val_x_corrected.push_back(tgt_pts[i].x);
+                    tgt_val_y_corrected.push_back(tgt_pts[i].y);
                 //}
             }
 
@@ -711,23 +724,10 @@ protected:
 };
 
 
-int main (int argc, char** argv) {
 
-    // Initialize ROS
-    std::string node_name = "calibration_refinement";
-    ros::init (argc, argv, node_name, ros::init_options::AnonymousName);
-    ros::NodeHandle nh("~");
-
-    std::string bag_name = "";
-    if (!nh.getParam("bag", bag_name)) {
-        std::cerr << "No bag file  specified!" << std::endl;
-        return -1;
-    }
-
-    // Camera name
-    std::string camera_name = "";
-    if (!nh.getParam("camera_name", camera_name)) camera_name = "main_camera";
-
+// generate tracks from a bag file
+std::pair<std::map<int, Track<std::tuple<float, float>>>, std::map<int, Track<std::tuple<float, float, float>>>>
+extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_name, float start_time_offset = 0.0, float sequence_duration = -1.0) {
     std::string wand_topic = "/vicon/Wand";
     nh.getParam("wand_topic", wand_topic);
 
@@ -744,24 +744,22 @@ int main (int argc, char** argv) {
                   << dataset_folder << std::endl;
     }
 
-    auto dataset = std::make_shared<Dataset>();
-    if (!dataset->init_no_objects(dataset_folder, camera_name))
-        return -1;
-
-    float start_time_offset = 0.0, sequence_duration = -1.0;
-    if (!nh.getParam("start_time_offset", start_time_offset)) start_time_offset =  0.0;
-    if (!nh.getParam("sequence_duration", sequence_duration)) sequence_duration = -1.0;
+    std::pair<std::map<int, Track<std::tuple<float, float>>>, std::map<int, Track<std::tuple<float, float, float>>>> err_ret;
 
     bool with_images = true;
     if (!nh.getParam("with_images", with_images)) with_images = true;
     else std::cout << _yellow("With 'with_images' option, the datased will be generated at image framerate.") << std::endl;
+
+    auto dataset = std::make_shared<Dataset>();
+    if (!dataset->init_no_objects(dataset_folder, camera_name))
+        return err_ret;
 
     // Force wand trajectory
     dataset->obj_pose_topics[0] = wand_topic;
 
     // Extract topics from bag
     if (!dataset->read_bag_file(bag_name, start_time_offset, sequence_duration, with_images, false)) {
-        return 0;
+        return err_ret;
     }
     with_images = (dataset->images.size() > 0);
 
@@ -780,7 +778,7 @@ int main (int argc, char** argv) {
     auto &wnd_tj = dataset->obj_tjs[0];
     if (wnd_tj.size() == 0 || cam_tj.size() == 0) {
         std::cout << _red("No trajectory for either wand or sensor rig!") << std::endl;
-        return -1;
+        return err_ret;
     }
 
     std::map<int, Track<std::tuple<float, float, float>>> wand_red_3d;
@@ -825,7 +823,7 @@ int main (int argc, char** argv) {
         for (size_t kk = 1; kk < marker_ids.size(); ++kk) {
             if (marker_ids[kk - 1] >= marker_ids[kk]) {
                 std::cout << _red("Marker id traversal not in order; terminating!") << std::endl;
-                return -1;
+                return err_ret;
             }
         }
 
@@ -912,7 +910,7 @@ int main (int argc, char** argv) {
 
     std::cout << _green("Using ") << dataset->images.size() << _green(" images") << std::endl;
     if (dataset->images.size() == 0) {
-        return -1;
+        return err_ret;
     }
 
     // Track filtering
@@ -973,18 +971,121 @@ int main (int argc, char** argv) {
     }
 
 
-    double time_offset = 0;
-    tf::Transform E_corr;
-    double to_step = 2 * 1e-2, to_wsize = 2.0;
+    double to_step = 1e-2, to_wsize = 1.0;
+    double time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize);
+    std::cout << bag_name << _green(":\tdetected time offset: ") << time_offset << std::endl;
 
-    time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize);
-    E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, false, true);
+    for (auto &lbl_pair : wand_red_3d) {
+        lbl_pair.second.apply_time_offset(-time_offset);
+    }
+
+    return {wand_detected_pix, wand_red_3d};
+}
+
+
+
+
+
+
+int main (int argc, char** argv) {
+
+    // Initialize ROS
+    std::string node_name = "calibration_refinement";
+    ros::init (argc, argv, node_name, ros::init_options::AnonymousName);
+    ros::NodeHandle nh("~");
+
+    // Read dataset configuration files
+    std::string path_to_self = ros::package::getPath("evimo");
+    std::string dataset_folder = path_to_self + "/config/"; // default
+    if (!nh.getParam("folder", dataset_folder)) {
+        std::cout << _yellow("No configuration folder specified! Using: ")
+                  << dataset_folder << std::endl;
+    }
+
+    std::string config_path = "";
+    if (!nh.getParam("conf", config_path)) {
+        std::cerr << "No configuration file specified!" << std::endl;
+        return -1;
+    }
+
+    std::string camera_name = "";
+    std::vector<std::tuple<std::string, float, float>> bag_names;
+
+    // read and parse the config file
+    std::ifstream ifs;
+    ifs.open(config_path, std::ifstream::in);
+    if (!ifs.is_open()) {
+        std::cout << _red("Could not open configuration file file at ")
+                  << config_path << "!" << std::endl;
+        return -1;
+    }
+ 
+    auto sep = config_path.find_last_of("/");
+    std::string root_folder = trim(config_path.substr(0, sep));
+    std::cout << "Folder:\t" << root_folder << "\n";
+
+    const std::string& delims = ":\t ";
+    while (ifs.good()) {
+        std::string line;
+        std::getline(ifs, line);
+        line = trim(line);
+        if (line.size() == 0) continue;
+        if (line[0] == '#') continue;
+        auto sep = line.find_first_of(delims);
+
+        std::string key = trim(line.substr(0, sep));
+        line = trim(line.substr(sep + 1));
+        sep = line.find_first_of(delims);
+        std::string value = trim(line.substr(0, sep));
+
+        if (key == "camera_name") {
+            camera_name = value;
+        } else if (key == "bag_file") {
+            line = trim(line.substr(sep + 1));
+            sep = line.find_first_of(delims);
+            float st_offset = std::stof(trim(line.substr(0, sep)));
+
+            line = trim(line.substr(sep + 1));
+            sep = line.find_first_of(delims);
+            float s_len = std::stof(trim(line.substr(0, sep)));
+
+            bag_names.push_back({root_folder + "/" + value, st_offset, s_len});
+            std::cout << value << "  " << st_offset << " " << s_len << "\n";
+        }
+    }
+    ifs.close();
+
+    // dummy dataset with intrinsics/extrinsics
+    auto dataset = std::make_shared<Dataset>();
+    if (!dataset->init_no_objects(dataset_folder, camera_name))
+        return -1;
+
+    ViconWandSpatialCalibrator calibrator(dataset);
+
+    // convert events to images; detect blobs, filter and track
+    for (auto &bag_name : bag_names) {
+        auto tracks = extract_tracks(nh, std::get<0>(bag_name), camera_name, std::get<1>(bag_name), std::get<2>(bag_name));
+        auto &p2d = tracks.first;
+        auto &p3d = tracks.second;
+
+        calibrator.add_tracks(p2d, p3d);
+    }
+
+
+    bool extr_only = false;
+    bool plot = true;
+
+    auto E_corr = calibrator.calibrate(extr_only, plot);
+    calibrator.reset();
+
+
     return 0;
 
+/*
     std::cout << _green("Time Offset Error: ") << time_offset << std::endl;
     for (size_t n_iter = 0; n_iter < 20; ++n_iter) {
         // compute spatial calibration
-        E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, true, true);
+        E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, true, true);
 
         // apply correction to wand red 3d and 2d points:
         for (auto &lbl_pair : wand_red_3d) {
@@ -1018,14 +1119,14 @@ int main (int argc, char** argv) {
 
     time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step / 10, to_wsize);
     std::cout << _green("\n\nTime Offset Error: ") << time_offset << std::endl;
-    E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, time_offset, false, true);
+    E_corr = ViconWandSpatialCalibrator::calibrate(dataset, wand_detected_pix, wand_red_3d, false, true);
 
 
     return 0;
 
 
-
-
+*/
+/*
     cv::namedWindow("img", cv::WINDOW_NORMAL);
     for (size_t i = 0; i < dataset->images.size(); ++i) {
         std::cout << i << "\n";
@@ -1035,7 +1136,7 @@ int main (int argc, char** argv) {
 
         auto keypoint_tuple = kpt_tracker[i];
         kpt_tracker.print_stats(i);
-
+*/
 
         /*
         auto wand_line_idx = wand::find_all_3lines(keypoint_pair.first, 0.2);
@@ -1044,7 +1145,7 @@ int main (int argc, char** argv) {
         */
 
 
-        cv::drawKeypoints(img, std::get<0>(keypoint_tuple), img, cv::Scalar(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+        //cv::drawKeypoints(img, std::get<0>(keypoint_tuple), img, cv::Scalar(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 
 
         /*
@@ -1060,7 +1161,7 @@ int main (int argc, char** argv) {
         }
         */
 
-
+/*
         if (dataset->res_x > 1000)
             cv::resize(img, img, cv::Size(), 0.3, 0.3);
 
@@ -1068,7 +1169,7 @@ int main (int argc, char** argv) {
         auto code = cv::waitKey(0);
         if (code == 27) break;
     }
-
+*/
 
 
 
