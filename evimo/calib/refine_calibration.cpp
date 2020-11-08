@@ -877,7 +877,8 @@ protected:
 
 // generate tracks from a bag file
 std::pair<std::map<int, Track<std::tuple<float, float>>>, std::map<int, Track<std::tuple<float, float, float>>>>
-extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_name, float start_time_offset = 0.0, float sequence_duration = -1.0) {
+extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_name, float start_time_offset = 0.0,
+               float sequence_duration = -1.0, bool dilate_blobs=false) {
     std::string wand_topic = "/vicon/Wand";
     nh.getParam("wand_topic", wand_topic);
 
@@ -1021,6 +1022,14 @@ extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_nam
                 auto img = (cv::Mat)eff;
                 auto ts = (current_ts + start_ts) / 2.0;
                 image_timestamps.push_back(ts);
+
+                if (dilate_blobs) {
+                    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
+                                                                cv::Size(5, 5),
+                                                                cv::Point(2, 2));
+                    cv::dilate(img, img, element);
+                }
+
                 dataset->images.push_back(img.clone());
                 start_ts = current_ts;
             }
@@ -1145,6 +1154,8 @@ int main (int argc, char** argv) {
     std::string camera_name = "";
     std::vector<std::tuple<std::string, float, float>> bag_names;
 
+    bool dilate_blobs = false;
+
     // read and parse the config file
     std::ifstream ifs;
     ifs.open(config_path, std::ifstream::in);
@@ -1174,6 +1185,8 @@ int main (int argc, char** argv) {
 
         if (key == "camera_name") {
             camera_name = value;
+        } else if (key == "dilate_blobs") {
+            if (value == "true") dilate_blobs = true;
         } else if (key == "bag_file") {
             line = trim(line.substr(sep + 1));
             sep = line.find_first_of(delims);
@@ -1198,7 +1211,9 @@ int main (int argc, char** argv) {
 
     // convert events to images; detect blobs, filter and track
     for (auto &bag_name : bag_names) {
-        auto tracks = extract_tracks(nh, std::get<0>(bag_name), camera_name, std::get<1>(bag_name), std::get<2>(bag_name));
+        auto tracks = extract_tracks(nh, std::get<0>(bag_name), camera_name,
+                                     std::get<1>(bag_name),
+                                     std::get<2>(bag_name), dilate_blobs);
         auto &p2d = tracks.first;
         auto &p3d = tracks.second;
 
