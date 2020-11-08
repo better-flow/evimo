@@ -15,20 +15,20 @@
 class Dataset {
 public:
     // The 3D scanned objects
-    static std::shared_ptr<StaticObject> background;
-    static std::map<int, std::shared_ptr<ViObject>> clouds;
-    static std::map<int, std::string> obj_pose_topics;
+    std::shared_ptr<StaticObject> background;
+    std::map<int, std::shared_ptr<ViObject>> clouds;
+    std::map<int, std::string> obj_pose_topics;
 
     // Event cloud
-    static std::vector<Event> event_array;
+    std::vector<Event> event_array;
 
     // Camera frames
-    static std::vector<cv::Mat> images;
-    static std::vector<ros::Time> image_ts;
+    std::vector<cv::Mat> images;
+    std::vector<ros::Time> image_ts;
 
     // Trajectories for camera and objects
-    static Trajectory cam_tj;
-    static std::map<int, Trajectory> obj_tjs;
+    Trajectory cam_tj;
+    std::map<int, Trajectory> obj_tjs;
 
     // Camera params
     std::string dist_model;
@@ -45,7 +45,7 @@ public:
     tf::Transform cam_E;
 
     // Background to vicon
-    static tf::Transform bg_E;
+    tf::Transform bg_E;
 
     // Time offset
     float image_to_event_to, pose_to_event_to;
@@ -278,19 +278,19 @@ public:
         boost::filesystem::create_directory(gt_dir_path);
     }
 
-    static void write_eventstxt(std::string efname) {
+    void write_eventstxt(std::string efname) {
         std::cout << std::endl << _yellow("Writing events.txt") << std::endl;
         std::stringstream ss;
-        for (uint64_t i = 0; i < Dataset::event_array.size(); ++i) {
-            if (i % 10000 == 0 || i == Dataset::event_array.size() - 1) {
+        for (uint64_t i = 0; i < this->event_array.size(); ++i) {
+            if (i % 10000 == 0 || i == this->event_array.size() - 1) {
                 std::cout << "\tPreparing\t" << i + 1 << "\t/\t" 
-                          << Dataset::event_array.size() << "\t\r" << std::flush;
+                          << this->event_array.size() << "\t\r" << std::flush;
             }
 
             ss << std::fixed << std::setprecision(9)
-               << Dataset::event_array[i].get_ts_sec()
-               << " " << Dataset::event_array[i].fr_y << " " << Dataset::event_array[i].fr_x
-               << " " << int(Dataset::event_array[i].polarity) << std::endl;
+               << this->event_array[i].get_ts_sec()
+               << " " << this->event_array[i].fr_y << " " << this->event_array[i].fr_x
+               << " " << int(this->event_array[i].polarity) << std::endl;
         }
         std::cout << std::endl;
         std::cout << std::endl << _yellow("Writing to file...") << std::endl;
@@ -434,9 +434,9 @@ private:
 
         this->k1 = this->k2 = this->k3 = this->k4 = this->p1 = this->p2 = 0;
 
-        if (Dataset::dist_model == "radtan") {
+        if (this->dist_model == "radtan") {
             ifs >> this->k1 >> this->k2 >> this->p1 >> this->p2;
-        } else if (Dataset::dist_model == "equidistant") {
+        } else if (this->dist_model == "equidistant") {
             ifs >> this->k1 >> this->k2 >> this->k3 >> this->k4;
         } else {
             std::cout << _red("Unknown distortion model! ") << this->dist_model << std::endl;
@@ -499,8 +499,8 @@ private:
         tf::Quaternion Q(bg_qx, bg_qy, bg_qz, bg_qw);
         T.setValue(bg_tx, bg_ty, bg_tz);
 
-        Dataset::bg_E.setRotation(Q);
-        Dataset::bg_E.setOrigin(T);
+        this->bg_E.setRotation(Q);
+        this->bg_E.setOrigin(T);
 
         this->update_cam_calib();
 
@@ -539,7 +539,7 @@ private:
         return true;
     }
 
-    static bool load_objects(ros::NodeHandle &nh_, std::string path) {
+    bool load_objects(ros::NodeHandle &nh_, std::string path) {
         std::string path_to_self = ros::package::getPath("evimo");
 
         std::ifstream ifs;
@@ -563,8 +563,8 @@ private:
             auto object_ = std::make_shared<ViObject>(nh_, path_to_self + "/" + object_name);
             if (object_->get_id() < 0) return false;
 
-            Dataset::clouds[object_->get_id()] = object_;
-            Dataset::obj_pose_topics[object_->get_id()] = object_->get_pose_topic();
+            this->clouds[object_->get_id()] = object_;
+            this->obj_pose_topics[object_->get_id()] = object_->get_pose_topic();
         }
         ifs.close();
         return true;

@@ -8,17 +8,6 @@
 
 uint32_t Dataset::instance_id = 0;
 
-std::shared_ptr<StaticObject> Dataset::background;
-std::map<int, std::shared_ptr<ViObject>> Dataset::clouds;
-std::map<int, std::string> Dataset::obj_pose_topics;
-
-std::vector<Event> Dataset::event_array;
-std::vector<cv::Mat> Dataset::images;
-std::vector<ros::Time> Dataset::image_ts;
-Trajectory Dataset::cam_tj;
-std::map<int, Trajectory> Dataset::obj_tjs;
-tf::Transform Dataset::bg_E;
-
 
 bool Dataset::read_bag_file(std::string bag_name,
                             float start_time_offset, float sequence_duration,

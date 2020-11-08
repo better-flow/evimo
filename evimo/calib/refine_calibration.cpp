@@ -757,13 +757,13 @@ int main (int argc, char** argv) {
     else std::cout << _yellow("With 'with_images' option, the datased will be generated at image framerate.") << std::endl;
 
     // Force wand trajectory
-    Dataset::obj_pose_topics[0] = wand_topic;
+    dataset->obj_pose_topics[0] = wand_topic;
 
     // Extract topics from bag
     if (!dataset->read_bag_file(bag_name, start_time_offset, sequence_duration, with_images, false)) {
         return 0;
     }
-    with_images = (Dataset::images.size() > 0);
+    with_images = (dataset->images.size() > 0);
 
     // blob tracker max blob pixel-per-second speed (here normalized by camera resolution)
     double tracker_max_pps = 1000 * std::max(dataset->res_y, dataset->res_x) / 640.0;
@@ -772,12 +772,12 @@ int main (int argc, char** argv) {
     nh.getParam("tracker_min_len", tracker_min_len);
 
     // Make sure there is no trajectory filtering
-    Dataset::cam_tj.set_filtering_window_size(-1);
-    Dataset::obj_tjs[0].set_filtering_window_size(-1);
+    dataset->cam_tj.set_filtering_window_size(-1);
+    dataset->obj_tjs[0].set_filtering_window_size(-1);
 
     // Convert wand markers to camera frame
-    auto &cam_tj = Dataset::cam_tj;
-    auto &wnd_tj = Dataset::obj_tjs[0];
+    auto &cam_tj = dataset->cam_tj;
+    auto &wnd_tj = dataset->obj_tjs[0];
     if (wnd_tj.size() == 0 || cam_tj.size() == 0) {
         std::cout << _red("No trajectory for either wand or sensor rig!") << std::endl;
         return -1;
@@ -850,23 +850,23 @@ int main (int argc, char** argv) {
     std::vector<double> image_timestamps;
 
     // Generate images from events
-    if (!with_images || Dataset::images.size() == 0) {
-        assert(Dataset::event_array.size() > 0);
-        Dataset::images.clear();
-        size_t to_reserve = size_t((Dataset::event_array.back().get_ts_sec() - Dataset::event_array.front().get_ts_sec()) / e_fps + 1);
-        Dataset::images.reserve(to_reserve);
+    if (!with_images || dataset->images.size() == 0) {
+        assert(dataset->event_array.size() > 0);
+        dataset->images.clear();
+        size_t to_reserve = size_t((dataset->event_array.back().get_ts_sec() - dataset->event_array.front().get_ts_sec()) / e_fps + 1);
+        dataset->images.reserve(to_reserve);
         image_timestamps.reserve(to_reserve);
 
         EventSlice2DFrequencyFilter eff(dataset->res_y, dataset->res_x, ull(e_slice_width * 1e9), 150, 250);
         //EventSlice2D eff(dataset->res_y, dataset->res_x, ull(e_slice_width * 1e9));
 
-        double start_ts = Dataset::event_array.front().get_ts_sec();
-        for (size_t i = 0; i < Dataset::event_array.size(); ++i) {
-            eff.push_back(Dataset::event_array[i]);
-            double current_ts = Dataset::event_array[i].get_ts_sec();
-            if (i % 10000 == 0 || i >= Dataset::event_array.size() - 1) {
+        double start_ts = dataset->event_array.front().get_ts_sec();
+        for (size_t i = 0; i < dataset->event_array.size(); ++i) {
+            eff.push_back(dataset->event_array[i]);
+            double current_ts = dataset->event_array[i].get_ts_sec();
+            if (i % 10000 == 0 || i >= dataset->event_array.size() - 1) {
                 std::cout << "\r\tConverting events to images: (" << i + 1 << "\t/\t" 
-                          << Dataset::event_array.size() << ")\t\t\t";
+                          << dataset->event_array.size() << ")\t\t\t";
             }
 
             if (current_ts - start_ts >= 1.0 / e_fps) {
@@ -887,41 +887,41 @@ int main (int argc, char** argv) {
         //if (code == 27) break;
 */
 
-                Dataset::images.push_back(img.clone());
+                dataset->images.push_back(img.clone());
                 start_ts = current_ts;
             }
         } std::cout << std::endl;
     } else { // ...or filter camera images
-        assert(Dataset::images.size() > 0);
-        image_timestamps.reserve(Dataset::images.size());
-        for (auto &ts : Dataset::image_ts) image_timestamps.push_back(ts.toSec());
-        for (size_t i = 0; i < Dataset::images.size(); ++i) {
-            if (Dataset::images[i].channels() > 1) {
+        assert(dataset->images.size() > 0);
+        image_timestamps.reserve(dataset->images.size());
+        for (auto &ts : dataset->image_ts) image_timestamps.push_back(ts.toSec());
+        for (size_t i = 0; i < dataset->images.size(); ++i) {
+            if (dataset->images[i].channels() > 1) {
                 std::vector<cv::Mat> ch;
-                cv::split(Dataset::images[i], ch);
-                Dataset::images[i] = ch[2].clone();
+                cv::split(dataset->images[i], ch);
+                dataset->images[i] = ch[2].clone();
             }
 
-            if (Dataset::images[i].elemSize1() > 1) {
-                Dataset::images[i].convertTo(Dataset::images[i], CV_8U, 1.0 / float(Dataset::images[i].elemSize1()));
+            if (dataset->images[i].elemSize1() > 1) {
+                dataset->images[i].convertTo(dataset->images[i], CV_8U, 1.0 / float(dataset->images[i].elemSize1()));
             }
 
-            cv::threshold(Dataset::images[i], Dataset::images[i], 220, 255, 0);
+            cv::threshold(dataset->images[i], dataset->images[i], 220, 255, 0);
         }
     }
 
-    std::cout << _green("Using ") << Dataset::images.size() << _green(" images") << std::endl;
-    if (Dataset::images.size() == 0) {
+    std::cout << _green("Using ") << dataset->images.size() << _green(" images") << std::endl;
+    if (dataset->images.size() == 0) {
         return -1;
     }
 
     // Track filtering
     std::cout << "Tracker max pps: " << tracker_max_pps << std::endl;
     KeypointTracker kpt_tracker(tracker_max_pps); // max pixel-per-second blob speed
-    for (size_t i = 0; i < Dataset::images.size(); ++i) {
-        std::cout << "\r\tExtracting blobs: (" << i + 1 << "\t/\t" << Dataset::images.size() 
+    for (size_t i = 0; i < dataset->images.size(); ++i) {
+        std::cout << "\r\tExtracting blobs: (" << i + 1 << "\t/\t" << dataset->images.size() 
                   << ")\t\t" << std::flush;
-        auto keypoints = wand::get_blobs(Dataset::images[i], false, 100, 110, 5);
+        auto keypoints = wand::get_blobs(dataset->images[i], false, 100, 110, 5);
         kpt_tracker.add_next(keypoints, image_timestamps[i]);
     } std::cout << std::endl;
 
@@ -930,8 +930,8 @@ int main (int argc, char** argv) {
 
 
     // detect wand and assign labels to keypoints (can be multiple labels per point)
-    for (size_t i = 0; i < Dataset::images.size(); ++i) {
-        auto img_ = Dataset::images[i];
+    for (size_t i = 0; i < dataset->images.size(); ++i) {
+        auto img_ = dataset->images[i];
         auto keypoint_tuple = kpt_tracker[i];
 
         auto wand_line_idx = wand::find_all_3lines(std::get<0>(keypoint_tuple), 0.2);
@@ -1027,9 +1027,9 @@ int main (int argc, char** argv) {
 
 
     cv::namedWindow("img", cv::WINDOW_NORMAL);
-    for (size_t i = 0; i < Dataset::images.size(); ++i) {
+    for (size_t i = 0; i < dataset->images.size(); ++i) {
         std::cout << i << "\n";
-        auto img_ = Dataset::images[i];
+        auto img_ = dataset->images[i];
         auto ts = image_timestamps[i];
         cv::Mat img = img_.clone();
 

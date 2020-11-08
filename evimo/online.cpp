@@ -50,7 +50,7 @@
 
 
 image_transport::Publisher res_img_pub;
-
+std::shared_ptr<Dataset> dataset;
 
 class RGBCameraVisualizer {
 protected:
@@ -83,13 +83,13 @@ public:
     // Callbacks
     void frame_cb(const sensor_msgs::ImageConstPtr& msg) {
         const std::lock_guard<std::mutex> lock(this->mutex);
-        Dataset::images.resize(1);
+        dataset->images.resize(1);
         if (msg->encoding == "8UC1") {
             sensor_msgs::Image img = *msg;
             img.encoding = "mono8";
-            Dataset::images[0] = (cv_bridge::toCvCopy(img, "bgr8")->image).clone();
+            dataset->images[0] = (cv_bridge::toCvCopy(img, "bgr8")->image).clone();
         } else {
-            Dataset::images[0] = (cv_bridge::toCvShare(msg, "bgr8")->image).clone();
+            dataset->images[0] = (cv_bridge::toCvShare(msg, "bgr8")->image).clone();
         }
 
         std::cout << "Image ts = " << msg->header.stamp << "\n";
@@ -97,9 +97,9 @@ public:
     }
 
     void compressed_frame_cb(const sensor_msgs::CompressedImageConstPtr& msg) {
-        Dataset::images.resize(1);
+        dataset->images.resize(1);
         cv::Mat img = cv::imdecode(cv::Mat(msg->data), 1).clone();
-        Dataset::images[0] = img;
+        dataset->images[0] = img;
 
         std::cout << "Image ts = " << msg->header.stamp << "\n";
         this->images_received ++;
@@ -107,11 +107,11 @@ public:
 
     template<class T>
     void event_cb(const T& msg) {
-        Dataset::event_array.clear();
+        dataset->event_array.clear();
         for (uint i = 0; i < msg->events.size(); ++i) {
             ull time = msg->events[i].ts.toNSec();
             Event e(msg->events[i].y, msg->events[i].x, time);
-            Dataset::event_array.push_back(e);
+            dataset->event_array.push_back(e);
         }
         std::cout << "Event ts = " << msg->header.stamp << "\n";
     }
@@ -134,27 +134,27 @@ public:
             this->frame.dataset_handle->modified = true;
 
             // Register data
-            for (auto &cl : Dataset::clouds) {
-                Dataset::obj_tjs[cl.first].clear();
-                Dataset::obj_tjs[cl.first].add(ros::Time(0), cl.second->get_last_pos());
+            for (auto &cl : dataset->clouds) {
+                dataset->obj_tjs[cl.first].clear();
+                dataset->obj_tjs[cl.first].add(ros::Time(0), cl.second->get_last_pos());
             }
 
-            for (auto &obj_tj : Dataset::obj_tjs) {
+            for (auto &obj_tj : dataset->obj_tjs) {
                 if (obj_tj.second.size() == 0) continue;
                 this->frame.add_object_pos_id(obj_tj.first, 0);
             }
 
             if (this->images_received > 0) {
-                this->frame.dataset_handle->res_x = Dataset::images[0].rows;
-                this->frame.dataset_handle->res_y = Dataset::images[0].cols;
-                this->frame.add_img(Dataset::images[0]);
+                this->frame.dataset_handle->res_x = dataset->images[0].rows;
+                this->frame.dataset_handle->res_y = dataset->images[0].cols;
+                this->frame.add_img(dataset->images[0]);
             }
 
-            if (Dataset::cam_tj.size() > 0)
+            if (dataset->cam_tj.size() > 0)
                 this->frame.generate();
 
-            if (Dataset::event_array.size() > 0)
-                this->frame.event_slice_ids = std::make_pair(0, Dataset::event_array.size() - 1);
+            if (dataset->event_array.size() > 0)
+                this->frame.event_slice_ids = std::make_pair(0, dataset->event_array.size() - 1);
 
             // Get visualization out
             cv::Mat img;
@@ -190,8 +190,8 @@ int RGBCameraVisualizer::uid = 0;
 
 
 void camera_pos_cb(const vicon::Subject& subject) {
-    Dataset::cam_tj.clear();
-    Dataset::cam_tj.add(ros::Time(0), subject);
+    dataset->cam_tj.clear();
+    dataset->cam_tj.add(ros::Time(0), subject);
     std::cout << "Vicon ts = " << subject.header.stamp << "\n";
 }
 
@@ -224,7 +224,7 @@ int main (int argc, char** argv) {
     if (!nh.getParam("camera_name", camera_name)) camera_name = "main_camera";
 
     // Read dataset configuration files
-    auto dataset = std::make_shared<Dataset>();
+    dataset = std::make_shared<Dataset>();
     if (!dataset->init(nh, dataset_folder, camera_name))
         return -1;
 
@@ -235,8 +235,8 @@ int main (int argc, char** argv) {
     std::string path_to_self = ros::package::getPath("evimo");
 
     if (!no_background) {
-        Dataset::background = std::make_shared<StaticObject>(path_to_self + "/objects/room");
-        Dataset::background->transform(Dataset::bg_E);
+        dataset->background = std::make_shared<StaticObject>(path_to_self + "/objects/room");
+        dataset->background->transform(dataset->bg_E);
     }
 
     ros::Subscriber cam_sub = nh.subscribe(dataset->cam_pos_topic, 0, camera_pos_cb);

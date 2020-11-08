@@ -47,24 +47,26 @@
 #include <dataset_frame.h>
 #include <annotation_backprojector.h>
 
+
 class FrameSequenceVisualizer {
 protected:
     std::vector<DatasetFrame> *frames;
     int frame_id;
     float plot_t_offset;
+    std::shared_ptr<Dataset> dataset;
 
     TjPlot plotter; // plot trajectories
 
 public:
-    FrameSequenceVisualizer(std::vector<DatasetFrame> &frames)
-        : frame_id(0), plotter("Trajectories", 2000, 400) {
+    FrameSequenceVisualizer(std::vector<DatasetFrame> &frames, std::shared_ptr<Dataset> &dataset)
+        : frame_id(0), dataset(dataset), plotter("Trajectories", 2000, 400) {
         std::cout << "Frame Sequence Visuzlizer...\n";
         this->frames = &frames;
         //this->frame_id = this->frames->size() / 2;
 
-        this->plot_t_offset = Dataset::cam_tj[0].get_ts_sec();
-        this->plotter.add_trajectory_plot(Dataset::cam_tj, plot_t_offset);
-        for (auto &tj : Dataset::obj_tjs)
+        this->plot_t_offset = this->dataset->cam_tj[0].get_ts_sec();
+        this->plotter.add_trajectory_plot(this->dataset->cam_tj, plot_t_offset);
+        for (auto &tj : this->dataset->obj_tjs)
             this->plotter.add_trajectory_plot(tj.second, plot_t_offset);
 
         this->spin();
@@ -220,21 +222,21 @@ int main (int argc, char** argv) {
     // Load 3D models (legacy, for evimo1)
     std::string path_to_self = ros::package::getPath("evimo");
     if (!no_background) {
-        Dataset::background = std::make_shared<StaticObject>(path_to_self + "/objects/room");
-        Dataset::background->transform(Dataset::bg_E);
+        dataset->background = std::make_shared<StaticObject>(path_to_self + "/objects/room");
+        dataset->background->transform(dataset->bg_E);
     }
 
     // Extract topics from bag
     if (!dataset->read_bag_file(bag_name, start_time_offset, sequence_duration, with_images, ignore_tj)) {
         return 0;
     }
-    with_images = (Dataset::images.size() > 0);
+    with_images = (dataset->images.size() > 0);
 
     // Align the timestamps
     double start_ts = 0.0;
-    if (Dataset::cam_tj.size() > 0) start_ts = Dataset::cam_tj[0].ts.toSec();
-    if (Dataset::event_array.size() > 0) start_ts = std::max(double(Dataset::event_array.front().timestamp) * 1e-9, start_ts);
-    for (auto &obj_tj : Dataset::obj_tjs)
+    if (dataset->cam_tj.size() > 0) start_ts = dataset->cam_tj[0].ts.toSec();
+    if (dataset->event_array.size() > 0) start_ts = std::max(double(dataset->event_array.front().timestamp) * 1e-9, start_ts);
+    for (auto &obj_tj : dataset->obj_tjs)
         start_ts = std::max(start_ts, obj_tj.second[0].ts.toSec());
     start_ts += 1e-3; // ensure the first pose is surrounded by events
     std::cout << "Actual start timestamp: " << start_ts << "\n";
@@ -247,43 +249,43 @@ int main (int argc, char** argv) {
     uint64_t event_low = 0, event_high = 0;
     while (true) {
         if (with_images) {
-            if (frame_id_real >= Dataset::image_ts.size()) break;
-            start_ts = Dataset::image_ts[frame_id_real].toSec();
+            if (frame_id_real >= dataset->image_ts.size()) break;
+            start_ts = dataset->image_ts[frame_id_real].toSec();
         }
 
-        while (cam_tj_id < Dataset::cam_tj.size() && Dataset::cam_tj[cam_tj_id].ts.toSec() < start_ts) cam_tj_id ++;
-        for (auto &obj_tj : Dataset::obj_tjs)
+        while (cam_tj_id < dataset->cam_tj.size() && dataset->cam_tj[cam_tj_id].ts.toSec() < start_ts) cam_tj_id ++;
+        for (auto &obj_tj : dataset->obj_tjs)
             while (obj_tj_ids[obj_tj.first] < obj_tj.second.size()
                    && obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() < start_ts) obj_tj_ids[obj_tj.first] ++;
 
         start_ts += dt;
 
         bool done = false;
-        if (cam_tj_id >= Dataset::cam_tj.size()) done = true;
-        for (auto &obj_tj : Dataset::obj_tjs)
+        if (cam_tj_id >= dataset->cam_tj.size()) done = true;
+        for (auto &obj_tj : dataset->obj_tjs)
             if (obj_tj.second.size() > 0 && obj_tj_ids[obj_tj.first] >= obj_tj.second.size()) done = true;
         if (done) break;
 
-        auto ref_ts = (with_images ? Dataset::image_ts[frame_id_real].toSec() : Dataset::cam_tj[cam_tj_id].ts.toSec());
+        auto ref_ts = (with_images ? dataset->image_ts[frame_id_real].toSec() : dataset->cam_tj[cam_tj_id].ts.toSec());
         uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
         uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
 
-        if (Dataset::event_array.size() > 0) {
-            while (event_low  < Dataset::event_array.size() - 1 && Dataset::event_array[event_low].timestamp  < ts_low)  event_low ++;
-            while (event_high < Dataset::event_array.size() - 1 && Dataset::event_array[event_high].timestamp < ts_high) event_high ++;
+        if (dataset->event_array.size() > 0) {
+            while (event_low  < dataset->event_array.size() - 1 && dataset->event_array[event_low].timestamp  < ts_low)  event_low ++;
+            while (event_high < dataset->event_array.size() - 1 && dataset->event_array[event_high].timestamp < ts_high) event_high ++;
         }
 
-        double max_ts_err = std::fabs(Dataset::cam_tj[cam_tj_id].ts.toSec() - ref_ts);
-        for (auto &obj_tj : Dataset::obj_tjs) {
+        double max_ts_err = std::fabs(dataset->cam_tj[cam_tj_id].ts.toSec() - ref_ts);
+        for (auto &obj_tj : dataset->obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
             double ts_err = std::fabs(ref_ts - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
             if (ts_err > max_ts_err) max_ts_err = ts_err;
         }
 
         double max_p2p_err = 0.0;
-        for (auto &obj_tj : Dataset::obj_tjs) {
+        for (auto &obj_tj : dataset->obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
-            double ts_err = std::fabs(Dataset::cam_tj[cam_tj_id].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
+            double ts_err = std::fabs(dataset->cam_tj[cam_tj_id].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
             if (ts_err > max_p2p_err) max_p2p_err = ts_err;
         }
 
@@ -293,12 +295,12 @@ int main (int argc, char** argv) {
             continue;
         }
 
-        if (Dataset::event_array.size() > 0) {
+        if (dataset->event_array.size() > 0) {
             bool to_skip = false;
-            auto de_low  = ts_low  > Dataset::event_array[event_low ].timestamp ? ts_low  - Dataset::event_array[event_low].timestamp :
-                                                                      Dataset::event_array[event_low].timestamp - ts_low;
-            auto de_high = ts_high > Dataset::event_array[event_high].timestamp ? ts_high - Dataset::event_array[event_high].timestamp :
-                                                                      Dataset::event_array[event_high].timestamp - ts_high;
+            auto de_low  = ts_low  > dataset->event_array[event_low ].timestamp ? ts_low  - dataset->event_array[event_low].timestamp :
+                                                                      dataset->event_array[event_low].timestamp - ts_low;
+            auto de_high = ts_high > dataset->event_array[event_high].timestamp ? ts_high - dataset->event_array[event_high].timestamp :
+                                                                      dataset->event_array[event_high].timestamp - ts_high;
             if (de_low > max_event_gap * 1e9 || de_high > max_event_gap * 1e9) {
                 std::cout << _red("Gap in event window boundaries: ") << double(de_low) * 1e-9 << " / "
                           << double(de_high) * 1e-9 << " sec. skipping..." << std::endl;
@@ -307,7 +309,7 @@ int main (int argc, char** argv) {
             }
 
             for (size_t event_id = event_low + 1; event_id <= event_high; event_id++) {
-                auto event_gap = Dataset::event_array[event_id].timestamp - Dataset::event_array[event_id - 1].timestamp;
+                auto event_gap = dataset->event_array[event_id].timestamp - dataset->event_array[event_id - 1].timestamp;
                 if (event_gap > max_event_gap * 1e9) {
                     std::cout << _red("Gap in events ") << event_id - 1 << " -> " << event_id << _red(" detected: ") 
                               << double(event_gap) * 1e-9 << " sec. skipping..." << std::endl;
@@ -322,7 +324,7 @@ int main (int argc, char** argv) {
             }
         }
 
-        if (Dataset::event_array.size() > 0 && event_high - event_low < 10) {
+        if (dataset->event_array.size() > 0 && event_high - event_low < 10) {
             std::cout << _red("No events at: ") << ref_ts << " sec. skipping..." << std::endl;
             frame_id_real ++;
             continue;
@@ -336,14 +338,14 @@ int main (int argc, char** argv) {
         frames.emplace_back(dataset, cam_tj_id, ref_ts, frame_id_real);
         auto &frame = frames.back();
 
-        if (Dataset::event_array.size() > 0) {
+        if (dataset->event_array.size() > 0) {
             frame.add_event_slice_ids(event_low, event_high);
         }
 
-        if (with_images) frame.add_img(Dataset::images[frame_id_real]);
-        std::cout << frame_id_real << ": " << Dataset::cam_tj[cam_tj_id].ts
-                  << " (" << cam_tj_id << "[" << Dataset::cam_tj[cam_tj_id].occlusion * 100 << "%])";
-        for (auto &obj_tj : Dataset::obj_tjs) {
+        if (with_images) frame.add_img(dataset->images[frame_id_real]);
+        std::cout << frame_id_real << ": " << dataset->cam_tj[cam_tj_id].ts
+                  << " (" << cam_tj_id << "[" << dataset->cam_tj[cam_tj_id].occlusion * 100 << "%])";
+        for (auto &obj_tj : dataset->obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
             std::cout << " " << obj_tj.second[obj_tj_ids[obj_tj.first]].ts << " (" << obj_tj_ids[obj_tj.first]
                       << "[" << obj_tj.second[obj_tj_ids[obj_tj.first]].occlusion * 100 <<  "%])";
@@ -369,7 +371,7 @@ int main (int argc, char** argv) {
     }
 
     if (show == -2)
-        FrameSequenceVisualizer fsv(frames);
+        FrameSequenceVisualizer fsv(frames, dataset);
 
     if (save_3d) {
         std::string save_dir = dataset->dataset_folder + '/' + dataset->camera_name + "/3D_data/";
@@ -420,10 +422,10 @@ int main (int argc, char** argv) {
 
     std::cout << std::endl << _yellow("Writing full trajectory") << std::endl;
     meta_file << ", 'full_trajectory': [\n";
-    for (uint64_t i = 0; i < Dataset::cam_tj.size(); ++i) {
-        DatasetFrame frame(dataset, i, Dataset::cam_tj[i].ts.toSec(), -1);
+    for (uint64_t i = 0; i < dataset->cam_tj.size(); ++i) {
+        DatasetFrame frame(dataset, i, dataset->cam_tj[i].ts.toSec(), -1);
 
-        for (auto &obj_tj : Dataset::obj_tjs) {
+        for (auto &obj_tj : dataset->obj_tjs) {
             if (obj_tj.second.size() == 0) continue;
             frame.add_object_pos_id(obj_tj.first, std::min(i, obj_tj.second.size() - 1));
         }
@@ -431,7 +433,7 @@ int main (int argc, char** argv) {
         meta_file << frame.as_dict() << ",\n\n";
 
         if (i % 10 == 0) {
-            std::cout << "\r\tWritten " << i + 1 << "\t/\t" << Dataset::cam_tj.size() << "\t" << std::flush;
+            std::cout << "\r\tWritten " << i + 1 << "\t/\t" << dataset->cam_tj.size() << "\t" << std::flush;
         }
     }
     meta_file << "]\n";
@@ -441,7 +443,7 @@ int main (int argc, char** argv) {
     meta_file.close();
 
     // Save events.txt
-    Dataset::write_eventstxt(dataset->gt_folder + "/events.txt");
+    dataset->write_eventstxt(dataset->gt_folder + "/events.txt");
     std::cout << _green("Done!") << std::endl;
     return 0;
 }

@@ -44,8 +44,8 @@ public:
         , mask_pc(new pcl::PointCloud<pcl::PointXYZRGBNormal>) {
 
         if (this->timestamp < 0 || this->window_size < 0) {
-            this->timestamp = (Dataset::event_array[Dataset::event_array.size() - 1].get_ts_sec() + Dataset::event_array[0].get_ts_sec()) / 2.0;
-            this->window_size = (Dataset::event_array[Dataset::event_array.size() - 1].get_ts_sec() - Dataset::event_array[0].get_ts_sec());
+            this->timestamp = (this->dataset->event_array[this->dataset->event_array.size() - 1].get_ts_sec() + this->dataset->event_array[0].get_ts_sec()) / 2.0;
+            this->window_size = (this->dataset->event_array[this->dataset->event_array.size() - 1].get_ts_sec() - this->dataset->event_array[0].get_ts_sec());
         }
 
         std::vector<double> ts_arr;
@@ -56,9 +56,9 @@ public:
                 ts_arr.push_back(ts);
             }
         } else {
-            ts_arr.reserve(Dataset::cam_tj.size());
-            for (uint64_t i = 0; i < Dataset::cam_tj.size(); ++i) {
-                ts_arr.push_back(Dataset::cam_tj[i].ts.toSec());
+            ts_arr.reserve(this->dataset->cam_tj.size());
+            for (uint64_t i = 0; i < this->dataset->cam_tj.size(); ++i) {
+                ts_arr.push_back(this->dataset->cam_tj[i].ts.toSec());
             }
         }
 
@@ -70,7 +70,7 @@ public:
             auto &frame = frames.back();
             last_cam_pos_id = frame.cam_pose_id;
 
-            for (auto &obj_tj : Dataset::obj_tjs) {
+            for (auto &obj_tj : this->dataset->obj_tjs) {
                 frame.add_object_pos_id(obj_tj.first, frame.cam_pose_id);
             }
 
@@ -308,10 +308,10 @@ return;
         std::string ret = "{\n";
         ret += this->dataset->meta_as_dict() + "\n";
         ret += ", 'full_trajectory': [\n";
-        for (uint64_t i = 0; i < Dataset::cam_tj.size(); ++i) {
-            DatasetFrame frame(this->dataset, i, Dataset::cam_tj[i].ts.toSec(), -1);
+        for (uint64_t i = 0; i < this->dataset->cam_tj.size(); ++i) {
+            DatasetFrame frame(this->dataset, i, this->dataset->cam_tj[i].ts.toSec(), -1);
 
-            for (auto &obj_tj : Dataset::obj_tjs) {
+            for (auto &obj_tj : this->dataset->obj_tjs) {
                 if (obj_tj.second.size() == 0) continue;
                 frame.add_object_pos_id(obj_tj.first, std::min(i, obj_tj.second.size() - 1));
             }
@@ -319,7 +319,7 @@ return;
             ret += frame.as_dict() + ",\n\n";
 
             if (i % 10 == 0) {
-                std::cout << "\r\tWritten " << i + 1 << "\t/\t" << Dataset::cam_tj.size() << "\t" << std::flush;
+                std::cout << "\r\tWritten " << i + 1 << "\t/\t" << this->dataset->cam_tj.size() << "\t" << std::flush;
             }
         }
         ret += "]\n";
@@ -339,7 +339,7 @@ return;
 
     void refresh_ec() {
         this->event_pc->clear();
-        auto e_slice = TimeSlice(Dataset::event_array,
+        auto e_slice = TimeSlice(this->dataset->event_array,
           std::make_pair(std::max(0.0, this->timestamp - this->window_size / 2.0), this->timestamp + this->window_size / 2.0),
           std::make_pair(this->frames.front().event_slice_ids.first, this->frames.back().event_slice_ids.second));
 

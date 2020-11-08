@@ -3,11 +3,11 @@
 
 cv::Mat DatasetFrame::get_visualization_event_projection(bool timg, bool nodist) {
     cv::Mat img;
-    if (Dataset::event_array.size() == 0)
+    if (this->dataset_handle->event_array.size() == 0)
         return cv::Mat(this->depth.rows, this->depth.cols, CV_8U, cv::Scalar(0));
 
-    if (Dataset::event_array.size() > 0) {
-        auto ev_slice = Slice<std::vector<Event>>(Dataset::event_array,
+    if (this->dataset_handle->event_array.size() > 0) {
+        auto ev_slice = Slice<std::vector<Event>>(this->dataset_handle->event_array,
                                                   this->event_slice_ids);
         if (timg) {
             img = EventFile::color_time_img(&ev_slice, 1, this->dataset_handle->res_x, this->dataset_handle->res_y);
@@ -35,7 +35,7 @@ cv::Mat DatasetFrame::get_visualization_depth(bool overlay_events, bool nodist) 
             ret.at<cv::Vec3b>(i, j)[0] = depth_img.at<float>(i, j);
             ret.at<cv::Vec3b>(i, j)[1] = depth_img.at<float>(i, j);
             ret.at<cv::Vec3b>(i, j)[2] = depth_img.at<float>(i, j);
-            if (overlay_events && Dataset::event_array.size() > 0)
+            if (overlay_events && this->dataset_handle->event_array.size() > 0)
                 ret.at<cv::Vec3b>(i, j)[2] = img_pr.at<uint8_t>(i, j);
         }
     }
@@ -68,7 +68,7 @@ cv::Mat DatasetFrame::get_visualization_mask(bool overlay_events, bool nodist) {
                 if (id > 0)
                     ret.at<cv::Vec3b>(i, j) = color;
             }
-            if (overlay_events && Dataset::event_array.size() > 0 && img_pr.at<uint8_t>(i, j) > 0)
+            if (overlay_events && this->dataset_handle->event_array.size() > 0 && img_pr.at<uint8_t>(i, j) > 0)
                 ret.at<cv::Vec3b>(i, j)[2] = img_pr.at<uint8_t>(i, j);
         }
     }
