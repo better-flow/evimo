@@ -76,7 +76,7 @@ std::vector<cv::KeyPoint> get_blobs(cv::Mat &image_, bool filter=true, float th0
 
     /*
     cv::Mat im_with_keypoints;
-    cv::drawKeypoints(image, keypoints, im_with_keypoints, cv::Scalar(0,0,255), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+    cv::drawKeypoints(image, keypoints, im_with_keypoints, cv::Scalar(255,0,0), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     cv::imshow("keypoints", im_with_keypoints);
     cv::waitKey(0);
     */

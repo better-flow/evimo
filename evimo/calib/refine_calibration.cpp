@@ -384,6 +384,32 @@ public:
 
         return ret;
     }
+
+    Track derivative() const {
+        Track<T> ret;
+        if (this->track.size() == 0) return ret;
+        ret.push_back(this->track[0].ts, tuple_foreach::init<T>(0));
+
+        for (size_t i = 1; i < this->track.size() - 1; ++i) {
+            auto dt = this->track[i + 1].ts - this->track[i - 1].ts;
+            if (std::fabs(dt) < 1e-5) {
+                ret.push_back(this->track[i].ts, tuple_foreach::init<T>(0));
+                continue;
+            }
+
+            auto dp = tuple_foreach::fma(this->track[i - 1].pose, -1, this->track[i + 1].pose);
+            auto dp_dt = tuple_foreach::fma(dp, 1.0 / dt, tuple_foreach::init<T>(0));
+            ret.push_back(this->track[i].ts, dp_dt);
+        }
+
+        if (this->track.size() > 1) {
+            ret.push_back(this->track.back().ts, ret.track.back().pose);
+            ret.track[0].pose = ret.track[1].pose;
+        }
+
+        assert(this->track.size() == ret.track.size());
+        return ret;
+    }
 };
 
 
@@ -393,7 +419,8 @@ public:
 
     // brute-force cross-correlator: will try all offsets in [-wsize/2, wsize/2] with a step 'step'
     template <typename T>
-    static double correlate(const Track<T> &ref_track, const Track<T> &target_track, double step=1e-2, double wsize=1.0) {
+    static double correlate(const Track<T> &ref_track, const Track<T> &target_track,
+                            double step=1e-2, double wsize=1.0, double wcenter=0.0, bool plot=false) {
         std::valarray<double> ref_ts(ref_track.size());
         std::vector<double> ref_val(ref_track.size());
         for (size_t i = 0; i < ref_track.size(); ++i) {
@@ -413,12 +440,15 @@ public:
             ref_val[i] = (ref_val[i] - mean_val) / (max_val - min_val < 1e-6 ? 1 : max_val - min_val);
         }
 
-        double offset = -wsize / 2;
+        double offset = -wsize / 2 + wcenter;
         ref_ts += offset;
+
+        std::vector<double> errors;
+        std::vector<double> e_offsets;
 
         double best_offset = offset;
         double best_error = -1;
-        while (offset <= wsize / 2) {
+        while (offset <= wsize / 2 + wcenter) {
             auto tt = target_track.evaluate(ref_ts);
             std::vector<double> tgt_val(tt.size());
             for (size_t i = 0; i < tt.size(); ++i) {
@@ -432,17 +462,17 @@ public:
             size_t count = 0;
             for (size_t i = 0; i < tt.size(); ++i) {
                 long double val = (long double)(tgt_val[i]) * (long double)(ref_val[i]);
-                if (val < 1e-3) continue; // 0 values after interpolation means point is out of timestamp range
+                if (std::fabs(val) < 1e-5) continue; // 0 values after interpolation means point is out of timestamp range
                 count++;
-                //score += val;
- 
-                // FIXME: cross correlation does not work for some reason!
-                score += std::fabs(tgt_val[i] - ref_val[i]);
+                score += val;
             }
             score /= (long double)count;
 
-            // smallest score search
-            if (best_error < 0 || best_error > score) {
+            errors.push_back(score);
+            e_offsets.push_back(offset);
+
+            // largest score search
+            if (best_error < 0 || best_error < score) {
                 best_error = score;
                 best_offset = offset;
             }
@@ -453,41 +483,45 @@ public:
 
         // plot the result
         // reset timestamps to original; remove data scaling
-        /*
-        for (size_t i = 0; i < ref_track.size(); ++i) {
-            ref_ts[i] = ref_track[i].get_ts_sec();
+        if (plot) {
+            for (size_t i = 0; i < ref_track.size(); ++i) {
+                ref_ts[i] = ref_track[i].get_ts_sec();
+            }
+
+            for (size_t i = 0; i < ref_track.size(); ++i) {
+                ref_val[i] = tuple_foreach::hypot(ref_track[i].pose);
+            }
+
+            auto tt = target_track.evaluate(ref_ts);
+            std::vector<double> tgt_val_orig(tt.size());
+            for (size_t i = 0; i < tt.size(); ++i) {
+                tgt_val_orig[i] = tuple_foreach::hypot(tt[i].pose);
+            }
+
+            ref_ts += best_offset;
+
+            tt = target_track.evaluate(ref_ts);
+            std::vector<double> tgt_val_corr(tt.size());
+            for (size_t i = 0; i < tt.size(); ++i) {
+                tgt_val_corr[i] = tuple_foreach::hypot(tt[i].pose);
+            }
+
+            std::vector<double> ref_ts_v;
+            ref_ts_v.assign(std::begin(ref_ts), std::end(ref_ts));
+
+            namespace plt = matplotlibcpp;
+            plt::figure_size(1200, 780);
+            plt::title("Timestamp offset correction result:");
+            plt::subplot(2,1,1);
+            plt::named_plot("reference",        ref_ts_v, ref_val, ".");
+            plt::named_plot("target original",  ref_ts_v, tgt_val_orig, ".");
+            plt::named_plot("target corrected", ref_ts_v, tgt_val_corr, ".");
+            plt::legend();
+            plt::subplot(2,1,2);
+            plt::named_plot("correlation",      e_offsets, errors, ".");
+            plt::legend();
+            plt::show();
         }
-
-        for (size_t i = 0; i < ref_track.size(); ++i) {
-            ref_val[i] = tuple_foreach::hypot(ref_track[i].pose);
-        }
-
-        auto tt = target_track.evaluate(ref_ts);
-        std::vector<double> tgt_val_orig(tt.size());
-        for (size_t i = 0; i < tt.size(); ++i) {
-            tgt_val_orig[i] = tuple_foreach::hypot(tt[i].pose);
-        }
-
-        ref_ts += best_offset;
-
-        tt = target_track.evaluate(ref_ts);
-        std::vector<double> tgt_val_corr(tt.size());
-        for (size_t i = 0; i < tt.size(); ++i) {
-            tgt_val_corr[i] = tuple_foreach::hypot(tt[i].pose);
-        }
-
-        std::vector<double> ref_ts_v;
-        ref_ts_v.assign(std::begin(ref_ts), std::end(ref_ts));
-
-        namespace plt = matplotlibcpp;
-        plt::figure_size(1200, 780);
-        plt::named_plot("reference",        ref_ts_v, ref_val, ".");
-        plt::named_plot("target original",  ref_ts_v, tgt_val_orig, ".");
-        plt::named_plot("target corrected", ref_ts_v, tgt_val_corr, ".");
-        plt::title("Timestamp offset correction result:");
-        plt::legend();
-        plt::show();
-        */
         return best_offset;
     }
 };
@@ -497,17 +531,45 @@ class ViconWandTimeAligner : public CrossCorrelator {
 public:
     static double align(const std::map<int, Track<std::tuple<float, float>>> &src,
                         const std::map<int, Track<std::tuple<float, float>>> &tgt,
-                        double step=1e-2, double wsize=1.0) {
+                        double step=1e-2, double wsize=1.0, bool plot=false) {
+
+        int best_label = -1;
+        size_t largest_len = 0;
 
         for (auto &label : std::vector({1,2,3,4,5})) {
             if (src.find(label) == src.end()) continue;
             if (tgt.find(label) == tgt.end()) continue;
-            std::cout << "Time-aligning label " << label << std::endl;
-            return correlate(src.at(label), tgt.at(label), step, wsize);
+            auto size = std::min(src.at(label).size(), tgt.at(label).size());
+            if (size > largest_len) {
+                largest_len = size;
+                best_label = label;
+            }
         }
 
-        std::cout << _red("time algnemnt failed! no tracks available") << std::endl;
-        return 0;
+        if (largest_len == 0) {
+            std::cout << _red("time algnemnt failed! no tracks available") << std::endl;
+            return 0;
+        }
+
+        std::cout << "Time-aligning label " << best_label << " with " << largest_len << " points" << std::endl;
+        auto img_pt_v = src.at(best_label).derivative();
+        auto wnd_pt_v = tgt.at(best_label).derivative();
+
+        double wcenter = 0.0;
+        std::cout << "\n\tfirst pass with step " << step << "; wsize " 
+                  << wsize << "; offset guess " << wcenter << std::endl;
+       
+        wcenter = correlate(img_pt_v, wnd_pt_v, step, wsize, wcenter, plot);
+        std::cout << "\t\t...offset = " << wcenter << std::endl;
+
+        wsize = step * 5;
+        step = step / 10;
+        std::cout << "\n\tsecond pass with step " << step << "; wsize " 
+                  << wsize << "; offset guess " << wcenter << std::endl;
+
+        wcenter = correlate(img_pt_v, wnd_pt_v, step, wsize, wcenter, plot);
+        std::cout << "\t\t...offset = " << wcenter << std::endl;
+        return wcenter;
     }
 };
 
@@ -516,16 +578,9 @@ class ViconWandSpatialCalibrator {
 protected:
     std::shared_ptr<Dataset> dataset;
 
-    // for visualization only
-    std::vector<double> src_val_x;
-    std::vector<double> src_val_y;
-    std::vector<double> tgt_val_x;
-    std::vector<double> tgt_val_y;
-
     // used in optimization
     std::vector<cv::Point2f> image_pts;
     std::vector<cv::Point3f> object_pts;
-
 
 public:
     ViconWandSpatialCalibrator(std::shared_ptr<Dataset> &dataset) : dataset(dataset) {}
@@ -533,12 +588,62 @@ public:
     void reset() {
         image_pts.clear();
         object_pts.clear();
-
-        src_val_x.clear();
-        src_val_y.clear();
-        tgt_val_x.clear();
-        tgt_val_y.clear();
     }
+
+    void remove_outliers() {
+        assert(this->image_pts.size() == this->object_pts.size());
+
+        std::vector<float> errors;
+        errors.reserve(this->image_pts.size());
+        for (size_t i = 0; i < this->image_pts.size(); ++i) {
+            auto pt2d = this->image_pts[i];
+            auto pt3d = this->object_pts[i];
+
+            float u = -1, v = -1;
+            if (pt3d.z > 0.001) {
+                this->dataset->project_point(pt3d, u, v);
+            }
+
+            if (u < 0 || v < 0) {
+                errors.push_back(-1);
+                continue;
+            }
+
+            errors.push_back(std::hypot(pt2d.x - v, pt2d.y - u));
+        }
+
+        assert(this->image_pts.size() == errors.size());
+
+        long double mean_error = 0, count = 0;
+        for (auto &e : errors) {
+            if (e < 0) continue;
+            mean_error += e;
+            count += 1;
+        }
+
+        mean_error /= count;
+        std::cout << "Mean error\t" << _yellow(std::to_string(mean_error)) << std::endl;
+        std::cout << "# points:\t" << this->image_pts.size() << std::endl;
+        std::cout << "# visible points:\t" << count << std::endl;
+
+        std::vector<size_t> inliers;
+        inliers.reserve(count);
+        for (size_t i = 0; i < errors.size(); ++i) {
+            if (errors[i] < 0 || errors[i] > mean_error) continue;
+            inliers.push_back(i);
+        }
+
+        for (size_t i = 0; i < inliers.size(); ++i) {
+            this->image_pts[i]  = this->image_pts[inliers[i]];
+            this->object_pts[i] = this->object_pts[inliers[i]];
+        }
+
+        this->image_pts.resize(inliers.size());
+        this->object_pts.resize(inliers.size());
+
+        std::cout << "# points (filtered):\t" << this->image_pts.size() << std::endl;
+    }
+
 
     void add_tracks(const std::map<int, Track<std::tuple<float, float>>> &src,
                     const std::map<int, Track<std::tuple<float, float, float>>> &tgt) {
@@ -565,25 +670,39 @@ public:
                 // add input points
                 this->image_pts.push_back({std::get<0>(s_tt[i].pose), std::get<1>(s_tt[i].pose)});
                 this->object_pts.push_back({std::get<0>(t_tt[i].pose), std::get<1>(t_tt[i].pose), std::get<2>(t_tt[i].pose)});
-
-                // project points for visualization
-                float u = -1, v = -1;
-                if (std::get<2>(point_3d) > 0.001) {
-                    struct pXYZ {double x, y, z; };
-                    dataset->project_point(pXYZ{std::get<0>(point_3d), std::get<1>(point_3d), std::get<2>(point_3d)}, u, v);
-                }
-
-                if (u >= 0 && v >= 0) {
-                    this->src_val_x.push_back(std::get<0>(s_tt[i].pose));
-                    this->src_val_y.push_back(std::get<1>(s_tt[i].pose));
-                    this->tgt_val_x.push_back(v);
-                    this->tgt_val_y.push_back(u);
-                }
             }
         }
     }
 
+
     tf::Transform calibrate(bool extr_only=false, bool plot=true) {
+        this->remove_outliers();
+
+        std::vector<double> src_val_x;
+        std::vector<double> src_val_y;
+        std::vector<double> tgt_val_x;
+        std::vector<double> tgt_val_y;
+        if (plot) {
+            // project points for visualization
+            assert(this->image_pts.size() == this->object_pts.size());
+            for (size_t i = 0; i < this->image_pts.size(); ++i) {
+                auto pt2d = this->image_pts[i];
+                auto pt3d = this->object_pts[i];
+
+                float u = -1, v = -1;
+                if (pt3d.z > 0.001) {
+                    this->dataset->project_point(pt3d, u, v);
+                }
+
+                //if (u >= 0 && v >= 0) {
+                    src_val_x.push_back(pt2d.x);
+                    src_val_y.push_back(pt2d.y);
+                    tgt_val_x.push_back(v);
+                    tgt_val_y.push_back(u);
+                //}
+            }
+        }
+
         // optimization
         std::vector<cv::Mat> rvecs, tvecs;
         int flags = cv::CALIB_USE_INTRINSIC_GUESS; 
@@ -618,7 +737,7 @@ public:
         assert(rvec.depth() == CV_64F);
         assert(tvec.depth() == CV_64F);
 
-        // update dataset
+        // update 'dataset'
         auto E_correction = rvec_tvec2tf(rvec, tvec);
         dataset->cam_E = dataset->cam_E * E_correction.inverse();
         dataset->fx = K.at<double>(0);
@@ -639,57 +758,88 @@ public:
         }
         dataset->apply_Intr_Calib();
 
+
+        // Compute error
+        std::vector<cv::Point2f> tgt_pts;
+        cv::projectPoints(this->object_pts, rvec, tvec, K, D, tgt_pts);
+        long double mean_error = 0, count = 0;
+        for (size_t i = 0; i < this->image_pts.size(); ++i) {
+            mean_error += std::hypot(tgt_pts[i].x - this->image_pts[i].x, tgt_pts[i].y - this->image_pts[i].y);
+            count += 1;
+        }
+        mean_error /= count;
+        std::cout << "Mean error after optimization\t" << _yellow(std::to_string(mean_error)) << std::endl;
+  
+        // Correct 3d point position in camera frame
+        for (size_t i = 0; i < this->object_pts.size(); ++i) {
+            auto &p3d = this->object_pts[i];
+            auto p3d_ = E_correction({p3d.x, p3d.y, p3d.z});
+            p3d.x = p3d_.x(); p3d.y = p3d_.y(); p3d.z = p3d_.z(); 
+        }
+
         // plot
         if (plot) {
-            std::vector<cv::Point2f> tgt_pts;
-            cv::projectPoints(this->object_pts, rvec, tvec, K, D, tgt_pts);
-
             std::vector<double> src_val_x_corrected;
             std::vector<double> src_val_y_corrected;
             std::vector<double> tgt_val_x_corrected;
             std::vector<double> tgt_val_y_corrected;
+            std::vector<double> z_values;
 
             assert(this->image_pts.size() == this->object_pts.size());
             for (size_t i = 0; i < this->object_pts.size(); ++i) {
                 auto &p3d = this->object_pts[i];
-                auto p3d_ = E_correction({p3d.x, p3d.y, p3d.z});
 
                 float u = -1, v = -1;
-                if (p3d_.z() > 0.001) {
-                    struct pXYZ {double x, y, z; };
-                    dataset->project_point(pXYZ{p3d_.x(), p3d_.y(), p3d_.z()}, u, v);
+                if (p3d.z > 0.001) {
+                    //struct pXYZ {double x, y, z; };
+                    //dataset->project_point(pXYZ{p3d.x(), p3d.y(), p3d.z()}, u, v);
+                    dataset->project_point(p3d, u, v);
                 }
+
+                z_values.push_back(p3d.z);
 
                 //if (u >= 0 && v >= 0) {
                     src_val_x_corrected.push_back(this->image_pts[i].x);
                     src_val_y_corrected.push_back(this->image_pts[i].y);
-                    //tgt_val_x_corrected.push_back(v);
-                    //tgt_val_y_corrected.push_back(u);
-                    tgt_val_x_corrected.push_back(tgt_pts[i].x);
-                    tgt_val_y_corrected.push_back(tgt_pts[i].y);
+                    tgt_val_x_corrected.push_back(v);
+                    tgt_val_y_corrected.push_back(u);
+                    //tgt_val_x_corrected.push_back(tgt_pts[i].x);
+                    //tgt_val_y_corrected.push_back(tgt_pts[i].y);
                 //}
             }
 
             namespace plt = matplotlibcpp;
             plt::figure_size(1200, 780);
-            plt::subplot(2,2,1);
+            plt::title("Spatial calibrator");
+            plt::subplot(3,2,1);
             plt::named_plot("detections", src_val_x, ".");
             plt::named_plot("vicon",      tgt_val_x, ".");
+            plt::legend();
 
-            plt::subplot(2,2,2);
+            plt::subplot(3,2,2);
             plt::named_plot("detections", src_val_y, ".");
             plt::named_plot("vicon",      tgt_val_y, ".");
+            plt::legend();
 
-            plt::subplot(2,2,3);
+            plt::subplot(3,2,3);
             plt::named_plot("detections", src_val_x_corrected, ".");
             plt::named_plot("vicon",      tgt_val_x_corrected, ".");
+            plt::legend();
 
-            plt::subplot(2,2,4);
+            plt::subplot(3,2,4);
             plt::named_plot("detections", src_val_y_corrected, ".");
             plt::named_plot("vicon",      tgt_val_y_corrected, ".");
-
-            plt::title("Spatial calibrator");
             plt::legend();
+
+            plt::subplot(3,2,5);
+            plt::named_hist("z distribution", z_values, 100);
+            plt::legend();
+
+            plt::subplot(3,2,6);
+            plt::named_plot("pixel distribution detections", src_val_x_corrected, src_val_y_corrected, ".");
+            plt::named_plot("pixel distribution wand", tgt_val_x_corrected, tgt_val_y_corrected, ".");
+            plt::legend();
+
             plt::show();
         }
 
@@ -870,21 +1020,7 @@ extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_nam
             if (current_ts - start_ts >= 1.0 / e_fps) {
                 auto img = (cv::Mat)eff;
                 auto ts = (current_ts + start_ts) / 2.0;
-
                 image_timestamps.push_back(ts);
-
-/*
-        cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT,
-                                                    cv::Size(5, 5),
-                                                    cv::Point(2, 2));
-        cv::dilate(img, img, element);
-        //cv::erode(img, img, element);
-
-        //cv::imshow("img", img);
-        //auto code = cv::waitKey(0);
-        //if (code == 27) break;
-*/
-
                 dataset->images.push_back(img.clone());
                 start_ts = current_ts;
             }
@@ -904,7 +1040,7 @@ extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_nam
                 dataset->images[i].convertTo(dataset->images[i], CV_8U, 1.0 / float(dataset->images[i].elemSize1()));
             }
 
-            cv::threshold(dataset->images[i], dataset->images[i], 220, 255, 0);
+            //cv::threshold(dataset->images[i], dataset->images[i], 220, 255, 0);
         }
     }
 
@@ -972,8 +1108,9 @@ extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_nam
 
 
     double to_step = 1e-2, to_wsize = 1.0;
-    double time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize);
-    std::cout << bag_name << _green(":\tdetected time offset: ") << time_offset << std::endl;
+    bool plot = false;
+    double time_offset = ViconWandTimeAligner::align(wand_detected_pix, wand_red_pix, to_step, to_wsize, plot);
+    std::cout << bag_name << _green(":\tcorrecting time offset: ") << time_offset << std::endl;
 
     for (auto &lbl_pair : wand_red_3d) {
         lbl_pair.second.apply_time_offset(-time_offset);
@@ -981,9 +1118,6 @@ extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_nam
 
     return {wand_detected_pix, wand_red_3d};
 }
-
-
-
 
 
 
@@ -1075,7 +1209,11 @@ int main (int argc, char** argv) {
     bool extr_only = false;
     bool plot = true;
 
-    auto E_corr = calibrator.calibrate(extr_only, plot);
+    std::cout << "\n\nRough calibration:\n";
+    auto E_corr = calibrator.calibrate(extr_only, false);
+
+    std::cout << "\n\nFine calibration:\n";
+    E_corr = calibrator.calibrate(extr_only, plot);
     calibrator.reset();
 
 

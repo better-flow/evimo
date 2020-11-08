@@ -801,7 +801,7 @@ bool arrow(Numeric x, Numeric y, Numeric end_x, Numeric end_y, const std::string
 }
 
 template< typename Numeric>
-bool hist(const std::vector<Numeric>& y, long bins=10,std::string color="b",
+bool hist(const std::vector<Numeric>& y, long bins=10, std::string color="b",
           double alpha=1.0, bool cumulative=false)
 {
     detail::_interpreter::get();
@@ -1111,7 +1111,7 @@ inline bool subplots_adjust(const std::map<std::string, double>& keywords = {})
 }
 
 template< typename Numeric>
-bool named_hist(std::string label,const std::vector<Numeric>& y, long bins=10, std::string color="b", double alpha=1.0)
+bool named_hist(std::string label, const std::vector<Numeric>& y, long bins=10, std::string color="b", double alpha=1.0)
 {
     detail::_interpreter::get();
 
