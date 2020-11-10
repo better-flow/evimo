@@ -1,0 +1,5 @@
+id: 2
+name: plane_00
+mesh: model.ply
+unit: m
+ros_pos_topic: /vicon/Object_2

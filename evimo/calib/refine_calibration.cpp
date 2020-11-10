@@ -878,7 +878,7 @@ protected:
 // generate tracks from a bag file
 std::pair<std::map<int, Track<std::tuple<float, float>>>, std::map<int, Track<std::tuple<float, float, float>>>>
 extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_name, float start_time_offset = 0.0,
-               float sequence_duration = -1.0, bool dilate_blobs=false) {
+               float sequence_duration = -1.0, bool dilate_blobs=false, int img_th_value=-1) {
     std::string wand_topic = "/vicon/Wand";
     nh.getParam("wand_topic", wand_topic);
 
@@ -1049,7 +1049,8 @@ extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_nam
                 dataset->images[i].convertTo(dataset->images[i], CV_8U, 1.0 / float(dataset->images[i].elemSize1()));
             }
 
-            //cv::threshold(dataset->images[i], dataset->images[i], 220, 255, 0);
+            if (img_th_value > 0)
+                cv::threshold(dataset->images[i], dataset->images[i], img_th_value, 255, 0);
         }
     }
 
@@ -1155,6 +1156,7 @@ int main (int argc, char** argv) {
     std::vector<std::tuple<std::string, float, float>> bag_names;
 
     bool dilate_blobs = false;
+    int img_th_value = -1;
 
     // read and parse the config file
     std::ifstream ifs;
@@ -1187,6 +1189,8 @@ int main (int argc, char** argv) {
             camera_name = value;
         } else if (key == "dilate_blobs") {
             if (value == "true") dilate_blobs = true;
+        } else if (key == "image_th") {
+            img_th_value = std::stoi(value);
         } else if (key == "bag_file") {
             line = trim(line.substr(sep + 1));
             sep = line.find_first_of(delims);
@@ -1213,7 +1217,7 @@ int main (int argc, char** argv) {
     for (auto &bag_name : bag_names) {
         auto tracks = extract_tracks(nh, std::get<0>(bag_name), camera_name,
                                      std::get<1>(bag_name),
-                                     std::get<2>(bag_name), dilate_blobs);
+                                     std::get<2>(bag_name), dilate_blobs, img_th_value);
         auto &p2d = tracks.first;
         auto &p3d = tracks.second;
 
