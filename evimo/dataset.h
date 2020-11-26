@@ -155,6 +155,10 @@ public:
 
         this->reset_Intr_Sliders();
         this->printCalib();
+        bool ret = this->write_extr(this->dataset_folder + "/" + camera_name + "/extrinsics.txt");
+        if (!ret) {
+            std::cout << _red("apply_Intr_Calib failed to save calibration") << std::endl;
+        }
     }
 
     void set_sliders(float Tx, float Ty, float Tz,
@@ -457,6 +461,39 @@ private:
 
     static float normval_inv(float val, int maxval, int normval) {
         return val * float(normval) + float(maxval / 2);
+    }
+
+    bool write_extr(std::string path) {
+        std::ofstream ofs (path, std::ofstream::out);
+        if (!ofs.is_open()) {
+            std::cout << _red("Could not open camera parameter file file at ")
+                      << path << _red(" for writing!") << std::endl;
+            return false;
+        }
+
+        ofs << this->tx0 << "\t" << this->ty0 << "\t" << this->tz0 
+            << "\t" << this->rr0 << "\t" << this->rp0 << "\t" << this->ry0 << std::endl;
+
+
+        tf::Vector3 T = this->bg_E.getOrigin();
+        tf::Quaternion Q(this->bg_E.getRotation());
+
+        if (std::isnan(Q.getW())
+            || std::isnan(Q.x())
+            || std::isnan(Q.y())
+            || std::isnan(Q.z())) {
+            ofs << T.x() << "\t" << T.y() << "\t" << T.z() << "\t"
+                << 0.0 << "\t" << 0.0 << "\t" << 0.0 << "\t" << 0.0 << std::endl;
+        } else {
+            ofs << T.x() << "\t" << T.y() << "\t" << T.z() << "\t"
+                << Q.getW() << "\t" << Q.x() << "\t" << Q.y() << "\t" << Q.z() << std::endl;
+        }
+
+        ofs << this->get_time_offset_pose_to_event() << std::endl;
+        ofs << this->get_time_offset_image_to_event() << std::endl;
+
+        ofs.close();
+        return true;
     }
 
     bool read_extr(std::string path) {
