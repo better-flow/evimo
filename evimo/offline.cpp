@@ -439,6 +439,17 @@ int main (int argc, char** argv) {
     meta_file << "]\n";
     std::cout << std::endl;
 
+    std::cout << std::endl << _yellow("Writing imu") << std::endl;
+    meta_file << ", 'imu': {";
+    for (auto &imu : dataset->imu_info) {
+        meta_file << "'" + imu.first + "': [\n";
+        for (uint64_t i = 0; i < imu.second.size(); ++i) {
+            meta_file << imu.second[i].as_dict() << ",\n";
+        }
+        meta_file << "],\n";
+    }
+    meta_file << "\n}";
+
     meta_file << "\n}\n";
     meta_file.close();
 

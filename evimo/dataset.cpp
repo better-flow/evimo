@@ -21,10 +21,14 @@ bool Dataset::read_bag_file(std::string bag_name,
 
     std::cout << std::endl << "Topics available:" << std::endl;
     for (auto &info : connection_infos) {
-        std::cout << "\t" << info->topic << std::endl;
+        std::cout << "\t" << info->topic << "\t" << info->datatype << std::endl;
+        if (info->datatype == "sensor_msgs/Imu") this->imu_info[info->topic] = ImuInfo();
     }
 
     std::map<int, vicon::Subject> obj_cloud_to_vicon_tf;
+    for (auto &p : this->obj_pose_topics) {
+        this->obj_tjs[p.first] = Trajectory();
+    }
 
     ros::Time bag_start_ts = view.begin()->getTime();
     uint64_t n_events = 0;
@@ -53,6 +57,19 @@ bool Dataset::read_bag_file(std::string bag_name,
 
             this->obj_tjs[p.first].add(timestamp, *msg);
             obj_cloud_to_vicon_tf[p.first] = *msg;
+            break;
+        }
+
+        for (auto &p : this->imu_info) {
+            if (m.getTopic() != p.first) continue;
+            auto msg = m.instantiate<sensor_msgs::Imu>();
+            if (msg == NULL) break;
+            auto timestamp = msg->header.stamp;
+
+            if (start_time_offset > 0 && timestamp < bag_start_ts + ros::Duration(start_time_offset)) continue;
+            if (sequence_duration > 0 && timestamp > bag_start_ts + ros::Duration(start_time_offset + sequence_duration)) continue;
+
+            this->imu_info[p.first].add(timestamp, *msg);
             break;
         }
 
@@ -240,12 +257,17 @@ bool Dataset::read_bag_file(std::string bag_name,
                   << " - " << this->cam_tj[this->cam_tj.size() - 1].ts << ")" << std::endl;
     }
 
+    this->ros_time_offset = time_offset;
     this->cam_tj.subtract_time(time_offset);
     for (auto &obj_tj : this->obj_tjs) {
         if (obj_tj.second.size() == 0) continue;
         std::cout << obj_tj.first << " tj timestamp range:\t(" << obj_tj.second[0].ts
                   << " - " << obj_tj.second[obj_tj.second.size() - 1].ts << ")" << std::endl;
         obj_tj.second.subtract_time(time_offset);
+    }
+
+    for (auto &imu_inf : this->imu_info) {
+        imu_inf.second.subtract_time(time_offset);
     }
 
     // images

@@ -18,6 +18,10 @@ public:
     std::shared_ptr<StaticObject> background;
     std::map<int, std::shared_ptr<ViObject>> clouds;
     std::map<int, std::string> obj_pose_topics;
+    std::map<std::string, ImuInfo> imu_info;
+
+    // Time offset from data to ros time
+    ros::Time ros_time_offset; 
 
     // Event cloud
     std::vector<Event> event_array;
@@ -317,6 +321,7 @@ public:
                     + ", 'res_x': " + std::to_string(this->res_y) // FIXME!
                     + ", 'res_y': " + std::to_string(this->res_x)
                     + ", 'dist_model': '" + this->dist_model + "'"
+                    + ", 'ros_time_offset': " + std::to_string(this->ros_time_offset.toSec())
                     + "}";
     }
 

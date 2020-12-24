@@ -3,6 +3,7 @@
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
+#include <sensor_msgs/Imu.h>
 
 // VICON
 #include <vicon/Subject.h>
@@ -353,6 +354,87 @@ protected:
 
     friend class Slice<Trajectory>;
     friend class TimeSlice<Trajectory>;
+};
+
+
+/*! Imu info */
+class ImuMeasurement : public SensorMeasurement {
+public:
+    ros::Time ts;
+    std::tuple<float, float, float> angular_velocity;
+    std::tuple<float, float, float> linear_acceleration;
+
+    ImuMeasurement() : ts(0) {}
+    ImuMeasurement(ros::Time ts_, const sensor_msgs::Imu& p) : ts(ts_) {
+        this->angular_velocity = {p.angular_velocity.x, p.angular_velocity.y, p.angular_velocity.z};
+        this->linear_acceleration = {p.linear_acceleration.x, p.linear_acceleration.y, p.linear_acceleration.z};
+    }
+
+    double get_ts_sec() {return this->ts.toSec(); }
+
+    std::string as_dict() {
+        std::string ret = "{";
+        ret += "'ts': " + std::to_string(this->get_ts_sec()) + ",\n";
+        ret += "'angular_velocity': {'x': " + std::to_string(std::get<0>(this->angular_velocity))
+            + ", 'y': " + std::to_string(std::get<1>(this->angular_velocity))
+            + ", 'z': " + std::to_string(std::get<2>(this->angular_velocity)) + "}, ";
+        ret += "'linear_acceleration': {'x': " + std::to_string(std::get<0>(this->linear_acceleration))
+            + ", 'y': " + std::to_string(std::get<1>(this->linear_acceleration))
+            + ", 'z': " + std::to_string(std::get<2>(this->linear_acceleration)) + "}}";
+        return ret;
+    }
+
+    friend std::ostream &operator<< (std::ostream &output, const ImuMeasurement &P) {
+        output << std::get<0>(P.angular_velocity) << " "
+               << std::get<1>(P.angular_velocity) << " "
+               << std::get<2>(P.angular_velocity) << " "
+               << std::get<0>(P.linear_acceleration) << " "
+               << std::get<1>(P.linear_acceleration) << " "
+               << std::get<2>(P.linear_acceleration);
+        return output;
+    }
+};
+
+
+class ImuInfo {
+public:
+    std::vector<ImuMeasurement> imu_mes;
+    ImuInfo() {}
+
+    template<class T> void add(ros::Time ts_, T pq_) {
+        if (this->imu_mes.size() > 0 && this->imu_mes.back().ts > ts_) {
+            std::cout << _yellow("IMU message added is out of order:") << "last added ts: "
+                      << this->imu_mes.back().ts << "; new ts: " << ts_ << std::endl;
+        }
+        this->imu_mes.push_back(ImuMeasurement(ts_, pq_));
+    }
+
+    void clear() {this->imu_mes.clear(); }
+    size_t size() {return this->imu_mes.size(); }
+    auto operator [] (size_t idx) {return this->imu_mes[idx]; }
+
+    virtual bool check() {
+        if (this->size() == 0) return true;
+        auto prev_ts = this->imu_mes[0].ts;
+        for (auto &p : this->imu_mes) {
+            if (p.ts < prev_ts) return false;
+            prev_ts = p.ts;
+        }
+        return true;
+    }
+
+    virtual void subtract_time(ros::Time t) final {
+        while ((this->imu_mes.size() > 0) && (this->imu_mes.begin()->ts < t))
+            this->imu_mes.erase(this->imu_mes.begin());
+        for (auto &p : this->imu_mes) p.ts = ros::Time((p.ts - t).toSec());
+    }
+
+protected:
+    auto begin() {return this->imu_mes.begin(); }
+    auto end()   {return this->imu_mes.end(); }
+
+    friend class Slice<ImuInfo>;
+    friend class TimeSlice<ImuInfo>;
 };
 
 
