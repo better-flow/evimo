@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="toy_00_toy_001_x" VALUE="25.470434188842773" PRIOR="25.470434188842773" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_001_y" VALUE="30.601644515991211" PRIOR="30.601644515991211" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_001_z" VALUE="-4.968231201171875" PRIOR="-4.968231201171875" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_002_x" VALUE="7.9174551963806152" PRIOR="7.9174551963806152" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_002_y" VALUE="10.429524421691895" PRIOR="10.429524421691895" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_002_z" VALUE="10.3505859375" PRIOR="10.3505859375" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_003_x" VALUE="-33.387889862060547" PRIOR="-33.387889862060547" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_003_y" VALUE="-41.031169891357422" PRIOR="-41.031169891357422" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_003_z" VALUE="-5.382354736328125" PRIOR="-5.382354736328125" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_004_x" VALUE="42.630695343017578" PRIOR="42.630695343017578" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_004_y" VALUE="60.207492828369141" PRIOR="60.207492828369141" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_004_z" VALUE="28.61680793762207" PRIOR="28.61680793762207" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_005_x" VALUE="50.319931030273438" PRIOR="50.319931030273438" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_005_y" VALUE="72.080741882324219" PRIOR="72.080741882324219" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_005_z" VALUE="-18.789955139160156" PRIOR="-18.789955139160156" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_006_x" VALUE="10.564615249633789" PRIOR="10.564615249633789" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_006_y" VALUE="99.483139038085938" PRIOR="99.483139038085938" HIDDEN="true"/>
+		<Parameter NAME="toy_00_toy_006_z" VALUE="6.6418733596801758" PRIOR="6.6418733596801758" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="toy_00" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_toy_00" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="toy_001" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="toy_002" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="toy_003" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="toy_004" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="toy_005" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="toy_006" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="toy_001" MARKER2="toy_002" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_001" MARKER2="toy_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_001" MARKER2="toy_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_001" MARKER2="toy_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_001" MARKER2="toy_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_002" MARKER2="toy_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_002" MARKER2="toy_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_002" MARKER2="toy_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_002" MARKER2="toy_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_003" MARKER2="toy_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_003" MARKER2="toy_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_003" MARKER2="toy_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_004" MARKER2="toy_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_004" MARKER2="toy_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="toy_005" MARKER2="toy_006" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="toy_001" OPACITY="255" POSITION="'toy_00_toy_001_x' 'toy_00_toy_001_y' 'toy_00_toy_001_z'" RGB="93 93 93" SEGMENT="toy_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="toy_002" OPACITY="255" POSITION="'toy_00_toy_002_x' 'toy_00_toy_002_y' 'toy_00_toy_002_z'" RGB="93 93 93" SEGMENT="toy_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="toy_003" OPACITY="255" POSITION="'toy_00_toy_003_x' 'toy_00_toy_003_y' 'toy_00_toy_003_z'" RGB="93 93 93" SEGMENT="toy_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="toy_004" OPACITY="255" POSITION="'toy_00_toy_004_x' 'toy_00_toy_004_y' 'toy_00_toy_004_z'" RGB="93 93 93" SEGMENT="toy_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="toy_005" OPACITY="255" POSITION="'toy_00_toy_005_x' 'toy_00_toy_005_y' 'toy_00_toy_005_z'" RGB="93 93 93" SEGMENT="toy_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="toy_006" OPACITY="255" POSITION="'toy_00_toy_006_x' 'toy_00_toy_006_y' 'toy_00_toy_006_z'" RGB="93 93 93" SEGMENT="toy_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

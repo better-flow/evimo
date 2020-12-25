@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="turntable_turntable1_x" VALUE="24.432723999023438" PRIOR="24.432723999023438" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable1_y" VALUE="-28.7518310546875" PRIOR="-28.7518310546875" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable1_z" VALUE="123.735595703125" PRIOR="123.735595703125" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable2_x" VALUE="12.147567749023438" PRIOR="12.147567749023438" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable2_y" VALUE="-14.615936279296875" PRIOR="-14.615936279296875" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable2_z" VALUE="29.550048828125" PRIOR="29.550048828125" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable3_x" VALUE="-88.115249633789063" PRIOR="-88.115249633789063" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable3_y" VALUE="5.821075439453125" PRIOR="5.821075439453125" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable3_z" VALUE="-34.085693359375" PRIOR="-34.085693359375" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable4_x" VALUE="51.534957885742188" PRIOR="51.534957885742188" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable4_y" VALUE="37.54669189453125" PRIOR="37.54669189453125" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable4_z" VALUE="-119.199951171875" PRIOR="-119.199951171875" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable5_x" VALUE="83.899139404296875" PRIOR="83.899139404296875" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable5_y" VALUE="13.141234397888184" PRIOR="13.141234397888184" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable5_z" VALUE="-50.027870178222656" PRIOR="-50.027870178222656" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable6_x" VALUE="43.105197906494141" PRIOR="43.105197906494141" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable6_y" VALUE="-19.093101501464844" PRIOR="-19.093101501464844" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable6_z" VALUE="71.519248962402344" PRIOR="71.519248962402344" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable7_x" VALUE="-63.385765075683594" PRIOR="-63.385765075683594" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable7_y" VALUE="14.442606925964355" PRIOR="14.442606925964355" HIDDEN="true"/>
+		<Parameter NAME="turntable_turntable7_z" VALUE="-76.214408874511719" PRIOR="-76.214408874511719" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="turntable" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_turntable" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="turntable1" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="turntable2" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="turntable3" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="turntable4" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="turntable5" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="turntable6" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="turntable7" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="turntable1" MARKER2="turntable2" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable1" MARKER2="turntable3" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable1" MARKER2="turntable4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable1" MARKER2="turntable5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable1" MARKER2="turntable6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable1" MARKER2="turntable7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable2" MARKER2="turntable3" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable2" MARKER2="turntable4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable2" MARKER2="turntable5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable2" MARKER2="turntable6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable2" MARKER2="turntable7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable3" MARKER2="turntable4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable3" MARKER2="turntable5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable3" MARKER2="turntable6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable3" MARKER2="turntable7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable4" MARKER2="turntable5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable4" MARKER2="turntable6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable4" MARKER2="turntable7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable5" MARKER2="turntable6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable5" MARKER2="turntable7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="turntable6" MARKER2="turntable7" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="turntable1" OPACITY="255" POSITION="'turntable_turntable1_x' 'turntable_turntable1_y' 'turntable_turntable1_z'" RGB="93 93 93" SEGMENT="turntable" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="turntable2" OPACITY="255" POSITION="'turntable_turntable2_x' 'turntable_turntable2_y' 'turntable_turntable2_z'" RGB="93 93 93" SEGMENT="turntable" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="turntable3" OPACITY="255" POSITION="'turntable_turntable3_x' 'turntable_turntable3_y' 'turntable_turntable3_z'" RGB="93 93 93" SEGMENT="turntable" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="turntable4" OPACITY="255" POSITION="'turntable_turntable4_x' 'turntable_turntable4_y' 'turntable_turntable4_z'" RGB="93 93 93" SEGMENT="turntable" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="turntable5" OPACITY="255" POSITION="'turntable_turntable5_x' 'turntable_turntable5_y' 'turntable_turntable5_z'" RGB="93 93 93" SEGMENT="turntable" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="turntable6" OPACITY="255" POSITION="'turntable_turntable6_x' 'turntable_turntable6_y' 'turntable_turntable6_z'" RGB="93 93 93" SEGMENT="turntable" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="turntable7" OPACITY="255" POSITION="'turntable_turntable7_x' 'turntable_turntable7_y' 'turntable_turntable7_z'" RGB="93 93 93" SEGMENT="turntable" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

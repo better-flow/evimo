@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="can_00_can_001_x" VALUE="0.4007059633731842" PRIOR="0.4007059633731842" HIDDEN="true"/>
+		<Parameter NAME="can_00_can_001_y" VALUE="-36.662353515625" PRIOR="-36.662353515625" HIDDEN="true"/>
+		<Parameter NAME="can_00_can_001_z" VALUE="57.732696533203125" PRIOR="57.732696533203125" HIDDEN="true"/>
+		<Parameter NAME="can_00_can_002_x" VALUE="-33.461139678955078" PRIOR="-33.461139678955078" HIDDEN="true"/>
+		<Parameter NAME="can_00_can_002_y" VALUE="2.38037109375" PRIOR="2.38037109375" HIDDEN="true"/>
+		<Parameter NAME="can_00_can_002_z" VALUE="-30.800750732421875" PRIOR="-30.800750732421875" HIDDEN="true"/>
+		<Parameter NAME="can_00_can_003_x" VALUE="33.060436248779297" PRIOR="33.060436248779297" HIDDEN="true"/>
+		<Parameter NAME="can_00_can_003_y" VALUE="34.281982421875" PRIOR="34.281982421875" HIDDEN="true"/>
+		<Parameter NAME="can_00_can_003_z" VALUE="-26.93194580078125" PRIOR="-26.93194580078125" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="can_00" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_can_00" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="can_001" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="can_002" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="can_003" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="can_001" MARKER2="can_002" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="can_001" MARKER2="can_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="can_002" MARKER2="can_003" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="can_001" OPACITY="255" POSITION="'can_00_can_001_x' 'can_00_can_001_y' 'can_00_can_001_z'" RGB="93 93 93" SEGMENT="can_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="can_002" OPACITY="255" POSITION="'can_00_can_002_x' 'can_00_can_002_y' 'can_00_can_002_z'" RGB="93 93 93" SEGMENT="can_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="can_003" OPACITY="255" POSITION="'can_00_can_003_x' 'can_00_can_003_y' 'can_00_can_003_z'" RGB="93 93 93" SEGMENT="can_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

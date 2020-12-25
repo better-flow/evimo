@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="car_00_car_001_x" VALUE="-30.482315063476563" PRIOR="-30.482315063476563" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_001_y" VALUE="40.8411865234375" PRIOR="40.8411865234375" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_001_z" VALUE="-16.024543762207031" PRIOR="-16.024543762207031" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_002_x" VALUE="-20.255203247070313" PRIOR="-20.255203247070313" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_002_y" VALUE="-19.8924560546875" PRIOR="-19.8924560546875" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_002_z" VALUE="4.4495162963867188" PRIOR="4.4495162963867188" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_003_x" VALUE="18.512130737304688" PRIOR="18.512130737304688" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_003_y" VALUE="-13.3968505859375" PRIOR="-13.3968505859375" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_003_z" VALUE="6.2117538452148438" PRIOR="6.2117538452148438" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_004_x" VALUE="32.225387573242188" PRIOR="32.225387573242188" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_004_y" VALUE="-7.5518798828125" PRIOR="-7.5518798828125" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_004_z" VALUE="5.3632736206054688" PRIOR="5.3632736206054688" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_005_x" VALUE="28.77998161315918" PRIOR="28.77998161315918" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_005_y" VALUE="18.322866439819336" PRIOR="18.322866439819336" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_005_z" VALUE="-37.424224853515625" PRIOR="-37.424224853515625" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_006_x" VALUE="-31.786033630371094" PRIOR="-31.786033630371094" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_006_y" VALUE="-55.523891448974609" PRIOR="-55.523891448974609" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_006_z" VALUE="-42.296806335449219" PRIOR="-42.296806335449219" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_007_x" VALUE="44.85955810546875" PRIOR="44.85955810546875" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_007_y" VALUE="-67.449981689453125" PRIOR="-67.449981689453125" HIDDEN="true"/>
+		<Parameter NAME="car_00_car_007_z" VALUE="-28.537628173828125" PRIOR="-28.537628173828125" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="car_00" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_car_00" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="car_001" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="car_002" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="car_003" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="car_004" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="car_005" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="car_006" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="car_007" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="car_001" MARKER2="car_002" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_001" MARKER2="car_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_001" MARKER2="car_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_001" MARKER2="car_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_001" MARKER2="car_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_001" MARKER2="car_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_002" MARKER2="car_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_002" MARKER2="car_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_002" MARKER2="car_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_002" MARKER2="car_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_002" MARKER2="car_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_003" MARKER2="car_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_003" MARKER2="car_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_003" MARKER2="car_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_003" MARKER2="car_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_004" MARKER2="car_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_004" MARKER2="car_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_004" MARKER2="car_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_005" MARKER2="car_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_005" MARKER2="car_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="car_006" MARKER2="car_007" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="car_001" OPACITY="255" POSITION="'car_00_car_001_x' 'car_00_car_001_y' 'car_00_car_001_z'" RGB="93 93 93" SEGMENT="car_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="car_002" OPACITY="255" POSITION="'car_00_car_002_x' 'car_00_car_002_y' 'car_00_car_002_z'" RGB="93 93 93" SEGMENT="car_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="car_003" OPACITY="255" POSITION="'car_00_car_003_x' 'car_00_car_003_y' 'car_00_car_003_z'" RGB="93 93 93" SEGMENT="car_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="car_004" OPACITY="255" POSITION="'car_00_car_004_x' 'car_00_car_004_y' 'car_00_car_004_z'" RGB="93 93 93" SEGMENT="car_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="car_005" OPACITY="255" POSITION="'car_00_car_005_x' 'car_00_car_005_y' 'car_00_car_005_z'" RGB="93 93 93" SEGMENT="car_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="car_006" OPACITY="255" POSITION="'car_00_car_006_x' 'car_00_car_006_y' 'car_00_car_006_z'" RGB="93 93 93" SEGMENT="car_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="car_007" OPACITY="255" POSITION="'car_00_car_007_x' 'car_00_car_007_y' 'car_00_car_007_z'" RGB="93 93 93" SEGMENT="car_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

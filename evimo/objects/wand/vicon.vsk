@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="Wand_Wand1_x" VALUE="-140.44000244140625" PRIOR="-140.44000244140625" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand1_y" VALUE="78.573989868164063" PRIOR="78.573989868164063" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand1_z" VALUE="3.7706642150878906" PRIOR="3.7706642150878906" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand2_x" VALUE="19.992639541625977" PRIOR="19.992639541625977" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand2_y" VALUE="71.963150024414063" PRIOR="71.963150024414063" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand2_z" VALUE="-0.87015342712402344" PRIOR="-0.87015342712402344" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand3_x" VALUE="99.580192565917969" PRIOR="99.580192565917969" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand3_y" VALUE="67.635391235351563" PRIOR="67.635391235351563" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand3_z" VALUE="-2.7568225860595703" PRIOR="-2.7568225860595703" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand4_x" VALUE="13.427331924438477" PRIOR="13.427331924438477" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand4_y" VALUE="-49.120494842529297" PRIOR="-49.120494842529297" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand4_z" VALUE="-0.23505592346191406" PRIOR="-0.23505592346191406" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand5_x" VALUE="7.4398436546325684" PRIOR="7.4398436546325684" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand5_y" VALUE="-169.05204772949219" PRIOR="-169.05204772949219" HIDDEN="true"/>
+		<Parameter NAME="Wand_Wand5_z" VALUE="0.091367721557617188" PRIOR="0.091367721557617188" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton RGB="93 93 93">
+		<Segment NAME="Wand" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_Wand" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="Wand1" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="Wand2" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="Wand3" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="Wand4" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="Wand5" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="Wand1" MARKER2="Wand2" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand1" MARKER2="Wand3" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand1" MARKER2="Wand4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand1" MARKER2="Wand5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand2" MARKER2="Wand3" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand2" MARKER2="Wand4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand2" MARKER2="Wand5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand3" MARKER2="Wand4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand3" MARKER2="Wand5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="Wand4" MARKER2="Wand5" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="Wand1" OPACITY="255" POSITION="'Wand_Wand1_x' 'Wand_Wand1_y' 'Wand_Wand1_z'" RGB="93 93 93" SEGMENT="Wand" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="Wand2" OPACITY="255" POSITION="'Wand_Wand2_x' 'Wand_Wand2_y' 'Wand_Wand2_z'" RGB="93 93 93" SEGMENT="Wand" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="Wand3" OPACITY="255" POSITION="'Wand_Wand3_x' 'Wand_Wand3_y' 'Wand_Wand3_z'" RGB="93 93 93" SEGMENT="Wand" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="Wand4" OPACITY="255" POSITION="'Wand_Wand4_x' 'Wand_Wand4_y' 'Wand_Wand4_z'" RGB="93 93 93" SEGMENT="Wand" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="Wand5" OPACITY="255" POSITION="'Wand_Wand5_x' 'Wand_Wand5_y' 'Wand_Wand5_z'" RGB="93 93 93" SEGMENT="Wand" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

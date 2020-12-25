@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="knife_00_knife_001_x" VALUE="-19.483673095703125" PRIOR="-19.483673095703125" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_001_y" VALUE="61.361003875732422" PRIOR="61.361003875732422" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_001_z" VALUE="1.0428262948989868" PRIOR="1.0428262948989868" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_002_x" VALUE="-2.992828369140625" PRIOR="-2.992828369140625" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_002_y" VALUE="-31.574544906616211" PRIOR="-31.574544906616211" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_002_z" VALUE="-0.80910235643386841" PRIOR="-0.80910235643386841" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_003_x" VALUE="22.47650146484375" PRIOR="22.47650146484375" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_003_y" VALUE="-29.786458969116211" PRIOR="-29.786458969116211" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_003_z" VALUE="-0.2337239533662796" PRIOR="-0.2337239533662796" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_004_x" VALUE="-0.53022336959838867" PRIOR="-0.53022336959838867" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_004_y" VALUE="-68.548851013183594" PRIOR="-68.548851013183594" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_004_z" VALUE="-3.2574036121368408" PRIOR="-3.2574036121368408" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_005_x" VALUE="26.559267044067383" PRIOR="26.559267044067383" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_005_y" VALUE="-140.27191162109375" PRIOR="-140.27191162109375" HIDDEN="true"/>
+		<Parameter NAME="knife_00_knife_005_z" VALUE="2.2913289070129395" PRIOR="2.2913289070129395" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="knife_00" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_knife_00" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="knife_001" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="knife_002" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="knife_003" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="knife_004" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="knife_005" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="knife_001" MARKER2="knife_002" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_001" MARKER2="knife_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_001" MARKER2="knife_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_001" MARKER2="knife_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_002" MARKER2="knife_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_002" MARKER2="knife_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_002" MARKER2="knife_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_003" MARKER2="knife_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_003" MARKER2="knife_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="knife_004" MARKER2="knife_005" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="knife_001" OPACITY="255" POSITION="'knife_00_knife_001_x' 'knife_00_knife_001_y' 'knife_00_knife_001_z'" RGB="93 93 93" SEGMENT="knife_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="knife_002" OPACITY="255" POSITION="'knife_00_knife_002_x' 'knife_00_knife_002_y' 'knife_00_knife_002_z'" RGB="93 93 93" SEGMENT="knife_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="knife_003" OPACITY="255" POSITION="'knife_00_knife_003_x' 'knife_00_knife_003_y' 'knife_00_knife_003_z'" RGB="93 93 93" SEGMENT="knife_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="knife_004" OPACITY="255" POSITION="'knife_00_knife_004_x' 'knife_00_knife_004_y' 'knife_00_knife_004_z'" RGB="93 93 93" SEGMENT="knife_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="knife_005" OPACITY="255" POSITION="'knife_00_knife_005_x' 'knife_00_knife_005_y' 'knife_00_knife_005_z'" RGB="93 93 93" SEGMENT="knife_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

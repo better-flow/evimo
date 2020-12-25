@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="wheel_00_wheel_001_x" VALUE="4.5378623008728027" PRIOR="4.5378623008728027" HIDDEN="true"/>
+		<Parameter NAME="wheel_00_wheel_001_y" VALUE="25.603109359741211" PRIOR="25.603109359741211" HIDDEN="true"/>
+		<Parameter NAME="wheel_00_wheel_001_z" VALUE="1.9528299570083618" PRIOR="1.9528299570083618" HIDDEN="true"/>
+		<Parameter NAME="wheel_00_wheel_002_x" VALUE="-8.2971296310424805" PRIOR="-8.2971296310424805" HIDDEN="true"/>
+		<Parameter NAME="wheel_00_wheel_002_y" VALUE="-2.4059245586395264" PRIOR="-2.4059245586395264" HIDDEN="true"/>
+		<Parameter NAME="wheel_00_wheel_002_z" VALUE="-3.0093891620635986" PRIOR="-3.0093891620635986" HIDDEN="true"/>
+		<Parameter NAME="wheel_00_wheel_003_x" VALUE="3.7592670917510986" PRIOR="3.7592670917510986" HIDDEN="true"/>
+		<Parameter NAME="wheel_00_wheel_003_y" VALUE="-23.197183609008789" PRIOR="-23.197183609008789" HIDDEN="true"/>
+		<Parameter NAME="wheel_00_wheel_003_z" VALUE="1.0565592050552368" PRIOR="1.0565592050552368" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="wheel_00" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_wheel_00" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="wheel_001" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="wheel_002" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="wheel_003" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="wheel_001" MARKER2="wheel_002" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="wheel_001" MARKER2="wheel_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="wheel_002" MARKER2="wheel_003" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="wheel_001" OPACITY="255" POSITION="'wheel_00_wheel_001_x' 'wheel_00_wheel_001_y' 'wheel_00_wheel_001_z'" RGB="93 93 93" SEGMENT="wheel_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="wheel_002" OPACITY="255" POSITION="'wheel_00_wheel_002_x' 'wheel_00_wheel_002_y' 'wheel_00_wheel_002_z'" RGB="93 93 93" SEGMENT="wheel_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="wheel_003" OPACITY="255" POSITION="'wheel_00_wheel_003_x' 'wheel_00_wheel_003_y' 'wheel_00_wheel_003_z'" RGB="93 93 93" SEGMENT="wheel_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

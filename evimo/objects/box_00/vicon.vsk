@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="box_00_box_001_x" VALUE="130.31184387207031" PRIOR="130.31184387207031" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_001_y" VALUE="27.330118179321289" PRIOR="27.330118179321289" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_001_z" VALUE="39.767578125" PRIOR="39.767578125" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_002_x" VALUE="-71.270973205566406" PRIOR="-71.270973205566406" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_002_y" VALUE="-64.761314392089844" PRIOR="-64.761314392089844" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_002_z" VALUE="9.54150390625" PRIOR="9.54150390625" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_003_x" VALUE="-59.040874481201172" PRIOR="-59.040874481201172" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_003_y" VALUE="37.431194305419922" PRIOR="37.431194305419922" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_003_z" VALUE="-49.30908203125" PRIOR="-49.30908203125" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_004_x" VALUE="-78.926055908203125" PRIOR="-78.926055908203125" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_004_y" VALUE="42.972320556640625" PRIOR="42.972320556640625" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_004_z" VALUE="-8.6939296722412109" PRIOR="-8.6939296722412109" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_005_x" VALUE="-20.286102294921875" PRIOR="-20.286102294921875" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_005_y" VALUE="0.45540428161621094" PRIOR="0.45540428161621094" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_005_z" VALUE="-1.7348408699035645" PRIOR="-1.7348408699035645" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_006_x" VALUE="-60.519317626953125" PRIOR="-60.519317626953125" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_006_y" VALUE="-43.068965911865234" PRIOR="-43.068965911865234" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_006_z" VALUE="83.708305358886719" PRIOR="83.708305358886719" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_007_x" VALUE="47.577995300292969" PRIOR="47.577995300292969" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_007_y" VALUE="-44.542156219482422" PRIOR="-44.542156219482422" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_007_z" VALUE="140.187255859375" PRIOR="140.187255859375" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_008_x" VALUE="-77.266494750976563" PRIOR="-77.266494750976563" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_008_y" VALUE="23.098232269287109" PRIOR="23.098232269287109" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_008_z" VALUE="55.9603271484375" PRIOR="55.9603271484375" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_009_x" VALUE="68.293365478515625" PRIOR="68.293365478515625" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_009_y" VALUE="51.828533172607422" PRIOR="51.828533172607422" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_009_z" VALUE="102.51966094970703" PRIOR="102.51966094970703" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0010_x" VALUE="101.37217712402344" PRIOR="101.37217712402344" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0010_y" VALUE="75.989173889160156" PRIOR="75.989173889160156" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0010_z" VALUE="72.358642578125" PRIOR="72.358642578125" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0011_x" VALUE="-11.345900535583496" PRIOR="-11.345900535583496" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0011_y" VALUE="66.197296142578125" PRIOR="66.197296142578125" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0011_z" VALUE="-6.2685585021972656" PRIOR="-6.2685585021972656" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0012_x" VALUE="82.424568176269531" PRIOR="82.424568176269531" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0012_y" VALUE="-47.504234313964844" PRIOR="-47.504234313964844" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0012_z" VALUE="81.158973693847656" PRIOR="81.158973693847656" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0013_x" VALUE="122.56199645996094" PRIOR="122.56199645996094" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0013_y" VALUE="3.9688525199890137" PRIOR="3.9688525199890137" HIDDEN="true"/>
+		<Parameter NAME="box_00_box_0013_z" VALUE="91.635513305664063" PRIOR="91.635513305664063" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="box_00" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_box_00" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="box_001" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="box_002" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_003" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_004" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_005" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_006" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_007" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_008" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_009" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_0010" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_0011" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_0012" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="box_0013" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="box_001" MARKER2="box_002" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_001" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_002" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_003" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_004" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_005" MARKER2="box_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_005" MARKER2="box_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_005" MARKER2="box_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_005" MARKER2="box_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_005" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_005" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_005" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_005" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_006" MARKER2="box_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_006" MARKER2="box_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_006" MARKER2="box_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_006" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_006" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_006" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_006" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_007" MARKER2="box_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_007" MARKER2="box_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_007" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_007" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_007" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_007" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_008" MARKER2="box_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_008" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_008" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_008" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_008" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_009" MARKER2="box_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_009" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_009" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_009" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_0010" MARKER2="box_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_0010" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_0010" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_0011" MARKER2="box_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_0011" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="box_0012" MARKER2="box_0013" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_001" OPACITY="255" POSITION="'box_00_box_001_x' 'box_00_box_001_y' 'box_00_box_001_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_002" OPACITY="255" POSITION="'box_00_box_002_x' 'box_00_box_002_y' 'box_00_box_002_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_003" OPACITY="255" POSITION="'box_00_box_003_x' 'box_00_box_003_y' 'box_00_box_003_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_004" OPACITY="255" POSITION="'box_00_box_004_x' 'box_00_box_004_y' 'box_00_box_004_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_005" OPACITY="255" POSITION="'box_00_box_005_x' 'box_00_box_005_y' 'box_00_box_005_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_006" OPACITY="255" POSITION="'box_00_box_006_x' 'box_00_box_006_y' 'box_00_box_006_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_007" OPACITY="255" POSITION="'box_00_box_007_x' 'box_00_box_007_y' 'box_00_box_007_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_008" OPACITY="255" POSITION="'box_00_box_008_x' 'box_00_box_008_y' 'box_00_box_008_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_009" OPACITY="255" POSITION="'box_00_box_009_x' 'box_00_box_009_y' 'box_00_box_009_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_0010" OPACITY="255" POSITION="'box_00_box_0010_x' 'box_00_box_0010_y' 'box_00_box_0010_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_0011" OPACITY="255" POSITION="'box_00_box_0011_x' 'box_00_box_0011_y' 'box_00_box_0011_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_0012" OPACITY="255" POSITION="'box_00_box_0012_x' 'box_00_box_0012_y' 'box_00_box_0012_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="box_0013" OPACITY="255" POSITION="'box_00_box_0013_x' 'box_00_box_0013_y' 'box_00_box_0013_z'" RGB="93 93 93" SEGMENT="box_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

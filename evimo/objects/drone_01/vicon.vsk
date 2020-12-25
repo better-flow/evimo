@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="drone_01_drone_011_x" VALUE="-1.7669219970703125" PRIOR="-1.7669219970703125" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_011_y" VALUE="16.63427734375" PRIOR="16.63427734375" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_011_z" VALUE="9.36669921875" PRIOR="9.36669921875" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_012_x" VALUE="-29.684707641601563" PRIOR="-29.684707641601563" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_012_y" VALUE="-0.69140625" PRIOR="-0.69140625" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_012_z" VALUE="4.984039306640625" PRIOR="4.984039306640625" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_013_x" VALUE="2.6371917724609375" PRIOR="2.6371917724609375" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_013_y" VALUE="-24.44775390625" PRIOR="-24.44775390625" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_013_z" VALUE="-13.31475830078125" PRIOR="-13.31475830078125" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_014_x" VALUE="28.814437866210938" PRIOR="28.814437866210938" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_014_y" VALUE="8.5048828125" PRIOR="8.5048828125" HIDDEN="true"/>
+		<Parameter NAME="drone_01_drone_014_z" VALUE="-1.035980224609375" PRIOR="-1.035980224609375" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="drone_01" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_drone_01" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="drone_011" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="drone_012" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="drone_013" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="drone_014" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="drone_011" MARKER2="drone_012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="drone_011" MARKER2="drone_013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="drone_011" MARKER2="drone_014" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="drone_012" MARKER2="drone_013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="drone_012" MARKER2="drone_014" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="drone_013" MARKER2="drone_014" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="drone_011" OPACITY="255" POSITION="'drone_01_drone_011_x' 'drone_01_drone_011_y' 'drone_01_drone_011_z'" RGB="93 93 93" SEGMENT="drone_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="drone_012" OPACITY="255" POSITION="'drone_01_drone_012_x' 'drone_01_drone_012_y' 'drone_01_drone_012_z'" RGB="93 93 93" SEGMENT="drone_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="drone_013" OPACITY="255" POSITION="'drone_01_drone_013_x' 'drone_01_drone_013_y' 'drone_01_drone_013_z'" RGB="93 93 93" SEGMENT="drone_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="drone_014" OPACITY="255" POSITION="'drone_01_drone_014_x' 'drone_01_drone_014_y' 'drone_01_drone_014_z'" RGB="93 93 93" SEGMENT="drone_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

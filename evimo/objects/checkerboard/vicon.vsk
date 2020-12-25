@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="checkerboard_checkerboard1_x" VALUE="151.41935729980469" PRIOR="151.41935729980469" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard1_y" VALUE="-295.62045288085938" PRIOR="-295.62045288085938" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard1_z" VALUE="-10.923828125" PRIOR="-10.923828125" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard2_x" VALUE="-366.09799194335938" PRIOR="-366.09799194335938" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard2_y" VALUE="-25.006134033203125" PRIOR="-25.006134033203125" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard2_z" VALUE="181.373046875" PRIOR="181.373046875" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard3_x" VALUE="214.67863464355469" PRIOR="214.67863464355469" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard3_y" VALUE="320.6265869140625" PRIOR="320.6265869140625" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard3_z" VALUE="-170.44921875" PRIOR="-170.44921875" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard4_x" VALUE="179.50796508789063" PRIOR="179.50796508789063" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard4_y" VALUE="342.7794189453125" PRIOR="342.7794189453125" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard4_z" VALUE="-148.06689453125" PRIOR="-148.06689453125" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard5_x" VALUE="-404.7572021484375" PRIOR="-404.7572021484375" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard5_y" VALUE="61.662017822265625" PRIOR="61.662017822265625" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard5_z" VALUE="191.94761657714844" PRIOR="191.94761657714844" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard6_x" VALUE="-160" PRIOR="-160" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard6_y" VALUE="-446.51904296875" PRIOR="-446.51904296875" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard6_z" VALUE="181.56936645507813" PRIOR="181.56936645507813" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard7_x" VALUE="435.3388671875" PRIOR="435.3388671875" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard7_y" VALUE="-153.35421752929688" PRIOR="-153.35421752929688" HIDDEN="true"/>
+		<Parameter NAME="checkerboard_checkerboard7_z" VALUE="-168.14202880859375" PRIOR="-168.14202880859375" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="checkerboard" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_checkerboard" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="checkerboard1" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="checkerboard2" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="checkerboard3" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="checkerboard4" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="checkerboard5" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="checkerboard6" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="checkerboard7" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="checkerboard1" MARKER2="checkerboard2" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard1" MARKER2="checkerboard3" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard1" MARKER2="checkerboard4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard1" MARKER2="checkerboard5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard1" MARKER2="checkerboard6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard1" MARKER2="checkerboard7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard2" MARKER2="checkerboard3" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard2" MARKER2="checkerboard4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard2" MARKER2="checkerboard5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard2" MARKER2="checkerboard6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard2" MARKER2="checkerboard7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard3" MARKER2="checkerboard4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard3" MARKER2="checkerboard5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard3" MARKER2="checkerboard6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard3" MARKER2="checkerboard7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard4" MARKER2="checkerboard5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard4" MARKER2="checkerboard6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard4" MARKER2="checkerboard7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard5" MARKER2="checkerboard6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard5" MARKER2="checkerboard7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="checkerboard6" MARKER2="checkerboard7" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="checkerboard1" OPACITY="255" POSITION="'checkerboard_checkerboard1_x' 'checkerboard_checkerboard1_y' 'checkerboard_checkerboard1_z'" RGB="93 93 93" SEGMENT="checkerboard" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="checkerboard2" OPACITY="255" POSITION="'checkerboard_checkerboard2_x' 'checkerboard_checkerboard2_y' 'checkerboard_checkerboard2_z'" RGB="93 93 93" SEGMENT="checkerboard" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="checkerboard3" OPACITY="255" POSITION="'checkerboard_checkerboard3_x' 'checkerboard_checkerboard3_y' 'checkerboard_checkerboard3_z'" RGB="93 93 93" SEGMENT="checkerboard" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="checkerboard4" OPACITY="255" POSITION="'checkerboard_checkerboard4_x' 'checkerboard_checkerboard4_y' 'checkerboard_checkerboard4_z'" RGB="93 93 93" SEGMENT="checkerboard" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="checkerboard5" OPACITY="255" POSITION="'checkerboard_checkerboard5_x' 'checkerboard_checkerboard5_y' 'checkerboard_checkerboard5_z'" RGB="93 93 93" SEGMENT="checkerboard" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="checkerboard6" OPACITY="255" POSITION="'checkerboard_checkerboard6_x' 'checkerboard_checkerboard6_y' 'checkerboard_checkerboard6_z'" RGB="93 93 93" SEGMENT="checkerboard" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="checkerboard7" OPACITY="255" POSITION="'checkerboard_checkerboard7_x' 'checkerboard_checkerboard7_y' 'checkerboard_checkerboard7_z'" RGB="93 93 93" SEGMENT="checkerboard" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

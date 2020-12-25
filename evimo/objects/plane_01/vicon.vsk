@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="plane_01_plane_011_x" VALUE="9.3495988845825195" PRIOR="9.3495988845825195" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_011_y" VALUE="49.288166046142578" PRIOR="49.288166046142578" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_011_z" VALUE="8.4033002853393555" PRIOR="8.4033002853393555" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_012_x" VALUE="-103.73816680908203" PRIOR="-103.73816680908203" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_012_y" VALUE="-29.788736343383789" PRIOR="-29.788736343383789" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_012_z" VALUE="-17.566335678100586" PRIOR="-17.566335678100586" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_013_x" VALUE="94.388572692871094" PRIOR="94.388572692871094" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_013_y" VALUE="-19.499429702758789" PRIOR="-19.499429702758789" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_013_z" VALUE="9.1630353927612305" PRIOR="9.1630353927612305" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_014_x" VALUE="102.33067321777344" PRIOR="102.33067321777344" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_014_y" VALUE="38.434478759765625" PRIOR="38.434478759765625" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_014_z" VALUE="8.4903936386108398" PRIOR="8.4903936386108398" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_015_x" VALUE="-26.512022018432617" PRIOR="-26.512022018432617" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_015_y" VALUE="110.94378662109375" PRIOR="110.94378662109375" HIDDEN="true"/>
+		<Parameter NAME="plane_01_plane_015_z" VALUE="3.7958507537841797" PRIOR="3.7958507537841797" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="plane_01" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_plane_01" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="plane_011" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_012" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_013" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_014" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_015" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="plane_011" MARKER2="plane_012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_011" MARKER2="plane_013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_011" MARKER2="plane_014" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_011" MARKER2="plane_015" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_012" MARKER2="plane_013" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_012" MARKER2="plane_014" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_012" MARKER2="plane_015" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_013" MARKER2="plane_014" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_013" MARKER2="plane_015" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_014" MARKER2="plane_015" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_011" OPACITY="255" POSITION="'plane_01_plane_011_x' 'plane_01_plane_011_y' 'plane_01_plane_011_z'" RGB="93 93 93" SEGMENT="plane_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_012" OPACITY="255" POSITION="'plane_01_plane_012_x' 'plane_01_plane_012_y' 'plane_01_plane_012_z'" RGB="93 93 93" SEGMENT="plane_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_013" OPACITY="255" POSITION="'plane_01_plane_013_x' 'plane_01_plane_013_y' 'plane_01_plane_013_z'" RGB="93 93 93" SEGMENT="plane_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_014" OPACITY="255" POSITION="'plane_01_plane_014_x' 'plane_01_plane_014_y' 'plane_01_plane_014_z'" RGB="93 93 93" SEGMENT="plane_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_015" OPACITY="255" POSITION="'plane_01_plane_015_x' 'plane_01_plane_015_y' 'plane_01_plane_015_z'" RGB="93 93 93" SEGMENT="plane_01" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

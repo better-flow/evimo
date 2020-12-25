@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="plane_00_plane_001_x" VALUE="-29.004627227783203" PRIOR="-29.004627227783203" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_001_y" VALUE="144.5496826171875" PRIOR="144.5496826171875" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_001_z" VALUE="10.553329467773438" PRIOR="10.553329467773438" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_002_x" VALUE="-88.390777587890625" PRIOR="-88.390777587890625" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_002_y" VALUE="-40.9161376953125" PRIOR="-40.9161376953125" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_002_z" VALUE="7.7611236572265625" PRIOR="7.7611236572265625" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_003_x" VALUE="1.9491691589355469" PRIOR="1.9491691589355469" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_003_y" VALUE="-71.6964111328125" PRIOR="-71.6964111328125" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_003_z" VALUE="-33.396377563476563" PRIOR="-33.396377563476563" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_004_x" VALUE="115.44624328613281" PRIOR="115.44624328613281" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_004_y" VALUE="-31.9371337890625" PRIOR="-31.9371337890625" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_004_z" VALUE="15.081924438476563" PRIOR="15.081924438476563" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_005_x" VALUE="-54.889968872070313" PRIOR="-54.889968872070313" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_005_y" VALUE="25.573335647583008" PRIOR="25.573335647583008" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_005_z" VALUE="61.225688934326172" PRIOR="61.225688934326172" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_006_x" VALUE="-72.790580749511719" PRIOR="-72.790580749511719" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_006_y" VALUE="-48.385246276855469" PRIOR="-48.385246276855469" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_006_z" VALUE="78.32666015625" PRIOR="78.32666015625" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_007_x" VALUE="87.961166381835938" PRIOR="87.961166381835938" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_007_y" VALUE="11.102564811706543" PRIOR="11.102564811706543" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_007_z" VALUE="72.605682373046875" PRIOR="72.605682373046875" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_008_x" VALUE="1.3675746917724609" PRIOR="1.3675746917724609" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_008_y" VALUE="136.29248046875" PRIOR="136.29248046875" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_008_z" VALUE="64.742744445800781" PRIOR="64.742744445800781" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_009_x" VALUE="34.391719818115234" PRIOR="34.391719818115234" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_009_y" VALUE="119.49033355712891" PRIOR="119.49033355712891" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_009_z" VALUE="-9.7167034149169922" PRIOR="-9.7167034149169922" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0010_x" VALUE="27.663505554199219" PRIOR="27.663505554199219" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0010_y" VALUE="-98.900741577148438" PRIOR="-98.900741577148438" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0010_z" VALUE="46.502304077148438" PRIOR="46.502304077148438" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0011_x" VALUE="124.24658203125" PRIOR="124.24658203125" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0011_y" VALUE="-29.269412994384766" PRIOR="-29.269412994384766" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0011_z" VALUE="-7.4671592712402344" PRIOR="-7.4671592712402344" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0012_x" VALUE="-87.085716247558594" PRIOR="-87.085716247558594" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0012_y" VALUE="-2.1131496429443359" PRIOR="-2.1131496429443359" HIDDEN="true"/>
+		<Parameter NAME="plane_00_plane_0012_z" VALUE="-15.331605911254883" PRIOR="-15.331605911254883" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="plane_00" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_plane_00" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="plane_001" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_002" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_003" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_004" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_005" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_006" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_007" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_008" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_009" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_0010" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_0011" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="plane_0012" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="plane_001" MARKER2="plane_002" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_001" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_003" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_002" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_004" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_003" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_004" MARKER2="plane_005" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_004" MARKER2="plane_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_004" MARKER2="plane_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_004" MARKER2="plane_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_004" MARKER2="plane_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_004" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_004" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_004" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_005" MARKER2="plane_006" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_005" MARKER2="plane_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_005" MARKER2="plane_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_005" MARKER2="plane_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_005" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_005" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_005" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_006" MARKER2="plane_007" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_006" MARKER2="plane_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_006" MARKER2="plane_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_006" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_006" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_006" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_007" MARKER2="plane_008" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_007" MARKER2="plane_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_007" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_007" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_007" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_008" MARKER2="plane_009" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_008" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_008" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_008" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_009" MARKER2="plane_0010" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_009" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_009" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_0010" MARKER2="plane_0011" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_0010" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="plane_0011" MARKER2="plane_0012" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_001" OPACITY="255" POSITION="'plane_00_plane_001_x' 'plane_00_plane_001_y' 'plane_00_plane_001_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_002" OPACITY="255" POSITION="'plane_00_plane_002_x' 'plane_00_plane_002_y' 'plane_00_plane_002_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_003" OPACITY="255" POSITION="'plane_00_plane_003_x' 'plane_00_plane_003_y' 'plane_00_plane_003_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_004" OPACITY="255" POSITION="'plane_00_plane_004_x' 'plane_00_plane_004_y' 'plane_00_plane_004_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_005" OPACITY="255" POSITION="'plane_00_plane_005_x' 'plane_00_plane_005_y' 'plane_00_plane_005_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_006" OPACITY="255" POSITION="'plane_00_plane_006_x' 'plane_00_plane_006_y' 'plane_00_plane_006_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_007" OPACITY="255" POSITION="'plane_00_plane_007_x' 'plane_00_plane_007_y' 'plane_00_plane_007_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_008" OPACITY="255" POSITION="'plane_00_plane_008_x' 'plane_00_plane_008_y' 'plane_00_plane_008_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_009" OPACITY="255" POSITION="'plane_00_plane_009_x' 'plane_00_plane_009_y' 'plane_00_plane_009_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_0010" OPACITY="255" POSITION="'plane_00_plane_0010_x' 'plane_00_plane_0010_y' 'plane_00_plane_0010_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_0011" OPACITY="255" POSITION="'plane_00_plane_0011_x' 'plane_00_plane_0011_y' 'plane_00_plane_0011_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="plane_0012" OPACITY="255" POSITION="'plane_00_plane_0012_x' 'plane_00_plane_0012_y' 'plane_00_plane_0012_z'" RGB="93 93 93" SEGMENT="plane_00" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+
