@@ -292,6 +292,11 @@ bool Dataset::read_bag_file(std::string bag_name,
               << " - " << this->cam_tj[this->cam_tj.size() - 1].ts << ")" << std::endl;
     auto cam_dt = this->cam_tj[this->cam_tj.size() - 1].ts - this->cam_tj[0].ts;
     for (auto &obj_tj : this->obj_tjs) {
+        if (obj_tj.second.size() == 0) {
+            std::cout << obj_tj.first << ":\t" << _yellow("No valid poses!\n");
+            continue;
+        }
+
         std::cout << obj_tj.first << " tj timestamp range:\t(" << obj_tj.second[0].ts
                   << " - " << obj_tj.second[obj_tj.second.size() - 1].ts << ")";
         auto dt = obj_tj.second[obj_tj.second.size() - 1].ts - obj_tj.second[0].ts;
