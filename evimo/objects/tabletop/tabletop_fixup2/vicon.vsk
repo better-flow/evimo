@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KinematicModel VERSION="3.2">
+	<Parameters>
+		<Parameter NAME="tabletop_tabletop1_x" VALUE="617.96575927734375" PRIOR="617.96575927734375" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop1_y" VALUE="-142.43363952636719" PRIOR="-142.43363952636719" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop1_z" VALUE="525.6812744140625" PRIOR="525.6812744140625" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop2_x" VALUE="145.28945922851563" PRIOR="145.28945922851563" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop2_y" VALUE="-92.617256164550781" PRIOR="-92.617256164550781" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop2_z" VALUE="367.27456665039063" PRIOR="367.27456665039063" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop3_x" VALUE="-322.84329223632813" PRIOR="-322.84329223632813" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop3_y" VALUE="-48.954322814941406" PRIOR="-48.954322814941406" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop3_z" VALUE="206.07923889160156" PRIOR="206.07923889160156" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop4_x" VALUE="-850.645263671875" PRIOR="-850.645263671875" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop4_y" VALUE="-0.91755020618438721" PRIOR="-0.91755020618438721" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop4_z" VALUE="-1.6810128688812256" PRIOR="-1.6810128688812256" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop5_x" VALUE="980.30364990234375" PRIOR="980.30364990234375" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop5_y" VALUE="3.6957919597625732" PRIOR="3.6957919597625732" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop5_z" VALUE="-56.088726043701172" PRIOR="-56.088726043701172" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop6_x" VALUE="67.73388671875" PRIOR="67.73388671875" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop6_y" VALUE="109.97289276123047" PRIOR="109.97289276123047" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop6_z" VALUE="-401.50131225585938" PRIOR="-401.50131225585938" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop8_x" VALUE="786.5174560546875" PRIOR="786.5174560546875" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop8_y" VALUE="-145.57257080078125" PRIOR="-145.57257080078125" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop8_z" VALUE="557.04754638671875" PRIOR="557.04754638671875" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop9_x" VALUE="362.42626953125" PRIOR="362.42626953125" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop9_y" VALUE="-58.666236877441406" PRIOR="-58.666236877441406" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop9_z" VALUE="228.88851928710938" PRIOR="228.88851928710938" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop10_x" VALUE="-599.707275390625" PRIOR="-599.707275390625" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop10_y" VALUE="-17.600303649902344" PRIOR="-17.600303649902344" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop10_z" VALUE="109.33232879638672" PRIOR="109.33232879638672" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop11_x" VALUE="-90.716529846191406" PRIOR="-90.716529846191406" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop11_y" VALUE="32.248893737792969" PRIOR="32.248893737792969" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop11_z" VALUE="-60.919994354248047" PRIOR="-60.919994354248047" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop12_x" VALUE="-695.36572265625" PRIOR="-695.36572265625" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop12_y" VALUE="146.40777587890625" PRIOR="146.40777587890625" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop12_z" VALUE="-535.962646484375" PRIOR="-535.962646484375" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop13_x" VALUE="737.85009765625" PRIOR="737.85009765625" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop13_y" VALUE="42.937999725341797" PRIOR="42.937999725341797" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop13_z" VALUE="-135.39041137695313" PRIOR="-135.39041137695313" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop14_x" VALUE="-637.14337158203125" PRIOR="-637.14337158203125" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop14_y" VALUE="167.78443908691406" PRIOR="167.78443908691406" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop14_z" VALUE="-639.883056640625" PRIOR="-639.883056640625" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop7_x" VALUE="-637.172119140625" PRIOR="-637.172119140625" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop7_y" VALUE="167.81520080566406" PRIOR="167.81520080566406" HIDDEN="true"/>
+		<Parameter NAME="tabletop_tabletop7_z" VALUE="-639.91033935546875" PRIOR="-639.91033935546875" HIDDEN="true"/>
+	</Parameters>
+	<Skeleton>
+		<Segment NAME="tabletop" OPACITY="255" BOUNDS="-50 -50 -50 50 50 50" MASS="0" MASS-CENTRE="0 0 0" INERTIA="0 0 0" RGB="255 164 0" HIDDEN="false" DRAW-END-RATIO="1" DRAW-HEIGHT="0.5" DRAW-TWIST="0" DRAW-WIDTH="0.5" DRAW-STYLE="box" DRAW-SHADING="shaded-smooth">
+			<JointFree NAME="World_tabletop" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0" MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" T="* * * * * *" SIGNS="+ + + + + +" RANGE-CENTRING-STATE="0 0 0 0 0 0" RANGE-MATRIX="29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 29.60881233215332 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000 0 0 0 0 0 0 100000000">
+				<JointTemplate MEAN="0 0 0 0 0 0" COVARIANCE="2.464900016784668 0 0 0 0 0 0 2.464900016784668 0 0 0 0 0 0 246.49000549316406 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000 0 0 0 0 0 0 1000000" TPOSE-MEAN="0 0 0 0 0 0" TPOSE-COVARIANCE="0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612 0 0 0 0 0 0 0.10000000149011612" PRE-ORIENTATION="0 0 0" PRE-POSITION="0 0 0" INVERSE-POST-ORIENTATION="0 0 0" INVERSE-POST-POSITION="0 0 0"/>
+			</JointFree>
+		</Segment>
+	</Skeleton>
+	<MarkerSet>
+		<Markers>
+			<Marker NAME="tabletop1" RADIUS="12.5" RGB="255 164 0" STATUS="required" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop2" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop3" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop4" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop5" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop6" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop7" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop8" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop9" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop10" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop11" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop12" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop13" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+			<Marker NAME="tabletop14" RADIUS="12.5" RGB="255 164 0" STATUS="optional" VIEW-ANGLE="0"/>
+		</Markers>
+		<Sticks>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop2" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop3" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop8" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop9" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop1" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop3" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop8" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop9" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop2" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop4" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop8" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop9" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop3" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop5" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop8" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop9" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop4" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop6" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop8" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop9" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop5" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop6" MARKER2="tabletop7" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop6" MARKER2="tabletop8" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop6" MARKER2="tabletop9" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop6" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop6" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop6" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop6" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop6" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop7" MARKER2="tabletop8" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop7" MARKER2="tabletop9" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop7" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop7" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop7" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop7" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop7" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop8" MARKER2="tabletop9" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop8" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop8" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop8" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop8" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop8" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop9" MARKER2="tabletop10" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop9" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop9" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop9" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop9" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop10" MARKER2="tabletop11" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop10" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop10" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop10" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop11" MARKER2="tabletop12" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop11" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop11" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop12" MARKER2="tabletop13" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop12" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+			<Stick MARKER1="tabletop13" MARKER2="tabletop14" RGB1="255 164 0" RGB2="255 164 0"/>
+		</Sticks>
+	</MarkerSet>
+	<TargetSet>
+		<Targets>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop1" OPACITY="255" POSITION="'tabletop_tabletop1_x' 'tabletop_tabletop1_y' 'tabletop_tabletop1_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop2" OPACITY="255" POSITION="'tabletop_tabletop2_x' 'tabletop_tabletop2_y' 'tabletop_tabletop2_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop3" OPACITY="255" POSITION="'tabletop_tabletop3_x' 'tabletop_tabletop3_y' 'tabletop_tabletop3_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop4" OPACITY="255" POSITION="'tabletop_tabletop4_x' 'tabletop_tabletop4_y' 'tabletop_tabletop4_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop5" OPACITY="255" POSITION="'tabletop_tabletop5_x' 'tabletop_tabletop5_y' 'tabletop_tabletop5_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop6" OPACITY="255" POSITION="'tabletop_tabletop6_x' 'tabletop_tabletop6_y' 'tabletop_tabletop6_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop8" OPACITY="255" POSITION="'tabletop_tabletop8_x' 'tabletop_tabletop8_y' 'tabletop_tabletop8_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop9" OPACITY="255" POSITION="'tabletop_tabletop9_x' 'tabletop_tabletop9_y' 'tabletop_tabletop9_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop10" OPACITY="255" POSITION="'tabletop_tabletop10_x' 'tabletop_tabletop10_y' 'tabletop_tabletop10_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop11" OPACITY="255" POSITION="'tabletop_tabletop11_x' 'tabletop_tabletop11_y' 'tabletop_tabletop11_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop12" OPACITY="255" POSITION="'tabletop_tabletop12_x' 'tabletop_tabletop12_y' 'tabletop_tabletop12_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop13" OPACITY="255" POSITION="'tabletop_tabletop13_x' 'tabletop_tabletop13_y' 'tabletop_tabletop13_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop14" OPACITY="255" POSITION="'tabletop_tabletop14_x' 'tabletop_tabletop14_y' 'tabletop_tabletop14_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+			<TargetLocalPointToWorldPoint COVARIANCE="1 0 0 0 1 0 0 0 1" FILL-GAPS="false" GAUSSIAN="true" HIDDEN="false" MARKER="tabletop7" OPACITY="255" POSITION="'tabletop_tabletop7_x' 'tabletop_tabletop7_y' 'tabletop_tabletop7_z'" RGB="93 93 93" SEGMENT="tabletop" WEIGHT="1" DRAW-STYLE="None">
+				<TargetLocalPointToWorldPointTemplate COVARIANCE="1 0 0 0 1 0 0 0 1"/>
+			</TargetLocalPointToWorldPoint>
+		</Targets>
+	</TargetSet>
+</KinematicModel>
+

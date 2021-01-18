@@ -1,0 +1,51 @@
+<!DOCTYPE MeshLabDocument>
+<MeshLabProject>
+ <MeshGroup>
+  <MLMesh visible="1" filename="modell.ply" label="model_l.ply">
+   <MLMatrix44>
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption wireColor="64 64 64 255" pointColor="131 149 69 255" pointSize="3" boxColor="234 234 234 255" wireWidth="1" solidColor="192 192 192 255">100111000000000000000100000001011000001010100000000100111010000111001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" filename="modelr.ply" label="model_r.ply">
+   <MLMatrix44>
+1 9.52795e-16 5.24547e-16 6.25278e-13 
+-9.52795e-16 1 -1.56783e-16 3.55271e-13 
+-5.24547e-16 1.56783e-16 1 2.84217e-13 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption wireColor="64 64 64 255" pointColor="131 149 69 255" pointSize="3" boxColor="234 234 234 255" wireWidth="1" solidColor="192 192 192 255">100111000000000000000100000001011000001010100000000100111010000111001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" filename="captured.ply" label="captured.ply">
+   <MLMatrix44>
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption wireColor="64 64 64 255" pointColor="131 149 69 255" pointSize="3" boxColor="234 234 234 255" wireWidth="1" solidColor="192 192 192 255">100001000000000000000100000001011000001010100000000100111010000111001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" filename="captured (1).ply" label="captured (1).ply">
+   <MLMatrix44>
+0.99993 -0.00954222 -0.00695585 4.17351 
+0.00950033 0.999937 -0.00603042 2.73392 
+0.00701295 0.00596391 0.999958 0.676111 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption wireColor="64 64 64 255" pointColor="131 149 69 255" pointSize="3" boxColor="234 234 234 255" wireWidth="1" solidColor="192 192 192 255">100001000000000000000100000001011000001010100000000100111010000111001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" filename="captured (1)_.ply" label="captured (1)_.ply">
+   <MLMatrix44>
+1 0 0 0 
+0 1 0 0 
+0 0 1 0 
+0 0 0 1 
+</MLMatrix44>
+   <RenderingOption wireColor="64 64 64 255" pointColor="131 149 69 255" pointSize="3" boxColor="234 234 234 255" wireWidth="1" solidColor="192 192 192 255">100001000000000000000100000001011000001010100000000100111010000111001001</RenderingOption>
+  </MLMesh>
+ </MeshGroup>
+ <RasterGroup/>
+</MeshLabProject>

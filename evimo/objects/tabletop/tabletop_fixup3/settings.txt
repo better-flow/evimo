@@ -1,0 +1,5 @@
+id: 22
+name: tabletop
+mesh: model.ply
+unit: mm
+ros_pos_topic: /vicon/tabletop

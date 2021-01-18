@@ -71,6 +71,38 @@ def transform_vicon_2_object(object_pts, vicon_pts):
     return (R @ vcn_pt_npy + T).transpose(), obj_pt_npy.transpose(), marker_ids
 
 
+
+def transform_object_2_vicon(object_pts, vicon_pts, obj, whitelist=None):
+    k0 = set(object_pts.keys())
+    k1 = set(vicon_pts.keys())
+    if (whitelist is not None):
+        k1 = k1.intersection(set(whitelist))
+    marker_ids = sorted(k0.intersection(k1))
+    print ("vicon/object marker id intersection", marker_ids)
+
+    obj_pt_npy = np.zeros(shape=(3, len(marker_ids)), dtype=np.float32)
+    vcn_pt_npy = np.zeros(shape=(3, len(marker_ids)), dtype=np.float32)
+    for i, mid in enumerate(marker_ids):
+        obj_pt_npy[:,i] = object_pts[mid]
+        vcn_pt_npy[:,i] = vicon_pts[mid]
+
+    R, T = rigid_transform_3D(obj_pt_npy, vcn_pt_npy)
+
+    R_ = np.array([[ 0.903726,   -0.14523385, -0.40272397],
+                  [-0.3248164,   0.38017777, -0.8660018 ],
+                  [ 0.2788795,   0.9134397,   0.29640222]]) 
+
+    T_ = np.array([[ 82.552795],
+                  [ 12.040735],
+                  [-14.74041 ]])
+    R = np.linalg.inv(R_) @ R
+    T -= T_
+
+    print (R, T)
+    obj_ = (R @ obj.transpose() + T).transpose()
+    return vcn_pt_npy.transpose(), obj_, marker_ids
+
+
 def generate_sphere(pos, r, samples=60):
     phi = np.linspace(0, np.pi, samples)
     theta = np.linspace(0, 2 * np.pi, 2 * samples)
@@ -95,6 +127,7 @@ def estimate_marker_radii(object_folder, settings, config):
         sph = pyrsc.Sphere()
         center, radius, inliers = sph.fit(points, thresh=0.4)
         ret[marker_id] = radius
+        print (marker_id, ':', center, radius)
     return ret
 
 
@@ -125,11 +158,15 @@ if __name__ == '__main__':
     print ("Refined radii:", radii)
 
 
-    vicon_pts, obj_pts, marker_ids = transform_vicon_2_object(config, vsk)
-
     import open3d as o3d
     object_cloud = o3d.io.read_point_cloud(os.path.join(args.object_folder, settings['mesh']))
     object_cloud.paint_uniform_color([1, 0.706, 0])
+
+    #vicon_pts, obj_pts, marker_ids = transform_vicon_2_object(config, vsk)
+    #whitelist=[1,2,6,5]
+    whitelist=[4,3,7]
+    vicon_pts, object_cloud_np_, marker_ids = transform_object_2_vicon(config, vsk, np.asarray(object_cloud.points), whitelist=whitelist)
+    object_cloud.points = o3d.utility.Vector3dVector(object_cloud_np_)
 
     vicon_spheres = []
     for i, mid in enumerate(marker_ids):
