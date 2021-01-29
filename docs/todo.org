@@ -1,8 +1,6 @@
-* TODO Fix the hovering 
-** Investigate messing with dom elements
-** Investigate messing with dom elements
+* DONE Fix the hovering
+* TODO Add links
 * TODO Add the rig details
 ** TODO Make graphic for rig
 ** TODO write up for rig
 * TODO Add bootstrap formatting
-* TODO Add links
