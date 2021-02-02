@@ -1,5 +1,5 @@
 * DONE Fix the hovering
-* TODO Add links
+* DONE Add links
 * TODO Add the rig details
 ** TODO Make graphic for rig
 ** TODO write up for rig
