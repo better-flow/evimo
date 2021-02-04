@@ -38,6 +38,37 @@
 
 <body>
   <div class="section">
+    <div class="container">
+      <h2> The Recording Setup </h2>
+      <div class="col-md-6">
+        <p>
+        We use the rigs showed in the following image which consists for three
+        Event Cameras and a High resolution RGB camera and the data collection
+        is performed on an Intel NUC.
+        </p>
+        <div class="row"> <h3> Prophese Cameras </h3>
+          <ul>
+            <li> Resoultion: </td><td style="text-align: center;" class="center"> 640 x 480 </li>
+            <li> Note: There are two prophese event cameras set up as a stereo pair. </li>
+          </ul>
+        </div>
+        <div class="row"> <h3> Samsumg Monocular Camera </h3>
+          <ul>
+            <li> Resoultion:   640 x 480   </li>
+            <li>   Note:  This camera is at the center of the rig.   </li>
+          </ul>
+        </div>
+        <div class="row"> <h3> Flea Camera </h3>
+          <ul>
+          <li>    Resoultion:  2080x1552  </li>
+            <li>   Note:  This camera is at the center of the rig.   </li>
+             </ul>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <img src="img/rig.jpeg" class="img-responsive fit-image"/>
+      </div>
+    </div>
   </div>
 
   <div class="section">
@@ -46,12 +77,12 @@
       <div class="container">
         <div class="row">
           <h3> Independently Moving Objects</h3>
-          <a href="https://drive.google.com/file/d/11S629-C0iLzG8KrYOpO9XNzkYIzpYupm/view?usp=sharing">
-            <p>Raw<i>.bag</i>
+          <div class="col-md-10" style="">
+          <p> These are whole sequences dedicated with various independently moving objects in the scene. The ROS bag files are produced <a href="https://drive.google.com/file/d/11S629-C0iLzG8KrYOpO9XNzkYIzpYupm/view?usp=sharing">
+            here
               <span class="glyphicon glyphicon-download text-primary"> </span>
-          </a> </p>
-          <div class="col-md-8" style="">
-            <table class="table table-bordered table-hover table-striped">
+          </a>. </p>
+            <table class="table table-bordered table-hover table-striped w-auto">
               <tr>
                 <th style="width=10%">Camera</th>
                 <th style="width=65%"> Download Links</th>
@@ -59,89 +90,89 @@
               </tr>
 
               <tr>
-                <td>flea3_7</td>
-                <td class="list-group">
+                <td style="text-align: center;">flea3_7</td>
+                <td style="text-align: center;" class="list-group">
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-CABNw4SIdODje1H6TfdZotRQNY0v6Xe/view?usp=sharing">
-                      <p>Ground Truth<i>.npy</i>
+                      <p>data <i>.npy</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/11zlfxPsqP-ZOfCefP8g3gEoVYwk5gPgy/view?usp=sharing">
-                      <p>Ground truth<i>.txt</i>
+                      <p>data <i>.txt</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
                 </td>
-                <td>
+                <td style="text-align: center;">
                   <img onmouseover="this.src='img/gif/f5.gif'" onmouseout="this.src='img/gif/f5.png'" src="img/gif/f5.png" />
                 </td>
               </tr>
 
               <tr>
-                <td>left_camera</td>
-                <td class="list-group">
+                <td style="text-align: center;">left_camera</td>
+                <td style="text-align: center;" class="list-group">
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-g4Na96-0rpQNMQHjJPJvF0ngMcf9sxh/view?usp=sharing">
-                      <p>Ground Truth<i>.npy</i>
+                      <p>data <i>.npy</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12bXm4nK--0IgM-Tmulc5lmg96jT6oO4e/view?usp=sharing">
-                      <p>Ground truth<i>.txt</i>
+                      <p>data <i>.txt</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
                 </td>
-                <td><img onmouseover="this.src='img/gif/l7.gif'" onmouseout="this.src='img/gif/l7.png'" src="img/gif/l7.png" class="moveonhover" /></td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/l7.gif'" onmouseout="this.src='img/gif/l7.png'" src="img/gif/l7.png" class="moveonhover" /></td>
               </tr>
 
               <tr>
-                <td>right_camera</td>
-                <td class="list-group">
+                <td style="text-align: center;">right_camera</td>
+                <td style="text-align: center;" class="list-group">
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10F7_b9znykInqzmHj4rt3wYo6KPVOxTD/view?usp=sharing">
-                      <p>Ground Truth<i>.npy</i>
+                      <p>data <i>.npy</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/137_uCn0xwVXPYhI4EZY_ooObX-77oxSg/view?usp=sharing">
-                      <p>Ground truth<i>.txt</i>
+                      <p>data <i>.txt</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
                 </td>
-                <td><img onmouseover="this.src='img/gif/r5.gif'" onmouseout="this.src='img/gif/r5.png'" src="img/gif/r5.png" class="moveonhover" /></td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/r5.gif'" onmouseout="this.src='img/gif/r5.png'" src="img/gif/r5.png" class="moveonhover" /></td>
               </tr>
 
               <tr>
-                <td>samsung_mono</td>
-                <td class="list-group">
+                <td style="text-align: center;">samsung_mono</td>
+                <td style="text-align: center;" class="list-group">
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10yE76O91ZoMbI74dn-f61BvI9mPcWrUH/view?usp=sharing">
-                      <p>Ground Truth<i>.npy</i>
+                      <p>data <i>.npy</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/144IB2bZeJx3GkZkM2D5ivHAYSI9xdp6s/view?usp=sharing">
-                      <p>Ground truth<i>.txt</i>
+                      <p>data <i>.txt</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
                 </td>
-                <td><img onmouseover="this.src='img/gif/s5.gif'" onmouseout="this.src='img/gif/s5.png'" src="img/gif/s5.png" class="moveonhover" /></td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/s5.gif'" onmouseout="this.src='img/gif/s5.png'" src="img/gif/s5.png" class="moveonhover" /></td>
               </tr>
 
             </table>
@@ -149,11 +180,12 @@
         </div>
         <div class="row">
           <h3> Independently Moving Objects with a Non Continuous stream of events</h3>
-          <a href="https://drive.google.com/file/d/11T4dmRvdHu2IHkBLq98u1EiNKUbFppAe/view?usp=sharing">
-            <p>Raw<i>.bag</i>
+          <div class="col-md-10" style="">
+
+          <p> These are sequences with various independently moving object with some events missing. The ROS bag files are produced <a href="https://drive.google.com/file/d/11T4dmRvdHu2IHkBLq98u1EiNKUbFppAe/view?usp=sharing">
+            here
               <span class="glyphicon glyphicon-download text-primary"> </span>
-          </a> </p>
-          <div class="col-md-8" style="">
+          </a> </p>.
             <table class="table table-bordered table-hover table-striped">
               <tr>
                 <th>Camera</th>
@@ -161,174 +193,170 @@
                 <th>Preview</th>
               </tr>
               <tr>
-                <td>flea3_7</td>
-                <td class="list-group">
+                <td style="text-align: center;">flea3_7</td>
+                <td style="text-align: center;" class="list-group">
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-DP2cFe0IQiniktv-EnPdd3R4MD9T-JV/view?usp=sharing">
-                      <p>Ground Truth<i>.npy</i>
+                      <p>data <i>.npy</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
-
-
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1260fklziGEYHVHF3yhagpz6fGtSpyp1Q/view?usp=sharing">
-                      <p>Ground truth<i>.txt</i>
+                      <p>data <i>.txt</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
                 </td>
-                <td><img onmouseover="this.src='img/gif/f7.gif'" onmouseout="this.src='img/gif/f7.png'" src="img/gif/f7.png" class="moveonhover" /></td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/f7.gif'" onmouseout="this.src='img/gif/f7.png'" src="img/gif/f7.png" class="moveonhover" /></td>
               </tr>
               <tr>
-                <td>left_camera</td>
-                <td class="list-group">
+                <td style="text-align: center;">left_camera</td>
+                <td style="text-align: center;" class="list-group">
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-j9Z_8MFHslPPwVgPnZv7CbZgs802uwY/view?usp=sharing">
-                      <p>Ground Truth<i>.npy</i>
+                      <p>data <i>.npy</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/drive/folders/1RmzgMX1_1c4ssrJiYemCgQPl2juNNb61?usp=sharing">
-                      <p>Ground truth<i>.txt</i>
+                      <p>data <i>.txt</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
                 </td>
-                <td><img onmouseover="this.src='img/gif/l7.gif'" onmouseout="this.src='img/gif/l7.png'" src="img/gif/l7.png" class="moveonhover" /></td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/l7.gif'" onmouseout="this.src='img/gif/l7.png'" src="img/gif/l7.png" class="moveonhover" /></td>
               </tr>
               <tr>
-                <td>right_camera</td>
-                <td class="list-group">
+                <td style="text-align: center;">right_camera</td>
+                <td style="text-align: center;" class="list-group">
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10I5JMrkUjKAevTPvXkq5ElYWINiCwq-Q/view?usp=sharing">
-                      <p>Ground Truth<i>.npy</i>
+                      <p>data <i>.npy</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/13B-weTGmgEdNosMtIAglIHuhZ2cpPgag/view?usp=sharing">
-                      <p>Ground truth<i>.txt</i>
+                      <p>data <i>.txt</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
                 </td>
 
-                <td><img onmouseover="this.src='img/gif/r7.gif'" onmouseout="this.src='img/gif/r7.png'" src="img/gif/r7.png" class="moveonhover" /></td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/r7.gif'" onmouseout="this.src='img/gif/r7.png'" src="img/gif/r7.png" class="moveonhover" /></td>
               </tr>
               <tr>
-                <td>samsung_mono</td>
-                <td class="list-group">
+                <td style="text-align: center;">samsung_mono</td>
+                <td style="text-align: center;" class="list-group">
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10zUQ9VprjAurU-65UzFMwuC8iXihRGix/view?usp=sharing">
-                      <p>Ground Truth<i>.npy</i>
+                      <p>data <i>.npy</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
 
                   <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14B52C6NSDFnWNECleOXaabFruFf-N3n6/view?usp=sharing">
-                      <p>Ground truth<i>.txt</i>
+                      <p>data <i>.txt</i>
                         <span class="glyphicon glyphicon-download text-primary"> </span>
                     </a> </p>
                   </li>
 
                 </td>
-                <td><img onmouseover="this.src='img/gif/s7.gif'" onmouseout="this.src='img/gif/s7.png'" src="img/gif/s7.png" class="moveonhover" /></td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/s7.gif'" onmouseout="this.src='img/gif/s7.png'" src="img/gif/s7.png" class="moveonhover" /></td>
               </tr>
             </table>
           </div>
         </div>
         <div class="row">
           <h3> Independently Moving Objects in Low Light</h3>
-          <a href="https://drive.google.com/file/d/11V97bfN03gmtqzyaLCIQgn_YRVu0xpvx/view?usp=sharing">
-            <p>Raw<i>.bag</i>
-              <span class="glyphicon glyphicon-download text-primary"> </span>
-            </p>
-          </a>
-          <div class="col-md-8" style="">
+          <div class="col-md-10" style="">
+
+          <p> These are whole sequences that were shot in low light. Due to this the output of the flea camera (RGB) is black. The ROS bag files are produced <a href="https://drive.google.com/file/d/11V97bfN03gmtqzyaLCIQgn_YRVu0xpvx/view?usp=sharing">
+            here <span class="glyphicon glyphicon-download text-primary"></span></a></p>
             <table class="table table-bordered table-hover table-striped">
-            <tr>
-              <th>Camera</th>
-              <th> Download Links</th>
-              <th>Preview</th>
-            </tr>
-            <tr>
-              <td>flea3_7</td>
-              <td class="list-group">
+              <tr>
+                <th>Camera</th>
+                <th> Download Links</th>
+                <th>Preview</th>
+              </tr>
+              <tr>
+                <td style="text-align: center;">flea3_7</td>
+                <td style="text-align: center;" class="list-group">
 
-                <li class="list-unstyled">
-                  <p><i>None</i></p>
-                </li>
-              </td>
-              <td><img onmouseover="this.src='img/gif/f15.gif'" onmouseout="this.src='img/gif/f15.png'" src="img/gif/f15.png" class="moveonhover" /></td>
-            </tr>
-            <tr>
-              <td>left_camera</td>
-              <td class="list-group">
+                  <li class="list-unstyled">
+                    <p><i>None</i></p>
+                  </li>
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/f15.gif'" onmouseout="this.src='img/gif/f15.png'" src="img/gif/f15.png" class="moveonhover" /></td>
+              </tr>
+              <tr>
+                <td style="text-align: center;">left_camera</td>
+                <td style="text-align: center;" class="list-group">
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-olftYdWgY4kP--XoAqmVLABdBx_7cI0/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12ecMywrufmo6RXVmH8MifkOgfdz-phyL/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-              </td>
-              <td><img onmouseover="this.src='img/gif/l15.gif'" onmouseout="this.src='img/gif/l15.png'" src="img/gif/l15.png" class="moveonhover" /></td>
-            </tr>
-            <tr>
-              <td>right_camera</td>
-              <td class="list-group">
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10QJg9SzgGne3rvW3nP6aDcc6rwzkk-Jc/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-olftYdWgY4kP--XoAqmVLABdBx_7cI0/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/13GKbtwO7QNt_PIeEMmKH8BytGIJEKicY/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12ecMywrufmo6RXVmH8MifkOgfdz-phyL/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
-              </td>
-              <td><img onmouseover="this.src='img/gif/r14.gif'" onmouseout="this.src='img/gif/r14.png'" src="img/gif/r14.png" class="moveonhover" /></td>
-            </tr>
-            <tr>
-              <td>samsung_mono</td>
-              <td class="list-group">
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/l15.gif'" onmouseout="this.src='img/gif/l15.png'" src="img/gif/l15.png" class="moveonhover" /></td>
+              </tr>
+              <tr>
+                <td style="text-align: center;">right_camera</td>
+                <td style="text-align: center;" class="list-group">
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/111cws9r3wH45r4QvsXaRdKRxPddkP5M3/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10QJg9SzgGne3rvW3nP6aDcc6rwzkk-Jc/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14C4aHOr7nQJuO1UoPkDr9RGYx31KT21B/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/13GKbtwO7QNt_PIeEMmKH8BytGIJEKicY/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
-              </td>
-              <td><img onmouseover="this.src='img/gif/s15.gif'" onmouseout="this.src='img/gif/s15.png'" src="img/gif/s15.png" class="moveonhover" /></td>
-            </tr>
-          </table>
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/r14.gif'" onmouseout="this.src='img/gif/r14.png'" src="img/gif/r14.png" class="moveonhover" /></td>
+              </tr>
+              <tr>
+                <td style="text-align: center;">samsung_mono</td>
+                <td style="text-align: center;" class="list-group">
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/111cws9r3wH45r4QvsXaRdKRxPddkP5M3/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14C4aHOr7nQJuO1UoPkDr9RGYx31KT21B/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/s15.gif'" onmouseout="this.src='img/gif/s15.png'" src="img/gif/s15.png" class="moveonhover" /></td>
+              </tr>
+            </table>
           </div>
         </div>
         <div class="row">
@@ -337,98 +365,98 @@
             <p>Raw<i>.bag</i>
               <span class="glyphicon glyphicon-download text-primary"> </span>
           </a> </p>
-          <div class="col-md-8" style="">
+          <div class="col-md-10" style="">
             <table class="table table-bordered table-hover table-striped">
-            <tr>
-              <th>This Camera</th>
-              <th> Download Links</th>
-              <th>Preview</th>
-            </tr>
+              <tr>
+                <th>This Camera</th>
+                <th> Download Links</th>
+                <th>Preview</th>
+              </tr>
 
-            <tr>
-              <td>flea3_7</td>
-              <td class="list-group">
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-WiSOCfWABZEY4YaEsVVInv41zrtdNAW/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12XitR4O78pTCNg2kgBTajKhnrJl1EnLg/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-              </td>
-              <td><img onmouseover="this.src='img/gif/f12.gif'" onmouseout="this.src='img/gif/f12.png'" src="img/gif/f12.png" class="moveonhover" /></td>
-            </tr>
-
-            <tr>
-              <td>left_camera</td>
-              <td class="list-group">
-
-                <li class="list-unstyled"> <a href="f12">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+              <tr>
+                <td style="text-align: center;">flea3_7</td>
+                <td style="text-align: center;" class="list-group">
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-WiSOCfWABZEY4YaEsVVInv41zrtdNAW/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
 
-                <li class="list-unstyled"> <a href="f12">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12XitR4O78pTCNg2kgBTajKhnrJl1EnLg/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
-              </td>
-              <td><img onmouseover="this.src='img/gif/l12.gif'" onmouseout="this.src='img/gif/l12.png'" src="img/gif/l12.png" class="moveonhover" /></td>
-            </tr>
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/f12.gif'" onmouseout="this.src='img/gif/f12.png'" src="img/gif/f12.png" class="moveonhover" /></td>
+              </tr>
 
-            <tr>
-              <td>right_camera</td>
-              <td class="list-group">
+              <tr>
+                <td style="text-align: center;">left_camera</td>
+                <td style="text-align: center;" class="list-group">
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10mB5CN1bwUh0BiIwc706q1k9B8uomJ6o/view?usp=sharing ">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1YwSmaL56mN9jGlex4hsw2XeVn5xBddW0/view?usp=sharing ">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-              </td>
-              <td><img onmouseover="this.src='img/gif/r11.gif'" onmouseout="this.src='img/gif/r11.png'" src="img/gif/r11.png" class="moveonhover" /></td>
-            </tr>
-
-            <tr>
-              <td>samsung_mono</td>
-              <td class="list-group">
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/11ExymKec8mlxb2Ok7xTK6X1Oz8BcUXhQ/view?usp=sharing ">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="f12">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14WTVi1O9grdR9d1l-7ZZmV4PprExpIit/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="f12">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
-              </td>
-              <td><img onmouseover="this.src='img/gif/s12.gif'" onmouseout="this.src='img/gif/s12.png'" src="img/gif/s12.png" class="moveonhover" /></td>
-            </tr>
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/l12.gif'" onmouseout="this.src='img/gif/l12.png'" src="img/gif/l12.png" class="moveonhover" /></td>
+              </tr>
 
-          </table>
+              <tr>
+                <td style="text-align: center;">right_camera</td>
+                <td style="text-align: center;" class="list-group">
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10mB5CN1bwUh0BiIwc706q1k9B8uomJ6o/view?usp=sharing ">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1YwSmaL56mN9jGlex4hsw2XeVn5xBddW0/view?usp=sharing ">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/r11.gif'" onmouseout="this.src='img/gif/r11.png'" src="img/gif/r11.png" class="moveonhover" /></td>
+              </tr>
+
+              <tr>
+                <td style="text-align: center;">samsung_mono</td>
+                <td style="text-align: center;" class="list-group">
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/11ExymKec8mlxb2Ok7xTK6X1Oz8BcUXhQ/view?usp=sharing ">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14WTVi1O9grdR9d1l-7ZZmV4PprExpIit/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/s12.gif'" onmouseout="this.src='img/gif/s12.png'" src="img/gif/s12.png" class="moveonhover" /></td>
+              </tr>
+
+            </table>
           </div>
         </div>
         <div class="row">
@@ -437,98 +465,98 @@
             <p>Raw<i>.bag</i>
               <span class="glyphicon glyphicon-download text-primary"> </span>
           </a> </p>
-          <div class="col-md-8" style="">
+          <div class="col-md-10" style="">
             <table class="table table-bordered table-hover table-striped">
-            <tr>
-              <th>Camera</th>
-              <th> Download Links</th>
-              <th>Preview</th>
-            </tr>
+              <tr>
+                <th>Camera</th>
+                <th> Download Links</th>
+                <th>Preview</th>
+              </tr>
 
-            <tr>
-              <td>flea3_7</td>
+              <tr>
+                <td style="text-align: center;">flea3_7</td>
 
-              <td class="list-group">
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-ZRYFhE_KwRNDZK_06j8QhstO90FQWEB/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12Yq9KatMV79v6DeTNa3LnBfGZV4QG9bU/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-              </td>
-              <td>
-                <img onmouseover="this.src='img/gif/f14.gif'" onmouseout="this.src='img/gif/f14.png'" src="img/gif/f14.png" class="moveonhover" />
-              </td>
-            </tr>
+                <td style="text-align: center;" class="list-group">
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-ZRYFhE_KwRNDZK_06j8QhstO90FQWEB/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12Yq9KatMV79v6DeTNa3LnBfGZV4QG9bU/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+                </td>
+                <td style="text-align: center;">
+                  <img onmouseover="this.src='img/gif/f14.gif'" onmouseout="this.src='img/gif/f14.png'" src="img/gif/f14.png" class="moveonhover" />
+                </td>
+              </tr>
 
-            <tr>
-              <td>left_camera</td>
-              <td class="list-group">
+              <tr>
+                <td style="text-align: center;">left_camera</td>
+                <td style="text-align: center;" class="list-group">
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10BYSo8sijQBX_jNCKMXk7pULze0wl650/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/130xSqYTOETHDyny2vJ0AT9jU-D7VN5ZE/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-              </td>
-              <td><img onmouseover="this.src='img/gif/l14.gif'" onmouseout="this.src='img/gif/l14.png'" src="img/gif/l14.png" class="moveonhover" /></td>
-            </tr>
-
-            <tr>
-              <td>right_camera</td>
-              <td class="list-group">
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10p4tKMTX4Hedyfq3CZsKzR1IHZMFwXAN/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10BYSo8sijQBX_jNCKMXk7pULze0wl650/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/13syDyGTDsUMR3RtJp0j49cWkV-5_0eHc/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/130xSqYTOETHDyny2vJ0AT9jU-D7VN5ZE/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
-              </td>
-              <td><img onmouseover="this.src='img/gif/r13.gif'" onmouseout="this.src='img/gif/r13.png'" src="img/gif/r13.png" class="moveonhover" /></td>
-            </tr>
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/l14.gif'" onmouseout="this.src='img/gif/l14.png'" src="img/gif/l14.png" class="moveonhover" /></td>
+              </tr>
 
-            <tr>
-              <td>samsung_mono</td>
-              <td class="list-group">
+              <tr>
+                <td style="text-align: center;">right_camera</td>
+                <td style="text-align: center;" class="list-group">
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/11NvwTO0xrN8FMSmyRy71_1DaTZbQotxe/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10p4tKMTX4Hedyfq3CZsKzR1IHZMFwXAN/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14_E8-hsruSg1KVshqd7-V6stjJ8ucXrh/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/13syDyGTDsUMR3RtJp0j49cWkV-5_0eHc/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
-              </td>
-              <td><img onmouseover="this.src='img/gif/s14.gif'" onmouseout="this.src='img/gif/s14.png'" src="img/gif/s14.png" class="moveonhover" /></td>
-            </tr>
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/r13.gif'" onmouseout="this.src='img/gif/r13.png'" src="img/gif/r13.png" class="moveonhover" /></td>
+              </tr>
 
-          </table>
+              <tr>
+                <td style="text-align: center;">samsung_mono</td>
+                <td style="text-align: center;" class="list-group">
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/11NvwTO0xrN8FMSmyRy71_1DaTZbQotxe/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14_E8-hsruSg1KVshqd7-V6stjJ8ucXrh/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/s14.gif'" onmouseout="this.src='img/gif/s14.png'" src="img/gif/s14.png" class="moveonhover" /></td>
+              </tr>
+
+            </table>
           </div>
         </div>
         <div class="row">
@@ -537,99 +565,99 @@
             <p>Raw<i>.bag</i>
               <span class="glyphicon glyphicon-download text-primary"> </span>
           </a> </p>
-          <div class="col-md-8" style="">
-            <table class="table table-bordered table-hover table-striped">
-            <tr>
-              <th>Camera</th>
-              <th> Download Links</th>
-              <th>Preview</th>
-            </tr>
+          <div class="col-md-10" style="">
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th>Camera</th>
+                <th> Download Links</th>
+                <th>Preview</th>
+              </tr>
 
-            <tr>
-              <td>flea3_7</td>
-              <td class="list-group">
+              <tr>
+                <td style="text-align: center;">flea3_7</td>
+                <td style="text-align: center;" class="list-group">
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-WiSOCfWABZEY4YaEsVVInv41zrtdNAW/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12XitR4O78pTCNg2kgBTajKhnrJl1EnLg/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-              </td>
-              <td><img onmouseover="this.src='img/gif/fll.gif'" onmouseout="this.src='img/gif/fll.png'" src="img/gif/fll.png" class="moveonhover" /></td>
-            </tr>
-
-            <tr>
-              <td>left_camera</td>
-              <td class="list-group">
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/106ahx0HW2Jqu-5FPRZ_DJG6p1wBWB3Qh/view?usp=sharing">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-WiSOCfWABZEY4YaEsVVInv41zrtdNAW/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/130ZLUeju1UPMprMPSmfv0NPWghowJY1O/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/12XitR4O78pTCNg2kgBTajKhnrJl1EnLg/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
-              </td>
-              <td><img onmouseover="this.src='img/gif/l20.gif'" onmouseout="this.src='img/gif/l20.png'" src="img/gif/l20.png" class="moveonhover" /></td>
-            </tr>
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/fll.gif'" onmouseout="this.src='img/gif/fll.png'" src="img/gif/fll.png" class="moveonhover" /></td>
+              </tr>
 
-            <tr>
-              <td>right_camera</td>
-              <td class="list-group">
+              <tr>
+                <td style="text-align: center;">left_camera</td>
+                <td style="text-align: center;" class="list-group">
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10mB5CN1bwUh0BiIwc706q1k9B8uomJ6o/view?usp=sharing ">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1YwSmaL56mN9jGlex4hsw2XeVn5xBddW0/view?usp=sharing ">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
-
-              </td>
-              <td><img onmouseover="this.src='img/gif/r19.gif'" onmouseout="this.src='img/gif/r19.png'" src="img/gif/r19.png" class="moveonhover" /></td>
-            </tr>
-
-            <tr>
-              <td>samsung_mono</td>
-              <td class="list-group">
-
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/11ExymKec8mlxb2Ok7xTK6X1Oz8BcUXhQ/view?usp=sharing ">
-                    <p>Ground Truth<i>.npy</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/106ahx0HW2Jqu-5FPRZ_DJG6p1wBWB3Qh/view?usp=sharing">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
 
-                <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14WTVi1O9grdR9d1l-7ZZmV4PprExpIit/view?usp=sharing">
-                    <p>Ground truth<i>.txt</i>
-                      <span class="glyphicon glyphicon-download text-primary"> </span>
-                  </a> </p>
-                </li>
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/130ZLUeju1UPMprMPSmfv0NPWghowJY1O/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
 
-              </td>
-              <td><img onmouseover="this.src='img/gif/s20.gif'" onmouseout="this.src='img/gif/s20.png'" src="img/gif/s20.png" class="moveonhover" /></td>
-            </tr>
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/l20.gif'" onmouseout="this.src='img/gif/l20.png'" src="img/gif/l20.png" class="moveonhover" /></td>
+              </tr>
 
-          </table>
+              <tr>
+                <td style="text-align: center;">right_camera</td>
+                <td style="text-align: center;" class="list-group">
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/10mB5CN1bwUh0BiIwc706q1k9B8uomJ6o/view?usp=sharing ">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/1YwSmaL56mN9jGlex4hsw2XeVn5xBddW0/view?usp=sharing ">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/r19.gif'" onmouseout="this.src='img/gif/r19.png'" src="img/gif/r19.png" class="moveonhover" /></td>
+              </tr>
+
+              <tr>
+                <td style="text-align: center;">samsung_mono</td>
+                <td style="text-align: center;" class="list-group">
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/11ExymKec8mlxb2Ok7xTK6X1Oz8BcUXhQ/view?usp=sharing ">
+                      <p>data <i>.npy</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+
+                  <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14WTVi1O9grdR9d1l-7ZZmV4PprExpIit/view?usp=sharing">
+                      <p>data <i>.txt</i>
+                        <span class="glyphicon glyphicon-download text-primary"> </span>
+                    </a> </p>
+                  </li>
+
+                </td>
+                <td style="text-align: center;"><img onmouseover="this.src='img/gif/s20.gif'" onmouseout="this.src='img/gif/s20.png'" src="img/gif/s20.png" class="moveonhover" /></td>
+              </tr>
+
+            </table>
           </div>
         </div>
 
