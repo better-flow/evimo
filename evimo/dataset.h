@@ -720,6 +720,13 @@ public:
         cv::Mat ret;
         cv::Mat K = (cv::Mat1d(3, 3) << this->fx, 0, this->cx, 0, this->fy, this->cy, 0, 0, 1);
 
+        //double fovx = -1, fovy = -1, focalLength = -1, aspectRatio=-1;
+        //cv::Point2d principalPoint;
+        // Prophesee sensor size: 9.6mm by 7.2mm (pix: 15um)
+        // Samsung sensor size: 5.76mm by 4.29mm (pix:  9um)
+        //cv::calibrationMatrixValues(K, img.size(), 5.76, 4.29, fovx, fovy, focalLength, principalPoint, aspectRatio);
+        //std::cout << "Focal length/fov:" << fovx << "\t" << fovy << "\t" << focalLength << "\n";
+
         if (this->dist_model == "radtan") {
             cv::Mat D = (cv::Mat1d(1, 4) << this->k1, this->k2, this->p1, this->p2);
             cv::undistort(img, ret, K, D, 1.0 * K);
