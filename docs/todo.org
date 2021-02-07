@@ -1,6 +1,12 @@
 * DONE Fix the hovering
 * DONE Add links
+* DONE Add bootstrap formatting
+* DONE Add sanity dataset
+** DONE Make graphic for rig
+** DONE write up for rig
 * TODO Add the rig details
-** TODO Make graphic for rig
-** TODO write up for rig
-* TODO Add bootstrap formatting
+** TODO Put in FOV for the cameras
+* TODO Integrate with the site
+** TODO Add the nav bar
+** TODO update the contributors 
+** TODO Fit into the download page
