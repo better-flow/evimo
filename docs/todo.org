@@ -4,9 +4,9 @@
 * DONE Add sanity dataset
 ** DONE Make graphic for rig
 ** DONE write up for rig
-* TODO Add the rig details
-** TODO Put in FOV for the cameras
-* TODO Integrate with the site
-** TODO Add the nav bar
-** TODO update the contributors 
-** TODO Fit into the download page
+* DONE Add the rig details
+** DONE Put in FOV for the cameras
+* DONE Integrate with the site
+** CANCEL Add the nav bar
+** DONE update the contributors
+** DONE Fit into the download page
