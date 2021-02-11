@@ -105,7 +105,7 @@
     <div class="container">
       <div class="row">
         <div class="col-md-12">
-          <h2 class="">DAVIS 346C</h2>
+          <h2 class="" id="DAVIS">DAVIS 346C</h2>
         </div>
       </div>
       <div class="row">
@@ -136,7 +136,7 @@
   <div class="section" style="">
     <div class="container">
       <div class="row">
-        <div class="col-md-12">
+        <div id="davis_eval" class="col-md-12">
           <h3 class="">Evaluation Sets</h3>
         </div>
       </div>
@@ -280,7 +280,7 @@
     <div class="container">
       <div class="row">
         <div class="col-md-12">
-          <h3 class="">Training Data</h3>
+          <h3 class="" id="davis_training">Training Data</h3>
         </div>
       </div>
       <div class="row">
@@ -555,7 +555,7 @@
 		<div class="section">
 			<div class="container">
 				<div class="container">
-					<div class="row"> <h3> Sequences for Independently Moving Objects</h3>
+					<div class="row" id="rig_IMO"> <h3> Sequences for Independently Moving Objects</h3>
 						<div class="col-md-10" style="">
 							<p> These are sequences dedicated with various independently moving objects in the scene. The ROS bag is <a href="https://drive.google.com/file/d/11S629-C0iLzG8KrYOpO9XNzkYIzpYupm/view?usp=sharing">
 								here
@@ -836,7 +836,7 @@
 						</div>
 					</div>
 
-					<div class="row"> <h3> Sequences for Structure from Motion </h3>
+					<div class="row" id="rig_SFM"> <h3> Sequences for Structure from Motion </h3>
 						<div class="col-md-10" style="">
 							<p>  These are sequence of motion going around stationary objects in a well lit scene. The ROS bag is
 							<a href="https://drive.google.com/file/d/11fH9Ka4CmGwjdl14GO3AIiwelcDwWYKC/view?usp=sharing ">
@@ -1139,7 +1139,7 @@
 
 		<div class="section">
 			<div class="container">
-				<h2> Basic Motions</h2>
+				<h2 id="rig_sanity"> Basic Motions</h2>
 				<div class="col-md-10" style="">
 					<p> The following are primitive scenes that consists of simple motions primarily for sanity testing, benchmarking and debugging algorithms. 
 					The dataset contains recordings of motions along specific axes with increasing difficulty of scene structure. 
