@@ -70,7 +70,7 @@ def project_points_radtan(points,
     dist = (1.0 + k1 * r2 + k2 * r4)
 
     x__ = x_ * dist + 2.0 * p1 * x_ * y_ + p2 * (r2 + 2.0 * x_ * x_)
-    y__ = y_ * dist + 2.0 * p2 * x_ * y_ + p1 * (r2 * y_ * y_)
+    y__ = y_ * dist + 2.0 * p2 * x_ * y_ + p1 * (r2 * 2.0 * y_ * y_)
 
 
     u = fx * x__ + cx
