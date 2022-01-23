@@ -2,7 +2,7 @@
 #
 # File: evimo_flow_converter.py
 #
-# Calculate normal flow on EVIMO datasets
+# Calculate optical flow from EVIMO datasets
 # so far this is tested on EVIMO2
 #
 # Usage:
