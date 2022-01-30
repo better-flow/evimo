@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head
+    content must come *after* these tags -->
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="icon" href="img/cake.png">
+  <title>EVIMO - Event Camera Motion Segmentation</title>
+  <!-- Bootstrap core CSS -->
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <!-- jQuery library -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- Latest compiled JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <link href="../../dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+  <!-- Custom styles for this template -->
+  <link href="offcanvas.css" rel="stylesheet">
+  <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+  <!--[if lt IE 9]>
+      <script src="../../assets/js/ie8-responsive-file-warning.js"></script>
+    <![endif]--> <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements
+    and media queries -->
+  <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+  <nav class="navbar navbar-fixed-top navbar-inverse">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">EVIMO</a>
+      </div>
+      <div id="navbar" class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li>
+            <a href="index.html">Home</a>
+          </li>
+          <li class ="active">
+            <a href="download_evimo.html">Download EVIMO</a>
+          </li>
+          <li>
+            <a href="download_evimo_2.html">Download EVIMO 2</a>
+          </li>
+          <li>
+            <a href="contact.html">Contributors</a>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li>
+            <a href="https://github.com/better-flow/evimo">Github</a>
+          </li>
+          <li>
+            <a href="https://github.com/better-flow/evimo/wiki">Wiki</a>
+          </li>
+        </ul>
+      </div>
+      <!-- /.nav-collapse -->
+    </div>
+    <!-- /.container -->
+  </nav>
+  <!-- /.navbar -->
+  <div class="section">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="">Download EVIMO</h1>
+          <p>This page will be updated with more recordings and datasets in the future. Please refer to our <a href="https://github.com/better-flow/evimo/wiki">Wiki</a> for detailed instructions on how to read and parse
+          the ground truth. </p>
+
+          <p>The authors would appreciate if you cite our papers:</p>
+          <ol>
+	        <li>EV-IMO: Motion Segmentation Dataset and Learning Pipeline for Event Cameras 
+            <a href="evimo.bib"><i>[bibtex]</i></a>
+            </li>
+	        <li>Learning Visual Motion Segmentation Using Event Surfaces
+            <a href="surfaces.bib"><i>[bibtex]</i></a>
+            </li>
+		  </ol>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <hr>
+    
+      <div class="section">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h2 class="" id="DAVIS">DAVIS 346C</h2>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h4>Sensor:</h4>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <ul>
+            <li>Resolution:&nbsp;346 x 260</li>
+            <li>Datasheet:&nbsp;<a href="https://inivation.com/wp-content/uploads/2019/08/DAVIS346.pdf">download</a></li>
+          </ul>
+          <h4>FOV: 70&deg;</h4>
+          <ul>
+            <li>Intrinsics calibration file:&nbsp;<a href="https://drive.google.com/file/d/1GfvFHJ2iA3iu64kj_dKQNsBdXG99FxPg/view?usp=sharing">download</a></li>
+          </ul>
+          <h4>Recordings:</h4>
+          <ul>
+            <li>Total recording time ~30 minutes</li>
+            <li>Up to 3 independently moving objects objects</li>
+            <li>Multiple types of scenes (varying backgrounds and motion speeds)<br></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section" style="">
+    <div class="container">
+      <div class="row">
+        <div id="davis_eval" class="col-md-12">
+          <h3 class="">Evaluation Sets</h3>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6" style="">
+          <table class="table table-bordered table-hover table-striped">
+            <thead>
+              <tr>
+                <th style="width: 10%;text-align:center">Background</th style="text-align: center">
+                <th style="width: 60%;text-align:center">Data</th style="text-align: center">
+                <th style="text-align: center">Preview (Hover for animation)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-center">
+                  <li class="list-unstyled text-center"><span class="label label-danger"><i>boxes</i></span></li>
+                </td>
+                <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a href="https://drive.google.com/file/d/1uIv7aGYWYUzSCEEQoIm4jtU6aa9UXl_A/view?usp=sharing"><span class="glyphicon glyphicon-download text-danger"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a href="https://drive.google.com/file/d/15prst2GzLORzIjASKOmy4LsIruzibOQI/view?usp=sharing"><span class="glyphicon glyphicon-download text-primary"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a href="https://drive.google.com/file/d/1i1_Yn_xjM62hmTIrNM8lz3bp8VnPiVyV/view?usp=sharing"><span class="glyphicon glyphicon-download text-success"></span></a></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1cKKxwOu7pTRcstXoK_kmU5W8IOCj4aE5/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-primary"><i>floor</i></span></li>
+                </td>
+                <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a href="https://drive.google.com/file/d/1WbowDwVg58KgFAspYpWlTbU2BQ-7o5lG/view?usp=sharing"><span class="glyphicon glyphicon-download text-danger"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a href="https://drive.google.com/file/d/16QkplaiUVim0uCA34tpK8XLRXdTeyX5x/view?usp=sharing"><span class="glyphicon glyphicon-download text-primary"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a href="https://drive.google.com/file/d/1IELJvl7VTnFixxvUT4n6jJrJO7P4gFDO/view?usp=sharing"><span class="glyphicon glyphicon-download text-success"></span></a></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1mYnrvAkyb3QWyD-SSv0hqevmWOLUmMYI/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-warning"><i>wall</i></span></li>
+                </td>
+                <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a href="https://drive.google.com/file/d/1yIXHlYEZj6AAAe0KrL-ZsrGOjgzrdQ_r/view?usp=sharing"><span class="glyphicon glyphicon-download text-danger"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a href="https://drive.google.com/file/d/1UabgXjUWsaj5unbqbFIxyaPPqP9YH2wu/view?usp=sharing"><span class="glyphicon glyphicon-download text-primary"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a href="https://drive.google.com/file/d/19cTzEF0hfU6YughGTGpSlnFwHT4Eqp_b/view?usp=sharing"><span class="glyphicon glyphicon-download text-success"></span></a></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/uc?export=download&id=13hDNQTxV0KPgJheH0HgL-b4oMtEBU3Ye"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-md-6" style="">
+          <table class="table table-bordered table-hover table-striped">
+            <thead>
+              <tr>
+                <th style="width: 10%;text-align:center">Background</th style="text-align: center">
+                <th style="width: 60%;text-align:center">Data</th style="text-align: center">
+                <th style="text-align: center">Preview (Hover for animation)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-success"><i>table</i></span></li>
+                </td>
+                <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a href="https://drive.google.com/file/d/1uA3149J5xZB1bAiXx5jLWCY-00pw5lP3/view?usp=sharing"><span class="glyphicon glyphicon-download text-danger"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a href="https://drive.google.com/file/d/1FD_rKWxnGv6Tbft5UDRy-rknVPrCYpwh/view?usp=sharing"><span class="glyphicon glyphicon-download text-primary"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a href="https://drive.google.com/file/d/1VaRc9I-76GC51WUy1XJgMqumG2OY2z6G/view?usp=sharing"><span class="glyphicon glyphicon-download text-success"></span></a></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1jwXKxvV526tIiWww3nwiUMOAoLIdI3vE/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-info"><i>tabletop</i></span></li>
+                </td>
+                <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a href="https://drive.google.com/file/d/1GptNkd-1UkdJhgiCJyXArF-VVYbrVNqp/view?usp=sharing"><span class="glyphicon glyphicon-download text-danger"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a href="https://drive.google.com/file/d/1RMmthT9oyiuv3SyzOhmH-a_iqqBI0Gpz/view?usp=sharing"><span class="glyphicon glyphicon-download text-primary"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a href="https://drive.google.com/file/d/12vhxW64I3oz_AjApAWnNFd9K8Rq0dDjf/view?usp=sharing"><span class="glyphicon glyphicon-download text-success"></span></a></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1-7muLh214udqULS8VJp7BXA8DlQ_zvMQ/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+             <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-info" style="background-color:#6a5acd;"><i>fast</i></span></li>
+                </td>
+                <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a href="https://drive.google.com/file/d/1rF6Bw9nOgJg1RF3BDxAsm2Uz3Dpg5-Ls/view?usp=sharing"><span class="glyphicon glyphicon-download text-danger"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a href="https://drive.google.com/file/d/1b3SzmJeCDr74ifh5eLau4-y_Uv116EKb/view?usp=sharing"><span class="glyphicon glyphicon-download text-primary"></span></a></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a href="https://drive.google.com/file/d/1CRy-fZ4JSOyOq5TVb3NP2plxk2TwPFc1/view?usp=sharing"><span class="glyphicon glyphicon-download text-success"></span></a></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1_IBd-SyjDlm7gVepe3tAP0HhDf7zBeoW/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h3 class="" id="davis_training">Training Data</h3>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6" style="">
+          <table class="table table-bordered table-hover table-striped">
+            <thead>
+              <tr>
+                <th style="width: 10%;text-align:center">Background</th style="text-align: center">
+                <th style="width: 60%;text-align:center">Data</th style="text-align: center">
+                <th style="text-align: center">Preview (Hover for animation)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-center">
+                  <li class="list-unstyled text-center"><span class="label label-danger"><i>boxes</i></span></li>
+                </td>
+                <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a
+                    href="https://drive.google.com/file/d/1J8IGn-tUZh2Cgjz9agHIFOsG8yOfx2RB/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-danger"></span></a><i>&nbsp(7 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a
+                    href="https://drive.google.com/file/d/1fZOZ3e3k6yuppkYHV8LzJw6njYajc0G0/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-primary"></span></a><i>&nbsp(5 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a
+                    href="https://drive.google.com/file/d/1Bqt8EwL_u4A7dBpPqVhLfuaAcEoJtPKi/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-success"></span></a><i>&nbsp(9 GB)</i></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1j76PhlD1L6ifyy4L5e2pg4GieT6eQstG/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-primary"><i>floor</i></span></li>
+                </td>
+                 <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a
+                    href="https://drive.google.com/file/d/1mTCyQXBJZCVM8xgwHAvR1TBFmye21gx7/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-danger"></span></a><i>&nbsp(3 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a
+                    href="https://drive.google.com/file/d/10eRsTTglSrZLaCaPRzuy5TaY_mI57xjy/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-primary"></span></a><i>&nbsp(2 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a
+                    href="https://drive.google.com/file/d/1L1Vjyj02uTk-H4Crvi2L1V6CBc5dV0ud/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-success"></span></a><i>&nbsp(3 GB)</i></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/14LJ_KUzCHxq9bYnSkZUQoDh4WF1cjBGc/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-warning"><i>wall</i></span></li>
+                </td>
+                  <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a
+                    href="https://drive.google.com/file/d/1GPIluJhLRSDFozK0OFWb_n8hdGPvnq9J/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-danger"></span></a><i>&nbsp(2 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a
+                    href="https://drive.google.com/file/d/1e7yhtUs2W_6y6JutuE8PqKp8lvy6Zlnh/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-primary"></span></a><i>&nbsp(1 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a
+                    href="https://drive.google.com/file/d/1qRgVqBntWEjSpjK03t1PTNnCVYX0W6YZ/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-success"></span></a><i>&nbsp(2 GB)</i></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/14o2lNHAStYZRGEAASRJiomMu7AOAt3mr/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-md-6" style="">
+          <table class="table table-bordered table-hover table-striped">
+            <thead>
+              <tr>
+                <th style="width: 10%;text-align:center">Background</th style="text-align: center">
+                <th style="width: 60%;text-align:center">Data</th style="text-align: center">
+                <th style="text-align: center">Preview (Hover for animation)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-success"><i>table</i></span></li>
+                </td>
+                  <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a
+                    href="https://drive.google.com/file/d/1x0sH7npvRZLmw2kfbWckx_5GZNw1QgaF/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-danger"></span></a><i>&nbsp(4 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a
+                    href="https://drive.google.com/file/d/1TJ9uVmK1XcN0PPj8F4EvX7e6f3TrBK1V/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-primary"></span></a><i>&nbsp(3 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a
+                    href="https://drive.google.com/file/d/1QXleY1ri02jBq-vSRdJ29HeBsttU7ueX/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-success"></span></a><i>&nbsp(5 GB)</i></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1WEyQzAH7nFZCU74H6r1e_PBi_l1QNcDK/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-info"><i>tabletop</i></span></li>
+                </td>
+                  <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a
+                    href="https://drive.google.com/file/d/1tOHWbMh2SS01JOreQKfJo5pAnhHcuZf4/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-danger"></span></a><i>&nbsp(3 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a
+                    href="https://drive.google.com/file/d/1iWbwaTnnhZvM--ZGnhetyt_MLEzcS_U1/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-primary"></span></a><i>&nbsp(2 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a
+                    href="https://drive.google.com/file/d/1SkILDDCtZRN9nlR7PYLwGi5ZkwYeOrlj/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-success"></span></a><i>&nbsp(4 GB)</i></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1VYGqf_Xstn-dV7g12vr5Tg7tWOVF7KV2/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-info" style="background-color:#00B7EB;"><i>tabletop-ego</i></span></li>
+                </td>
+                  <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a
+                    href="https://drive.google.com/file/d/1fNe8Te4JlR6UeKW9Tqcs2JNzRHlNK49I/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-danger"></span></a><i>&nbsp(2 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a
+                    href="https://drive.google.com/file/d/1a7kBHs6mJ2oXqnx9IZNE7L8UIO7etnDU/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-primary"></span></a><i>&nbsp(2 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a
+                    href="https://drive.google.com/file/d/1SEN6AMvIQKBCB9fkHJUeLcIAi68GiZ2S/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-success"></span></a><i>&nbsp(2 GB)</i></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1Yu4VCuZZgcgOCPXC5VQXXIhUxBcuGAUJ/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6" style="">
+          <table class="table table-bordered table-hover table-striped">
+            <tbody>
+              <tr>
+                <td>
+                  <li class="list-unstyled text-center"><span class="label label-success"
+                  style="background-color:#6a5acd;"><i>sanity check</i></span></li>
+                </td>
+                  <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a
+                    href="https://drive.google.com/file/d/1FB0brPz8PyemxWw3Gdm3oyRnKOEd6nNu/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-danger"></span></a><i>&nbsp(5 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Python <i>.npz</i> <a
+                    href="https://drive.google.com/file/d/139cVM0fueJAC79EQi6ZqTuGCBmCBY46a/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-primary"></span></a><i>&nbsp(4 GB)</i></p>
+                  </li>
+                  <li class="list-unstyled">
+                    <p>Text <i>.txt</i> <a
+                    href="https://drive.google.com/file/d/1eQ2rYHdF6O_Ek5pgWXY-pmSo7MoH6Tnn/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-success"></span></a><i>&nbsp(6 GB)</i></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/1Wp6hI0Br9Y4kEstN_6wjP501ulKNUz0a/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="col-md-6" style="">
+          <table class="table table-bordered table-hover table-striped">
+            <tbody>
+              <tr>
+                <td class="text-center">
+                  <li class="list-unstyled text-center"><span class="label label-danger"  style="background-color:#6a5acd;"><i>calibration</i></span></li>
+                </td>
+                <td class="list-group">
+                  <li class="list-unstyled">
+                    <p>Raw <i>.bag</i> <a
+                    href="https://drive.google.com/file/d/1U6mtOoPI2072BvOjPAF4Q3Y0TiPOlgcm/view?usp=sharing"><span
+                    class="glyphicon glyphicon-download text-danger"></span></a><i>&nbsp(1 GB)</i></p>
+                  </li>
+                </td>
+                <td>Video <a href="https://drive.google.com/file/d/14Ga-SVKf05TEd1svk6g3IjdZBG4ZG5B2/view?usp=sharing"><span class="glyphicon glyphicon-download"></span></a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <hr>
+    
+    
+    
+    <div class="container">
+      <footer style="font-size:12px">
+        <i class="fa fa-github"></i>
+        <a href="https://github.com/better-flow/evimo">View on GitHub</a>
+      </footer>
+    </div>
+  </div>
+  <!--/.container-->
+  <!-- Bootstrap core JavaScript==================================================-
+    ->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- Placed at the end of the document so the pages load faster -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js" style=""></script>
+  <script>
+    window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')
+  </script>
+  <script src="../../dist/js/bootstrap.min.js" style=""></script>
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script>
+  <script src="index.js"></script>
+</body>
+
+</html>
