@@ -21,11 +21,14 @@
 # evimo_file_flow.npz
 # which contains:
 # timestamps.npy
+# end_timestamps.npy
 # x_flow_dist.npy
 # y_flow_dist.npy
 #
 # timestamps are relative to epoch time in double seconds
-# x_flow and y_flow are displacements in pixels between frames (timestamp intervals)
+# end_timestamps are relative to epoch_time in double seconds, they correspond to
+# the end of the interval x_flow and y_flow were computed from (e.g with default settings, 0.01 seconds ahead of timestamps)
+# x_flow and y_flow are displacements in pixels over the timeperiod timestamp to end_timestamp.
 #
 # Missing depth values (walls of room) are filled with NaN
 # The timestamps can skip values when the VICON has lost lock on one or more objects from occulusion or too rapid motion.
@@ -260,7 +263,8 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         cv2.imshow('color direction chart', flow_direction_image_bgr)
 
     # Preallocate arrays for flow as in MSEVC format
-    timestamps  = np.zeros((data['depth'].shape[0],), dtype=np.float64)
+    timestamps      = np.zeros((data['depth'].shape[0],), dtype=np.float64)
+    end_timestamps  = np.zeros((data['depth'].shape[0],), dtype=np.float64)
     x_flow_dist = np.zeros((data['depth'].shape), dtype=np.float64) # named as in MVSEC monoocular camera flow, double as in MVSEC NPZs
     y_flow_dist = np.zeros((data['depth'].shape), dtype=np.float64)
 
@@ -372,7 +376,8 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             start_time=relative_time
         last_time=relative_time
 
-        timestamps[i] = relative_time +ros_time_offset
+        timestamps[i]     = relative_time + ros_time_offset
+        end_timestamps[i] = right_time    + ros_time_offset
         x_flow_dist[i, :, :] = dx
         y_flow_dist[i, :, :] = dy
 
@@ -395,7 +400,8 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         npz_name_base,
         x_flow_dist=x_flow_dist,
         y_flow_dist=y_flow_dist,
-        timestamps=timestamps)
+        timestamps=timestamps,
+        end_timestamps=end_timestamps)
 
 
 
