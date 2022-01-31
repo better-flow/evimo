@@ -1,12 +1,13 @@
 #!/usr/bin/env python
+# run "pip install -e ." to install scripts to python path in current environment
 
 from setuptools import setup, find_packages
 
 setup(name='ev-imo-tools',
       version='1.0',
       description='EV-IMO command line tools',
-      author='Tobi Delbruck',
-      author_email='tobi@ini.uzh.ch',
+      author='Levi Burner',
+      author_email='lburner@umd.edu',
       url='https://github.com/better-flow/evimo/tools',
       packages=find_packages(include=['tools', '*.py']),
       install_requires=[
