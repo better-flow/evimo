@@ -37,6 +37,7 @@
 # History:
 # 01-21-22 - Levi Burner - Created file
 # 01-29-22 - Tobi Delbruck - corrected to match MVSEC NPZ flow output contents for mono camera recordings from MVSEC, added multiple file option
+# 01-30-22 - Levi Burner - Fixed to handle moving objects correctly and fixed bug in radtan model
 #
 ###############################################################################
 
@@ -53,32 +54,56 @@ import statistics
 
 # Sample a list of translations and rotations
 # with linear interpolation
-def interpolate_cam_pose(t, cam_pose):
-    right_i = np.searchsorted(cam_pose[:, 0], t)
-    if right_i==cam_pose.shape[0]:
+def interpolate_pose(t, pose):
+    right_i = np.searchsorted(pose[:, 0], t)
+    if right_i==pose.shape[0]:
         print(f'attempted extrapolation past end of cam poses, clipping')
         right_i=right_i-1 # prevent attempted extrapolation past array end
 
-    left_t  = cam_pose[right_i-1, 0]
-    right_t = cam_pose[right_i,   0]
+    left_t  = pose[right_i-1, 0]
+    right_t = pose[right_i,   0]
 
     alpha = (t - left_t) / (right_t - left_t)
     if alpha>1:
         print('attempted alpha>1, clipping')
         alpha=1
 
-    left_position  = cam_pose[right_i - 1, 1:4]
-    right_position = cam_pose[right_i,     1:4]
+    left_position  = pose[right_i - 1, 1:4]
+    right_position = pose[right_i,     1:4]
 
     position_interp = alpha * (right_position - left_position) + left_position
 
-    left_right_rot_stack = R.from_quat((cam_pose[right_i - 1, 4:8],
-                                        cam_pose[right_i,     4:8]))
+    left_right_rot_stack = R.from_quat((pose[right_i - 1, 4:8],
+                                        pose[right_i,     4:8]))
 
     slerp = Slerp((0, 1), left_right_rot_stack)
     R_interp = slerp(alpha)
 
     return np.array([t,] + list(position_interp) + list(R_interp.as_quat()))
+
+# Apply an SE(3) transform to an element of SE(3)
+# e.g. T_cb to T_ba to get T_ca
+# Transforms are the same thing as poses
+def apply_transform(T_cb, T_ba):
+    R_ba = R.from_quat(T_ba[4:8])
+    t_ba = T_ba[1:4]
+
+    R_cb = R.from_quat(T_cb[4:8])
+    t_cb = T_cb[1:4]
+
+    R_ca = R_cb * R_ba
+    t_ca = R_cb.as_matrix() @ t_ba + t_cb
+    return np.array([T_ba[0],] + list(t_ca) + list(R_ca.as_quat()))
+
+# Invert an SE(3) transform
+def inv_transform(T_ba):
+    R_ba = R.from_quat(T_ba[4:8])
+    t_ba = T_ba[1:4]
+
+    R_ab = R_ba.inv()
+    t_ab = -R_ba.inv().as_matrix() @ t_ba
+
+    return np.array([T_ba[0],] + list(t_ab) + list(R_ab.as_quat()))
 
 # OpenCV's map functions do not return results for fractional
 # start points. Best to implement by hand.
@@ -96,7 +121,7 @@ def project_points_radtan(points,
     dist = (1.0 + k1 * r2 + k2 * r4)
 
     x__ = x_ * dist + 2.0 * p1 * x_ * y_ + p2 * (r2 + 2.0 * x_ * x_)
-    y__ = y_ * dist + 2.0 * p2 * x_ * y_ + p1 * (r2 * 2.0 * y_ * y_)
+    y__ = y_ * dist + 2.0 * p2 * x_ * y_ + p1 * (r2 + 2.0 * y_ * y_)
 
 
     u = fx * x__ + cx
@@ -119,7 +144,7 @@ def visualize_optical_flow(flowin):
 
     return flow_hsv
 
-def draw_flow_arrows(img, xx, yy, dx, dy, p_skip=10):
+def draw_flow_arrows(img, xx, yy, dx, dy, p_skip=15, mag_scale=1.0):
     xx     = xx[::p_skip, ::p_skip].flatten()
     yy     = yy[::p_skip, ::p_skip].flatten()
     flow_x = dx[::p_skip, ::p_skip].flatten()
@@ -130,7 +155,7 @@ def draw_flow_arrows(img, xx, yy, dx, dy, p_skip=10):
             continue
         cv2.arrowedLine(img,
                         (int(x), int(y)),
-                        (int(x+5*u), int(y+5*v)),
+                        (int(x+mag_scale*u), int(y+mag_scale*v)),
                         (0, 0, 0),
                         tipLength=0.2)
 
@@ -145,27 +170,35 @@ def flow_direction_image(shape=(60,60)):
     flow_hsv[:, :, 2] = 255
     return flow_hsv
 
-# Get a list of camera translations and rotations in the vicon frame
-# out of EVIMO's 'meta' field
-def get_cam_poses(meta):
-    cam_pose_samples = len(meta['full_trajectory'])
-    cam_poses = np.zeros((cam_pose_samples, 1+3+4))
+# Get a poses of all objects in the vicon frame
+# out of EVIMO's 'meta' field and into a numpy array
+def get_all_poses(meta):
+    vicon_pose_samples = len(meta['full_trajectory'])
+
+    poses = {}
+    for key in meta['full_trajectory'][0].keys():
+        if key == 'id' or key == 'ts' or key == 'gt_frame':
+            continue
+        poses[key] = np.zeros((vicon_pose_samples, 1+3+4))
 
     # Convert camera poses to array
-    for cam_pose, all_pose in zip(cam_poses, meta['full_trajectory']):
-        assert 'cam' in all_pose
+    for i, all_pose in enumerate(meta['full_trajectory']):
+        for key in poses.keys():
+            if key == 'id' or key == 'ts' or key == 'gt_frame':
+                continue
 
-        cam_pose[0] = all_pose['cam']['ts']
-        cam_pose[1] = all_pose['cam']['pos']['t']['x']
-        cam_pose[2] = all_pose['cam']['pos']['t']['y']
-        cam_pose[3] = all_pose['cam']['pos']['t']['z']
+            assert key in all_pose
 
-        cam_pose[4] = all_pose['cam']['pos']['q']['x']
-        cam_pose[5] = all_pose['cam']['pos']['q']['y']
-        cam_pose[6] = all_pose['cam']['pos']['q']['z']
-        cam_pose[7] = all_pose['cam']['pos']['q']['w']
+            poses[key][i, 0] = all_pose['ts']
+            poses[key][i, 1] = all_pose[key]['pos']['t']['x']
+            poses[key][i, 2] = all_pose[key]['pos']['t']['y']
+            poses[key][i, 3] = all_pose[key]['pos']['t']['z']
+            poses[key][i, 4] = all_pose[key]['pos']['q']['x']
+            poses[key][i, 5] = all_pose[key]['pos']['q']['y']
+            poses[key][i, 6] = all_pose[key]['pos']['q']['z']
+            poses[key][i, 7] = all_pose[key]['pos']['q']['w']
 
-    return cam_poses
+    return poses
 
 # Get the camera intrinsics out of EVIMO's 'meta' field
 def get_intrinsics(meta):
@@ -182,7 +215,8 @@ def get_intrinsics(meta):
     return K, dist_coeffs
 
 
-def convert(file, flow_dt, showflow=True, overwrite=False):
+def convert(file, flow_dt, showflow=True, overwrite=False,
+            waitKey=1, dframes=None):
     if file.endswith('_flow.npz'):
         print(f'skipping {file} because it appears to be a flow output npz file')
         return
@@ -192,12 +226,17 @@ def convert(file, flow_dt, showflow=True, overwrite=False):
     if not overwrite and p.exists():
         print(f'skipping {file} because {p} exists; use --overwrite option to overwrite existing output file')
         return
-    print(f'converting {file} with dt={flow_dt}s; loading source...',end='')
+
+    if dframes is None:
+        print(f'converting {file} with dt={flow_dt}s; loading source...',end='')
+    else:
+        print(f'converting {file} with dframes={dframes}; loading source...',end='')
+
     data = np.load(file, allow_pickle=True, mmap_mode='r')
     print('done loading')
     meta = data['meta'].item()
 
-    cam_poses      = get_cam_poses (meta)
+    all_poses      = get_all_poses (meta)
     K, dist_coeffs = get_intrinsics(meta)
 
     # Get the map from pixels to direction vectors with Z = 1
@@ -232,7 +271,16 @@ def convert(file, flow_dt, showflow=True, overwrite=False):
     start_time=float('nan')
     large_delta_times=0
 
-    for i, (depth_frame_mm, frame_info) in enumerate(tqdm(zip(data['depth'], meta['frames']), total=len(timestamps))):
+    if dframes is not None:
+        iterskip = dframes
+    else:
+        iterskip = 1
+
+    for i, (depth_frame_mm, mask_frame, frame_info) in (
+            enumerate(tqdm(zip(data['depth'] [::iterskip],
+                               data['mask']  [::iterskip],
+                               meta['frames'][::iterskip]),
+                            total=len(data['depth'][::iterskip])))):
         depth_mask = depth_frame_mm > 0 # if depth_frame_mm is zero, it means a missing value from lack of GT model (e.g. of room walls)
         # these x_flow and y_flow values are filled with NaN
         depth_frame_float_m = depth_frame_mm.astype('float') / 1000.0
@@ -243,28 +291,61 @@ def convert(file, flow_dt, showflow=True, overwrite=False):
         Y_m = map2 * Z_m
         left_XYZ = np.dstack((X_m, Y_m, Z_m))
 
-        # Get the change in coordinate frame
+        # Get poses of objects and camera in vicon frame
         left_time = frame_info['cam']['ts']
-        right_time = left_time + flow_dt
 
-        left_pose  = interpolate_cam_pose(left_time,  cam_poses)
-        right_pose = interpolate_cam_pose(right_time, cam_poses)
+        if dframes is None:
+            right_time = left_time + flow_dt
+        else:
+            right_time_index = iterskip*i+iterskip
+            if right_time_index >= len(meta['frames']):
+                right_time_index = len(meta['frames']) - 1
+                print('clipping right_time_index')
+            right_time = meta['frames'][right_time_index]['cam']['ts']
 
-        delta_t = left_pose[1:4] - right_pose[1:4]
+        left_poses = {}
+        right_poses = {}
+        for key in all_poses:
+            left_poses[key]  = interpolate_pose(left_time,  all_poses[key])
+            right_poses[key] = interpolate_pose(right_time, all_poses[key])
 
-        R_left  = R.from_quat(left_pose [4:8])
-        R_right = R.from_quat(right_pose[4:8])
-        right_R_inv = R_right.inv().as_matrix()
-        delta_R = (R_right.inv() * R_left).as_matrix()
+        # Get the poses of objects in camera frame
+        # at the left and right times
+        left_to_right_pose = {}
+        for key in all_poses.keys():
+            if key == 'cam':
+                continue
+
+            T_c1o1 = left_poses[key]
+            T_c2o2 = right_poses[key]
+
+            T_c2c1 = apply_transform(T_c2o2, inv_transform(T_c1o1))
+
+            left_to_right_pose[key] = T_c2c1
 
         # Flatten for transformation
         left_XYZ_flat_cols  = left_XYZ.reshape(X_m.shape[0]*X_m.shape[1], 3).transpose()
+        right_XYZ_flat_rows = np.zeros(left_XYZ_flat_cols.shape).transpose()
 
-        # Transform the point cloud
-        right_XYZ_flat_rows = (delta_R @ left_XYZ_flat_cols).transpose() + right_R_inv @ delta_t
+        # Transform the points for each object
+        for key in left_to_right_pose.keys():
+            R_rl = R.from_quat(left_to_right_pose[key][4:8]).as_matrix()
+            t_rl = left_to_right_pose[key][1:4]
+
+            # If this conversion does not work, there is a problem with the data
+            object_id = int(key)
+            mask_id = 1000 * object_id
+
+            object_points = (mask_frame == mask_id).flatten()
+
+            p_l = left_XYZ_flat_cols[:, object_points]
+
+            p_r = (R_rl @ p_l).transpose() + t_rl
+
+            right_XYZ_flat_rows[object_points, :] = p_r
 
         # Reshape into 3 channel image
-        right_XYZ           = right_XYZ_flat_rows.reshape(X_m.shape[0], X_m.shape[1], 3)
+        right_XYZ = right_XYZ_flat_rows.reshape(X_m.shape[0], X_m.shape[1], 3)
 
         # Project right_XYZ back to the distorted camera frame
         W_x, W_y = project_points_radtan(right_XYZ,
@@ -272,8 +353,8 @@ def convert(file, flow_dt, showflow=True, overwrite=False):
                                          *dist_coeffs)
 
         # Calculate flow, mask out points where depth is unknown
-        dx = (W_x - xx) * depth_mask
-        dy = (W_y - yy) * depth_mask
+        dx = W_x - xx
+        dy = W_y - yy
         dx[depth_mask==0]=float("nan")
         dy[depth_mask==0]=float("nan")
 
@@ -297,13 +378,15 @@ def convert(file, flow_dt, showflow=True, overwrite=False):
 
         if showflow:
             # Visualize
+            cv2.imshow('mask', mask_frame)
+
             flow_hsv = visualize_optical_flow(np.dstack((dx, dy)))
             flow_bgr = cv2.cvtColor(flow_hsv, cv2.COLOR_HSV2BGR)
 
             draw_flow_arrows(flow_bgr, xx, yy, dx, dy)
             cv2.imshow('flow_bgr', flow_bgr)
 
-            cv2.waitKey(1)
+            cv2.waitKey(waitKey)
     del data
     print(f'Relative start time {start_time:.3f}s, last time {last_time:.3f}s, duration is {(last_time-start_time):.3f}s.\n'
           f'There are {large_delta_times} ({(100*(large_delta_times/len(timestamps))):.1f}%) excessive delta times.\n'
@@ -325,6 +408,8 @@ if __name__ == '__main__':
         ' more accurate, but noiser approximations of optical flow.', type=float,  default=0.01)
     parser.add_argument('--quiet', help='turns off OpenCV graphical output windows', default=False, action='store_true')
     parser.add_argument('--overwrite', dest='overwrite', action='store_true', help='Overwrite existing output files')
+    parser.add_argument('--wait', dest='wait', action='store_true', help='Wait for keypress between visualizations (for debugging)')
+    parser.add_argument('--dframes', dest='dframes', type=int, default=None, help='Alternative to flow_dt, flow is calculated for time N depth frames ahead')
 
     args,files = parser.parse_known_args()
 
@@ -334,4 +419,9 @@ if __name__ == '__main__':
 
 
     for f in files:
-        convert(f, flow_dt=args.dt, showflow=not args.quiet, overwrite=args.overwrite)
+        convert(f,
+                flow_dt=args.dt,
+                showflow=not args.quiet,
+                overwrite=args.overwrite,
+                waitKey=int(not args.wait),
+                dframes=args.dframes)
