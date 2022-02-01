@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!python
 #
 # ###############################################################################
 #
@@ -77,6 +77,7 @@ from tqdm import tqdm
 from pathlib import Path
 import statistics
 
+
 # Sample a list of translations and rotations
 # with linear interpolation
 def interpolate_pose(t, pose):
@@ -139,10 +140,10 @@ def project_points_radtan(points,
                           k1, k2, p1, p2):
     x_ = points[:, :, 0] / points[:, :, 2]
     y_ = points[:, :, 1] / points[:, :, 2]
-    
+
     r2 = np.square(x_) + np.square(y_)
     r4 = np.square(r2)
-    
+
     dist = (1.0 + k1 * r2 + k2 * r4)
 
     x__ = x_ * dist + 2.0 * p1 * x_ * y_ + p2 * (r2 + 2.0 * x_ * x_)
@@ -451,6 +452,9 @@ if __name__ == '__main__':
     if len(files)==0:
         import easygui
         files=[easygui.fileopenbox()]
+        if files[0] is None:
+            print('nothing to convert. Use -h flag for usage.')
+            quit(0)
 
 
     for f in files:
