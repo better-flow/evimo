@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!python
 #
 # ###############################################################################
 #
@@ -7,15 +7,36 @@
 # Calculate optical flow from EVIMO datasets
 # so far this is tested on EVIMO2 for VGA DVS reocrdings
 #
-# Usage:
-# python evimo_flow.py  --dt 0.01 evimo_file.npz evimo_file2.npz ....
+# usage: evimo_flow.py [-h] [--dt DT] [--quiet] [--overwrite] [--wait] [--dframes DFRAMES] [files ...]
+#
+# positional arguments:
+# files              NPZ files to convert
+#
+# optional arguments:
+# -h, --help         show this help message and exit
+# --dt DT            dt for flow approximation"dt" is how far ahead of the camera trajectory to sample in secondswhen approximating flow through finite
+# difference. Smaller values are more accurate, but noiser approximations of optical flow.
+# --quiet            turns off OpenCV graphical output windows
+# --overwrite        Overwrite existing output files
+# --wait             Wait for keypress between visualizations (for debugging)
+# --dframes DFRAMES  Alternative to flow_dt, flow is calculated for time N depth frames ahead
+#
+# Calculates optical flow from EVIMO datasets. Each of the source npz files on the command line is processed to produce the corresponding flow npz files. See source
+# code for details of output.
 # The source evimo_file.npz file(s) are one of the EV-IMO NPZ files that combine all the sensor and GT static pose data, e.g.
 # samsung_mono/imo/train/scene9_dyn_train_02.npz
 # The source NPZ file contents are documented in https://github.com/better-flow/evimo/wiki/Ground-Truth-Format
 #
-# "dt" is how far ahead of the camera trajectory to sample in seconds
+# "DT" is how far ahead of the camera trajectory to sample in seconds
 # when approximating flow through finite difference. Smaller values are
 # more accurate, but noiser approximations of optical flow.
+#
+# "DFRAMES" is  useful because the resulting displacement arrows point to the new position of points in the scene at the time of a ground truth frame in the future.
+# The displacements are correct for even for insane values, like 10, or 20 frames ahead from the current gt_frame. Combined with the --wait flag, we use dframes to make sure everything is working correctly.
+# Here is a convincing example:
+#      python3 evimo_flow.py --overwrite ../../recordings/samsung_mono/imo/eval/scene15_dyn_test_05.npz --dframe 3 --wait
+#
+# Press the a button until the board starts to flip the toys, then use your mouse to verify the toys move where the arrows say they will, even though the arrows are computed "far" into the future.
 #
 # Writes out flow files to the NPZ file folder location as:
 # evimo_file_flow.npz
@@ -28,7 +49,8 @@
 # timestamps are relative to epoch time in double seconds
 # end_timestamps are relative to epoch_time in double seconds, they correspond to
 # the end of the interval x_flow and y_flow were computed from (e.g with default settings, 0.01 seconds ahead of timestamps)
-# x_flow and y_flow are displacements in pixels over the timeperiod timestamp to end_timestamp.
+# x_flow and y_flow are displacements in pixels over the time period timestamp to end_timestamp.
+# To obtain flow speed in px/s, divide displacement dx,dy by the time difference (end_timestamp-timestamp).
 #
 # Missing depth values (walls of room) are filled with NaN
 # The timestamps can skip values when the VICON has lost lock on one or more objects from occulusion or too rapid motion.
@@ -54,6 +76,7 @@ import easygui
 from tqdm import tqdm
 from pathlib import Path
 import statistics
+
 
 # Sample a list of translations and rotations
 # with linear interpolation
@@ -117,10 +140,10 @@ def project_points_radtan(points,
                           k1, k2, p1, p2):
     x_ = points[:, :, 0] / points[:, :, 2]
     y_ = points[:, :, 1] / points[:, :, 2]
-    
+
     r2 = np.square(x_) + np.square(y_)
     r4 = np.square(r2)
-    
+
     dist = (1.0 + k1 * r2 + k2 * r4)
 
     x__ = x_ * dist + 2.0 * p1 * x_ * y_ + p2 * (r2 + 2.0 * x_ * x_)
@@ -407,21 +430,31 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(epilog='Calculates optical flow from EVIMO datasets. '
+                                            'Each of the source npz files on the command line is processed to produce the corresponding flow npz files. '
+                                            'See source code for details of output.')
     parser.add_argument('--dt', dest='dt', help='dt for flow approximation'
-          '"dt" is how far ahead of the camera trajectory to sample in seconds'
-        'when approximating flow through finite difference. Smaller values are'
-        ' more accurate, but noiser approximations of optical flow.', type=float,  default=0.01)
+                      '"dt" is how far ahead of the camera trajectory to sample in seconds'
+                    'when approximating flow through finite difference. Smaller values are'
+                    ' more accurate, but noiser approximations of optical flow. '
+                    'The flow velocity is obtained from dx,dy/dt, where dx,dy are written to the flow output files', type=float,  default=0.01)
     parser.add_argument('--quiet', help='turns off OpenCV graphical output windows', default=False, action='store_true')
     parser.add_argument('--overwrite', dest='overwrite', action='store_true', help='Overwrite existing output files')
     parser.add_argument('--wait', dest='wait', action='store_true', help='Wait for keypress between visualizations (for debugging)')
-    parser.add_argument('--dframes', dest='dframes', type=int, default=None, help='Alternative to flow_dt, flow is calculated for time N depth frames ahead')
+    parser.add_argument('--dframes', dest='dframes', type=int, default=None, help='Alternative to flow_dt, flow is calculated for time N depth frames ahead. '
+                                                                                  'Useful because the resulting displacement arrows point to the new position of points '
+                                                                                  'in the scene at the time of a ground truth frame in the future')
+    parser.add_argument('files', nargs='*',help='NPZ files to convert')
 
-    args,files = parser.parse_known_args()
+    args = parser.parse_args()
+    files=args.files
 
     if len(files)==0:
         import easygui
         files=[easygui.fileopenbox()]
+        if files[0] is None:
+            print('nothing to convert. Use -h flag for usage.')
+            quit(0)
 
 
     for f in files:
