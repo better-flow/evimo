@@ -231,6 +231,7 @@ int main (int argc, char** argv) {
         return 0;
     }
     with_images = (dataset->images.size() > 0);
+    std::cout << "Found " << dataset->images.size() << " camera images\n";
 
     // Align the timestamps
     double start_ts = 0.0;

@@ -206,7 +206,11 @@ cv::Mat draw_wand(cv::Mat &img_, std::vector<cv::Point2f> &wand) {
     
     cv::Mat ret;
     if (img_.channels() == 1) {
+    #if (CV_VERSION_MAJOR >= 4)
+        cv::cvtColor(img_, ret, cv::COLOR_GRAY2BGR);
+    #else
         cv::cvtColor(img_, ret, CV_GRAY2BGR);
+    #endif
     } else {
         ret = img_.clone();
     }

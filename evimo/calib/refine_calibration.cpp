@@ -956,7 +956,13 @@ extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_nam
         std::vector<std::valarray<float>> tracked_wand_ir;
         std::vector<int> marker_ids;
         for (auto &m : w_cam.markers) {
-            int m_id = std::stoi(std::get<3>(m).substr(std::get<3>(m).find_last_not_of("0123456789") + 1));
+            int m_id = -1;
+            if (std::get<3>(m) == "MarkerA") m_id = 1;
+            else if (std::get<3>(m) == "MarkerB") m_id = 2;
+            else if (std::get<3>(m) == "MarkerC") m_id = 3;
+            else if (std::get<3>(m) == "MarkerD") m_id = 4;
+            else if (std::get<3>(m) == "MarkerE") m_id = 5;
+            else m_id = std::stoi(std::get<3>(m).substr(std::get<3>(m).find_last_not_of("0123456789") + 1));
 
             float u = -1, v = -1;
             if (std::get<2>(m) > 0.001) {
@@ -1094,7 +1100,6 @@ extract_tracks(ros::NodeHandle &nh, std::string bag_name, std::string camera_nam
         auto code = cv::waitKey(0);
         if (code == 27) break;
 */
-
     }
 
     // pick best labels for each keypoint
