@@ -114,11 +114,11 @@
         </p>
             <img src="img/dataset.png" width="100%" height="100%">
         <h2>Data Collection</h2>
-        <p>Event-based sensors essentially do not suffer from motion blur, and are capable of working in poor light
+        <p>Event-based sensors have extordinary temporal resolution, and are capable of working in poor light
         conditions where classical cameras fail. To provide the best possible ground truth, we use Vicon motion capture
         system to track the locations of the camera and objects. The ground
         truth depth and masks are then synthesized offline during data postprocessing by projecting static 3D scans of
-        the room and the objects onto camera plane. This approach allows to capture data in extreme dark and avoid motion blur for fast moving objects, without sacrificing the quality of the dataset. Our approach for data collection is described in [<a href="https://arxiv.org/abs/1903.07520">1</a>], and the authors would appreciate if you cite the paper if you use EVIMO in academic research.</p>
+        the room and the objects onto camera plane. This approach allows to capture data in extreme dark with fast moving objects, without sacrificing the quality of the dataset. Our approach for data collection is described in [<a href="https://arxiv.org/abs/1903.07520">1</a>], and the authors would appreciate if you cite the paper if you use EVIMO in academic research.</p>
         <h2>Ground Truth Format</h2>
         <p>We support Python (numpy) .npz format, as well as plain text format. We also provide raw ROS
         .bag recordings and C++ code used to process the recordings. Please see our <a href="https://github.com/better-flow/evimo/wiki">Wiki</a>
