@@ -259,6 +259,12 @@ public:
         this->async_gen_in_progress = false;
     }
 
+    // This cannot be called before generate_async is complete
+    void save_gt_images_async(void) {
+        this->thread_handle = std::thread(&DatasetFrame::save_gt_images, this);
+        this->async_gen_in_progress = true;
+    }
+
     // Visualization helpers
     cv::Mat get_visualization_event_projection(bool timg = false, bool nodist = false);
     cv::Mat get_visualization_depth(bool overlay_events = true, bool nodist = false);

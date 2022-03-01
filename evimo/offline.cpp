@@ -387,37 +387,56 @@ int main (int argc, char** argv) {
     }
 
     // Projecting the clouds and generating masks / depth maps
-    std::cout << std::endl << _yellow("Generating ground truth") << std::endl;
-    for (int i = 0; i < frames.size(); ++i) {
-        frames[i].generate_async();
-    }
+    auto processor_count = std::thread::hardware_concurrency();
+    // If not able to detect hardware concurrency
+    if (processor_count == 0) processor_count = 1; 
 
-    for (int i = 0; i < frames.size(); ++i) {
-        frames[i].join();
-        if (i % 10 == 0) {
-            std::cout << "\r\tFrame\t" << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
+    for (uint64_t i = 0; i < frames.size(); i+=processor_count) {
+        std::cout << "\r\tGenerating Frame \t" << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
+        // Quick and easy concurrency without spawning hundreds of threads simultaneously (results in big speedup)
+        for (uint64_t j = 0; j < processor_count; j++) {
+            if (i+j < frames.size()) frames[i+j].generate_async();
+        }
+
+        for (uint64_t j = 0; j < processor_count; j++) {
+            if (i+j < frames.size()) frames[i+j].join();
         }
     }
+
     std::cout << std::endl;
 
     // Create / clear ground truth folder
     dataset->create_ground_truth_folder();
 
-    // Save ground truth
+    // Save ground truth depth
     std::cout << std::endl << _yellow("Writing depth and mask ground truth") << std::endl;
+    for (uint64_t i = 0; i < frames.size(); i+=processor_count) {
+        std::cout << "\r\tWriting Frame \t" << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
+        // Quick and easy concurrency without spawning hundreds of threads simultaneously (results in big speedup)
+        for (uint64_t j = 0; j < processor_count; j++) {
+            if (i+j < frames.size()) frames[i+j].save_gt_images_async();
+        }
+
+        for (uint64_t j = 0; j < processor_count; j++) {
+            if (i+j < frames.size()) frames[i+j].join();
+        }
+    }
+
+    // Save meta
+    std::cout << std::endl << _yellow("Writing meta") << std::endl;
     std::string meta_fname = dataset->gt_folder + "/meta.txt";
     std::ofstream meta_file(meta_fname, std::ofstream::out);
     meta_file << "{\n";
     meta_file << dataset->meta_as_dict() + "\n";
     meta_file << ", 'frames': [\n";
     for (uint64_t i = 0; i < frames.size(); ++i) {
-        frames[i].save_gt_images();
         meta_file << frames[i].as_dict() << ",\n\n";
 
         if (i % 10 == 0) {
-            std::cout << "\r\tWritten " << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
+            std::cout << "\r\tWritten meta " << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
         }
     }
+
     meta_file << "]\n";
     std::cout << std::endl;
 
