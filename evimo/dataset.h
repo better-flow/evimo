@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <thread>
 
 #include <ros/package.h>
 
@@ -286,24 +287,51 @@ public:
         boost::filesystem::create_directory(gt_dir_path);
     }
 
+    // Using a reference instead of pointer for ss causes compilation to fail
+    void convert_events_to_txt_slice(uint64_t start, uint64_t end, std::stringstream* ss) {
+        for (uint64_t i = start; i < end; ++i) {
+            (*ss) << std::fixed << std::setprecision(9)
+                  << this->event_array[i].get_ts_sec()
+                  << " " << this->event_array[i].fr_y << " " << this->event_array[i].fr_x
+                  << " " << int(this->event_array[i].polarity) << std::endl;
+        }
+    }
+
     void write_eventstxt(std::string efname) {
-        std::cout << std::endl << _yellow("Writing events.txt") << std::endl;
-        std::stringstream ss;
-        for (uint64_t i = 0; i < this->event_array.size(); ++i) {
-            if (i % 10000 == 0 || i == this->event_array.size() - 1) {
-                std::cout << "\tPreparing\t" << i + 1 << "\t/\t" 
-                          << this->event_array.size() << "\t\r" << std::flush;
+        std::cout << std::endl << _yellow("Generating events.txt") << std::endl;
+
+        auto processor_count = std::thread::hardware_concurrency();
+        // If not able to detect hardware concurrency
+        if (processor_count == 0) processor_count = 1;
+
+        std::thread thread_handles[processor_count];
+        std::stringstream ss[processor_count];
+        for (uint64_t i = 0; i < processor_count; ++i) {
+            uint64_t start = i * (this->event_array.size() / processor_count);
+
+            uint64_t end = 0;
+            if (i == processor_count - 1) {
+                end = this->event_array.size();
+            } else {
+                end = (i+1) * (this->event_array.size() / processor_count);
             }
 
-            ss << std::fixed << std::setprecision(9)
-               << this->event_array[i].get_ts_sec()
-               << " " << this->event_array[i].fr_y << " " << this->event_array[i].fr_x
-               << " " << int(this->event_array[i].polarity) << std::endl;
+            std::cout << "Launching thread " << i << " on events " << start << " to " << end << std::endl;
+            thread_handles[i] = std::thread(&Dataset::convert_events_to_txt_slice, this, start, end, &ss[i]);
         }
+
+        for (uint64_t i = 0; i < processor_count; ++i) {
+            thread_handles[i].join();
+        }
+
         std::cout << std::endl;
         std::cout << std::endl << _yellow("Writing to file...") << std::endl;
         std::ofstream event_file(efname, std::ofstream::out);
-        event_file << ss.str();
+
+        for (uint64_t i = 0; i < processor_count; ++i) {
+            event_file << ss[i].str();
+        }
+
         event_file.close();
     }
 
