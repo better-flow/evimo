@@ -70,7 +70,14 @@ for cam in ${CameraArray[@]}; do
         zip_pids+=($!)
     fi
 
-    ffmpeg -r 60 -i $VIS_FOLDER/frame_%10d.png -c:v libx264 -vf \
+    if [ $cam = "flea3_7" ]
+    then
+        fps=30
+    else
+        fps=60
+    fi
+
+    ffmpeg -r $fps -i $VIS_FOLDER/frame_%10d.png -c:v libx264 -vf \
         "pad=ceil(iw/2)*2:ceil(ih/2)*2" -pix_fmt yuv420p \
         $VIDEO_DST
     rm -rf $VIS_FOLDER
