@@ -40,4 +40,4 @@ Because all source code is in the `docker_home` folder, which is mounted into th
 Running `catkin_make` is required only when the C++ codes are changed. It does not need to be re-run if the container is restarted.
 
 ## `pydvs`
-Pydvs is installed using the "editable" mode. This means the `pip3` command only needs to be run the first time the container is run.
+Pydvs is installed using the "editable" mode. This means python codes can be edited and run without running `pip3` again. However, updating pydvs's C components will require running `pip3` again.

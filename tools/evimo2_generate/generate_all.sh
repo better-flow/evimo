@@ -11,11 +11,16 @@ folders=($folders)
 # folders=(
 # ./imo/eval/scene13_dyn_test_00
 # ./imo/eval/scene13_dyn_test_05
-# ./imo/eval/scene14_dyn_test_03
 # )
 
 for folder in "${folders[@]}"
 do
     sequence_folder=$DATA_ROOT/$folder
-    bash ./generate.sh $sequence_folder
+    bash ./generate.sh $sequence_folder no_wait_for_zip
+done
+
+echo "Checking for zip jobs that may still be running. Found:"
+zip_pids_search=$(pgrep -f "[z]ip -rjq")
+for pid in ${zip_pids_search[@]}; do
+    cat /proc/${pid}/cmdline | xargs -0 echo
 done
