@@ -65,7 +65,7 @@ add_executable(datagen_online plot.cpp
                               dataset.cpp
                               dataset_frame.cpp
 )
-
+add_dependencies(datagen_online ${catkin_EXPORTED_TARGETS})
 target_link_libraries(datagen_online
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
@@ -78,7 +78,7 @@ add_executable(datagen_offline annotation_backprojector.h
                                offline.cpp
                                dataset.cpp
                                dataset_frame.cpp)
-
+add_dependencies(datagen_offline ${catkin_EXPORTED_TARGETS})
 target_link_libraries(datagen_offline
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
@@ -89,12 +89,14 @@ target_link_libraries(datagen_offline
 
 
 add_executable(bag_sanity bag_sanity/bag_sanity.cpp)
+add_dependencies(bag_sanity ${catkin_EXPORTED_TARGETS})
 target_link_libraries(bag_sanity
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
 )
 
 add_executable(topic_sanity bag_sanity/topic_sanity.cpp)
+add_dependencies(topic_sanity ${catkin_EXPORTED_TARGETS})
 target_link_libraries(topic_sanity
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
@@ -105,8 +107,8 @@ target_link_libraries(topic_sanity
 find_package(Python3 COMPONENTS Development NumPy)
 add_executable(refine calib/refine_calibration.cpp
                       dataset.cpp)
-
 target_include_directories(refine PRIVATE ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
+add_dependencies(refine ${catkin_EXPORTED_TARGETS})
 target_link_libraries(refine
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
@@ -118,10 +120,12 @@ target_link_libraries(refine
 find_package(X11 REQUIRED)
 add_executable(collect calib/collect.cpp
                        dataset.cpp)
+add_dependencies(collect ${catkin_EXPORTED_TARGETS})
 target_link_libraries(collect
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
     ${PCL_LIBRARIES}
     ${Boost_LIBRARIES}
     ${X11_LIBRARIES}
+
 )
