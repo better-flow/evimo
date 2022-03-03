@@ -3,16 +3,16 @@
 # The first argument is full path to evimo_data_config
 # https://github.com/better-flow/evimo_data_config
 # For example:
-# ./docker_run.sh /media/$USER/EVIMO/evimo_data_config
+# ./docker_run.sh /media/$USER/EVIMO/raw
 
 docker run -it \
     --user=$(id -u $USER):$(id -g $USER) \
     --env="DISPLAY" \
     --workdir="/home/$USER" \
     --volume=$(pwd)"/docker_home:/home/$USER" \
-    --volume=$(pwd)"/catkin_ws:/home/$USER/catkin_ws" \
     --volume=$(pwd)"/../../evimo:/home/$USER/catkin_ws/src/evimo" \
-    --volume=$1":/home/$USER/evimo_data_config" \
+    --volume=$(pwd)"/../../tools:/home/$USER/tools" \
+    --volume=$1":/home/$USER/raw" \
     --volume="/etc/group:/etc/group:ro" \
     --volume="/etc/passwd:/etc/passwd:ro" \
     --volume="/etc/shadow:/etc/shadow:ro" \
@@ -20,4 +20,3 @@ docker run -it \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     ev_imo:1.0 \
     bash
-

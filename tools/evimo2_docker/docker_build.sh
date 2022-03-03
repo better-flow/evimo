@@ -1,15 +1,13 @@
 #!/bin/bash
 set -xe
 
-if [ -d "docker_home" ] 
-then
-    echo "docker_home already exists, skipping creation"
-else
-    mkdir -p docker_home
+rm -rf docker_home
+mkdir -p docker_home
+# Enter docker_home
+cd docker_home
 
-    # Source ROS files always
-    echo "source catkin_ws/devel/setup.bash" >> docker_home/.bashrc
-fi
+# Source ROS files always
+echo "source catkin_ws/devel/setup.bash" >> .bashrc
 
 if [ -d "catkin_ws" ] 
 then
@@ -21,7 +19,7 @@ else
            catkin_ws/src/vicon/vicon_odom \
            catkin_ws/src/vicon/ipc
     cd catkin_ws/src/vicon
-    git apply ../../../vicon_cmake_disable.patch
+    git apply ../../../../vicon_cmake_disable.patch
     cd ../../..
 
     git clone git@github.com:uzh-rpg/rpg_dvs_ros.git catkin_ws/src/rpg_dvs_ros
@@ -33,5 +31,15 @@ else
            catkin_ws/src/rpg_dvs_ros/dvs_ros_driver   \
            catkin_ws/src/rpg_dvs_ros/dvxplorer_ros_driver
 fi
+
+if [ -d "pydvs" ] 
+then
+    echo "pydvs already exists, skipping creation"
+else
+    git clone https://github.com/aftersomemath/pydvs --branch evimo2_regen
+fi
+
+# Back to evimo2_docker
+cd ..
 
 docker build --tag ev_imo:1.0 .

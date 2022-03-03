@@ -21,7 +21,3 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install matplotlib pyquaternion scipy tqdm pandas numpy --upgrade
-
-RUN git clone https://github.com/aftersomemath/pydvs --branch evimo2_regen && \
-    cd pydvs/lib && \
-    pip3 install .
