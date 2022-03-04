@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 import sys, os, shutil, subprocess, argparse
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('idir',
@@ -17,9 +15,11 @@ if __name__ == '__main__':
         if (g not in groups): continue
 
         for subgroup in os.listdir(os.path.join(idir, g)):
-            for dtype in os.listdir(os.path.join(idir, g, subgroup)):
-                if (dtype == 'video'):
-                    src = os.path.join(idir, g, subgroup, dtype)
-                    dst = os.path.join(videos_dir, g, subgroup, dtype)
-                    os.makedirs(dst, exist_ok=True)
-                    shutil.copytree(src, dst, dirs_exist_ok=True)
+            for sequence in os.listdir(os.path.join(idir, g, subgroup)):
+                for item in os.listdir(os.path.join(idir, g, subgroup, sequence)):
+                    if os.path.splitext(item)[1] == '.mp4':
+                        src = os.path.join(idir, g, subgroup, sequence, item)
+                        dst = os.path.join(videos_dir, g, subgroup)
+                        print(dst)
+                        os.makedirs(dst, exist_ok=True)
+                        shutil.move(src, os.path.join(videos_dir, g, subgroup, item))
