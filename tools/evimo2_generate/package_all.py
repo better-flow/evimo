@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 import sys, os, shutil, subprocess, argparse
-from multiprocessing import Pool
-import tarfile
 
 # its a dataset folder is at least one of camera_folders is in it, as well as objectstxt:
 camera_folders = set(['flea3_7', 'left_camera', 'right_camera', 'samsung_mono'])
@@ -199,41 +197,6 @@ def move_all(groups, idir, odir, dry_run):
                 txt = TxtSelector(f, c)
                 txt.copy(os.path.join(odir, 'txt', c, g, subgroup, raw.sequence_name), dry_run=dry_run)
 
-
-def compress(fin, fout, fname):
-    print ("compressing", fin, '->', fout, fname)
-    os.makedirs(fout, exist_ok=True)
-
-    with tarfile.open(os.path.join(fout, fname), "w:gz") as tar:
-        tar.add(fin, arcname=os.path.basename(fin))
-
-    print ("\tdone", fin, '->', fout, fname)
-
-def compress_all_list(idir):
-    compressed_dir = os.path.join(idir, 'COMPRESSED')
-    os.makedirs(compressed_dir, exist_ok=True)
-
-    fin_list = []
-    fout_list = []
-    fname_list = []
-
-    for g in os.listdir(os.path.join(idir)):
-        for subgroup in os.listdir(os.path.join(idir, g)):
-            for dtype in os.listdir(os.path.join(idir, g, subgroup)):
-                if (dtype == 'raw'):
-                    fin_list.append(os.path.join(idir, g, subgroup, dtype))
-                    fout_list.append(os.path.join(compressed_dir, g, subgroup))
-                    fname_list.append(subgroup + '_' + g + '_' + dtype + '.tar.gz')
-                    continue
-
-                for c in os.listdir(os.path.join(idir, g, subgroup, dtype)):
-                    fin_list.append(os.path.join(idir, g, subgroup, dtype, c))
-                    fout_list.append(os.path.join(compressed_dir, g, subgroup, dtype))
-                    fname_list.append(subgroup + '_' + g + '_' + c + '_' + dtype + '.tar.gz')
-
-    return fin_list, fout_list, fname_list
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('idir',
@@ -253,17 +216,3 @@ if __name__ == '__main__':
 
     groups = ['imo', 'sanity', 'sfm', 'imo_gaps', 'sanity_gaps', 'sfm_gaps', 'imo_ll', 'sanity_ll', 'sfm_ll']
     move_all(groups, args.idir, args.odir, dry_run)
-
-    if (False):
-        fin_list, fout_list, fname_list = compress_all_list(args.odir)
-
-        print ("To be compressed:")
-        for i in range(len(fin_list)):
-            print ("\t", fin_list[i], '->', fout_list[i], ':\t', fname_list[i])
-
-        def f(i):
-            compress(fin_list[i], fout_list[i], fname_list[i])
-
-        #with Pool(12) as p:
-        #    p.map(f, range(len(fin_list)))
-

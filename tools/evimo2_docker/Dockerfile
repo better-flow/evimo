@@ -17,6 +17,7 @@ RUN apt-get update \
     python3-tk \
     ffmpeg \
     zip \
+    pigz \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
