@@ -257,6 +257,9 @@ bool Dataset::read_bag_file(std::string bag_name,
                   << " - " << this->cam_tj[this->cam_tj.size() - 1].ts << ")" << std::endl;
     }
 
+    std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec()))
+              << std::endl << std::endl;
+
     this->ros_time_offset = time_offset;
     this->cam_tj.subtract_time(time_offset);
     for (auto &obj_tj : this->obj_tjs) {
@@ -281,9 +284,6 @@ bool Dataset::read_bag_file(std::string bag_name,
     // events
     for (auto &e : this->event_array)
         e.timestamp -= time_offset.toNSec();
-
-    std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec()))
-              << std::endl << std::endl;
 
     if (n_events > 0)
         std::cout << "Event timestamp range:\t(" << double(this->event_array.front().timestamp) * 1e-9

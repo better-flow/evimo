@@ -162,6 +162,14 @@ public:
 };
 
 
+uint64_t uint64_t_abs_diff(uint64_t x, uint64_t y) {
+    if (x > y) {
+        return x - y;
+    } else {
+        return y - x;
+    }
+}
+
 int main (int argc, char** argv) {
 
     // Initialize ROS
@@ -230,7 +238,7 @@ int main (int argc, char** argv) {
     if (!dataset->read_bag_file(bag_name, start_time_offset, sequence_duration, with_images, ignore_tj)) {
         return 0;
     }
-    with_images = (dataset->images.size() > 0);
+    with_images = (dataset->images.size() > 0); // We are using a classical camera
     std::cout << "Found " << dataset->images.size() << " camera images\n";
 
     // Align the timestamps
@@ -241,237 +249,291 @@ int main (int argc, char** argv) {
         start_ts = std::max(start_ts, obj_tj.second[0].ts.toSec());
     start_ts += 1e-3; // ensure the first pose is surrounded by events
     std::cout << "Actual start timestamp: " << start_ts << "\n";
+    std::cout << "Vicon occlusion info per ground truth frame:" << std::endl;
 
-    unsigned long int frame_id_real = 0;
-    double dt = 1.0 / FPS;
-    long int cam_tj_id = 0;
-    std::map<int, long int> obj_tj_ids;
+    // Make a list of GT frames to generate
     std::vector<DatasetFrame> frames;
-    uint64_t event_low = 0, event_high = 0;
-    while (true) {
-        if (with_images) {
-            if (frame_id_real >= dataset->image_ts.size()) break;
-            start_ts = dataset->image_ts[frame_id_real].toSec();
-        }
-
-        while (cam_tj_id < dataset->cam_tj.size() && dataset->cam_tj[cam_tj_id].ts.toSec() < start_ts) cam_tj_id ++;
-        for (auto &obj_tj : dataset->obj_tjs)
-            while (obj_tj_ids[obj_tj.first] < obj_tj.second.size()
-                   && obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() < start_ts) obj_tj_ids[obj_tj.first] ++;
-
-        start_ts += dt;
-
-        bool done = false;
-        if (cam_tj_id >= dataset->cam_tj.size()) done = true;
-        for (auto &obj_tj : dataset->obj_tjs)
-            if (obj_tj.second.size() > 0 && obj_tj_ids[obj_tj.first] >= obj_tj.second.size()) done = true;
-        if (done) break;
-
-        auto ref_ts = (with_images ? dataset->image_ts[frame_id_real].toSec() : dataset->cam_tj[cam_tj_id].ts.toSec());
-        uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
-        uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
-
-        if (dataset->event_array.size() > 0) {
-            while (event_low  < dataset->event_array.size() - 1 && dataset->event_array[event_low].timestamp  < ts_low)  event_low ++;
-            while (event_high < dataset->event_array.size() - 1 && dataset->event_array[event_high].timestamp < ts_high) event_high ++;
-        }
-
-        double max_ts_err = std::fabs(dataset->cam_tj[cam_tj_id].ts.toSec() - ref_ts);
-        for (auto &obj_tj : dataset->obj_tjs) {
-            if (obj_tj.second.size() == 0) continue;
-            double ts_err = std::fabs(ref_ts - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
-            if (ts_err > max_ts_err) max_ts_err = ts_err;
-        }
-
-        double max_p2p_err = 0.0;
-        for (auto &obj_tj : dataset->obj_tjs) {
-            if (obj_tj.second.size() == 0) continue;
-            double ts_err = std::fabs(dataset->cam_tj[cam_tj_id].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
-            if (ts_err > max_p2p_err) max_p2p_err = ts_err;
-        }
-
-        if (max_ts_err > 0.005 || max_p2p_err > 0.001) {
-            std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " / " << max_p2p_err << " skipping..." << std::endl;
-            frame_id_real ++;
-            continue;
-        }
-
-        if (dataset->event_array.size() > 0) {
-            bool to_skip = false;
-            auto de_low  = ts_low  > dataset->event_array[event_low ].timestamp ? ts_low  - dataset->event_array[event_low].timestamp :
-                                                                      dataset->event_array[event_low].timestamp - ts_low;
-            auto de_high = ts_high > dataset->event_array[event_high].timestamp ? ts_high - dataset->event_array[event_high].timestamp :
-                                                                      dataset->event_array[event_high].timestamp - ts_high;
-            if (de_low > max_event_gap * 1e9 || de_high > max_event_gap * 1e9) {
-                std::cout << _red("Gap in event window boundaries: ") << double(de_low) * 1e-9 << " / "
-                          << double(de_high) * 1e-9 << " sec. skipping..." << std::endl;
-                frame_id_real ++;
-                continue;
+    {
+        unsigned long int frame_id_real = 0;
+        double dt = 1.0 / FPS;
+        long int cam_tj_id = 0;
+        std::map<int, long int> obj_tj_ids;
+        uint64_t event_low = 0, event_high = 0;
+        while (true) {
+            // If using a classical camera
+            if (with_images) {
+                if (frame_id_real >= dataset->image_ts.size()) break; // If classical camera, but no frames, just exit the loop
+                start_ts = dataset->image_ts[frame_id_real].toSec(); // Otherwise force the staring timestamp to the first frame
             }
 
-            for (size_t event_id = event_low + 1; event_id <= event_high; event_id++) {
-                auto event_gap = dataset->event_array[event_id].timestamp - dataset->event_array[event_id - 1].timestamp;
-                if (event_gap > max_event_gap * 1e9) {
-                    std::cout << _red("Gap in events ") << event_id - 1 << " -> " << event_id << _red(" detected: ") 
-                              << double(event_gap) * 1e-9 << " sec. skipping..." << std::endl;
-                    to_skip = true;
-                    break;
+            // Find the trajectory id's with the closest timestamp greater than or equal to start_ts
+            // Find the id for the camera
+            while (cam_tj_id < dataset->cam_tj.size() && dataset->cam_tj[cam_tj_id].ts.toSec() < start_ts) {
+                cam_tj_id ++;
+            }
+            // Find the id for every object
+            for (auto &obj_tj : dataset->obj_tjs) {
+                while (obj_tj_ids[obj_tj.first] < obj_tj.second.size()
+                       && obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() < start_ts) {
+                    obj_tj_ids[obj_tj.first] ++;
                 }
             }
-             
-            if (to_skip) {
+
+            // Increment start_ts forward by one dt
+            // It has to be done here so that the continue statements
+            // below do not stop start_ts from updating
+            start_ts += dt;
+
+            // If we are out of trajectory data for the camera or any of the objects, exit generation
+            bool done = false;
+            if (cam_tj_id >= dataset->cam_tj.size()) done = true;
+            for (auto &obj_tj : dataset->obj_tjs)
+                if (obj_tj.second.size() > 0 && obj_tj_ids[obj_tj.first] >= obj_tj.second.size()) done = true;
+            if (done) break;
+
+            // If using classical camera, use frame timestamp for ref_ts
+            // else use the trajectories timestamp
+            // ref_ts is the actual time that the ground truth frame will be generated for
+            auto ref_ts = (with_images ? dataset->image_ts[frame_id_real].toSec() : dataset->cam_tj[cam_tj_id].ts.toSec());
+
+            // Find the maximum difference between ref_ts and the actual trajectory timestamps
+            double max_ts_err = std::fabs(dataset->cam_tj[cam_tj_id].ts.toSec() - ref_ts);
+            for (auto &obj_tj : dataset->obj_tjs) {
+                if (obj_tj.second.size() == 0) continue;
+                double ts_err = std::fabs(ref_ts - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
+                if (ts_err > max_ts_err) max_ts_err = ts_err;
+            }
+
+            // Find the maximum difference between the objects timestamps and the camera trajectory timestamp
+            double max_p2p_err = 0.0;
+            for (auto &obj_tj : dataset->obj_tjs) {
+                if (obj_tj.second.size() == 0) continue;
+                double ts_err = std::fabs(dataset->cam_tj[cam_tj_id].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec());
+                if (ts_err > max_p2p_err) max_p2p_err = ts_err;
+            }
+
+            // If the error between ref_ts and any object trajectory timestamp
+            // or the camera trajectory timestamp and any object trajectory timestamp is too large
+            // Skip this GT frame
+            if (max_ts_err > 0.005 || max_p2p_err > 0.001) {
+                std::cout << _red("Trajectory timestamp misalignment: ") << max_ts_err << " / " << max_p2p_err << " skipping..." << std::endl;
+                frame_id_real ++;
+                continue; // Skip this GT frame
+            }
+
+            // Test if events are suitable for generation of a GT frame
+            if (dataset->event_array.size() > 0) {
+                // Find a slice of events
+                uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
+                uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
+                while (event_low  < dataset->event_array.size() - 1 && dataset->event_array[event_low].timestamp  < ts_low)  event_low ++;
+                while (event_high < dataset->event_array.size() - 1 && dataset->event_array[event_high].timestamp < ts_high) event_high ++;
+
+                // Find out if closest events are too far away from the desired ts_low, ts_high
+                // If so skip the entire GT frame
+                uint64_t de_low  = uint64_t_abs_diff(ts_low,  dataset->event_array[event_low ].timestamp);
+                uint64_t de_high = uint64_t_abs_diff(ts_high, dataset->event_array[event_high].timestamp);
+
+                if (de_low > max_event_gap * 1e9 || de_high > max_event_gap * 1e9) {
+                    std::cout << ref_ts << " " << dataset->slice_width / 2.0 << " "
+                             << ts_low << " " << ts_high << " "
+                             << event_low << " " << event_high << " "
+                             << frame_id_real << std::endl;
+
+                    std::cout << _red("Gap in event window boundaries: ") << double(de_low) * 1e-9 << " / "
+                              << double(de_high) * 1e-9 << " sec. skipping..." << std::endl;
+                    frame_id_real ++;
+                    continue;
+                }
+
+                // Check time delta between every event in the window
+                // if its too large skip generation of a GT frame
+                for (size_t event_id = event_low + 1; event_id <= event_high; event_id++) {
+                    auto event_gap = dataset->event_array[event_id].timestamp - dataset->event_array[event_id - 1].timestamp;
+                    if (event_gap > max_event_gap * 1e9) {
+                        std::cout << _red("Gap in events ") << event_id - 1 << " -> " << event_id << _red(" detected: ") 
+                                  << double(event_gap) * 1e-9 << " sec. skipping..." << std::endl;
+                        frame_id_real++;
+                        continue;
+                    }
+                }
+            }
+
+            // If less than 10 events in the window skip generating the GT frame
+            if (dataset->event_array.size() > 0 && event_high - event_low < 10) {
+                std::cout << _red("No events at: ") << ref_ts << " sec. skipping..." << std::endl;
                 frame_id_real ++;
                 continue;
             }
-        }
 
-        if (dataset->event_array.size() > 0 && event_high - event_low < 10) {
-            std::cout << _red("No events at: ") << ref_ts << " sec. skipping..." << std::endl;
+            // If the last generated GT frame is too close to ref_ts then skip
+            // generating the GT frame, but do not increment the frame_id_real
+            // so that the next GT frame is considered consecutive
+            if (frames.size() > 0 && std::fabs(frames.back().get_timestamp() - ref_ts) < 1e-4) {
+                std::cout << _red("Duplicate frame encountered at: ") << ref_ts << " sec. skipping..." << std::endl;
+                continue;
+            }
+
+            // All checks have passed, schedule creation of a GT frame
+            frames.emplace_back(dataset, cam_tj_id, ref_ts, frame_id_real);
+
+            // Add the event_slice times to the GT frame
+            auto &frame = frames.back();
+            if (dataset->event_array.size() > 0) {
+                frame.add_event_slice_ids(event_low, event_high);
+            }
+
+            // Add a classical image to the GT frame
+            if (with_images) frame.add_img(dataset->images[frame_id_real]);
+
+            // Print information about the frame
+            std::cout << frame_id_real << ": cam "
+                      << std::setprecision(2) << dataset->cam_tj[cam_tj_id].ts.toSec()
+                      << " (" << cam_tj_id << "[" << std::setprecision(0) << dataset->cam_tj[cam_tj_id].occlusion * 100 << "%])";
+            for (auto &obj_tj : dataset->obj_tjs) {
+                if (obj_tj.second.size() != 0) {
+                    std::cout << " obj_" << obj_tj.first << " "
+                              << std::setprecision(2) << obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec()
+                              << " (" << obj_tj_ids[obj_tj.first] << "[" << std::setprecision(0) << obj_tj.second[obj_tj_ids[obj_tj.first]].occlusion * 100 <<  "%])";
+                    frame.add_object_pos_id(obj_tj.first, obj_tj_ids[obj_tj.first]);
+                }
+            }
+            std::cout << std::endl;
+
+            // We have generated one gt frame so increment frame_id_real
             frame_id_real ++;
-            continue;
         }
-
-        if (frames.size() > 0 && std::fabs(frames.back().get_timestamp() - ref_ts) < 1e-4) {
-            std::cout << _red("Duplicate frame encountered at: ") << ref_ts << " sec. skipping..." << std::endl;
-            continue;
-        }
-
-        frames.emplace_back(dataset, cam_tj_id, ref_ts, frame_id_real);
-        auto &frame = frames.back();
-
-        if (dataset->event_array.size() > 0) {
-            frame.add_event_slice_ids(event_low, event_high);
-        }
-
-        if (with_images) frame.add_img(dataset->images[frame_id_real]);
-        std::cout << frame_id_real << ": " << dataset->cam_tj[cam_tj_id].ts
-                  << " (" << cam_tj_id << "[" << dataset->cam_tj[cam_tj_id].occlusion * 100 << "%])";
-        for (auto &obj_tj : dataset->obj_tjs) {
-            if (obj_tj.second.size() == 0) continue;
-            std::cout << " " << obj_tj.second[obj_tj_ids[obj_tj.first]].ts << " (" << obj_tj_ids[obj_tj.first]
-                      << "[" << obj_tj.second[obj_tj_ids[obj_tj.first]].occlusion * 100 <<  "%])";
-            frame.add_object_pos_id(obj_tj.first, obj_tj_ids[obj_tj.first]);
-        }
-        std::cout << std::endl;
-        frame_id_real ++;
     }
 
     std::cout << _blue("\nTimestamp alignment done") << std::endl;
-    std::cout << "\tDataset contains " << frames.size() << " frames" << std::endl;
+    std::cout << "\tDataset contains " << frames.size() << " ground truth frames" << std::endl;
     if (frames.size() == 0) {
         return 0;
     }
 
-    // Visualization
-    int step = std::max(int(frames.size()) / show, 1);
-    for (int i = 0; i < frames.size() && show > 0; i += step) {
-        frames[i].show();
-    }
-    if (show > 0) {
-        DatasetFrame::visualization_spin();
+    // Visualize in some way if appropriate flags are set
+    // closes program if generate not set
+    if (show > 0 || show == -2 || save_3d) {
+        int step = std::max(int(frames.size()) / show, 1);
+        for (int i = 0; i < frames.size() && show > 0; i += step) {
+            frames[i].show();
+        }
+        if (show > 0) {
+            DatasetFrame::visualization_spin();
+        }
+
+        if (show == -2)
+            FrameSequenceVisualizer fsv(frames, dataset);
+
+        if (save_3d) {
+            std::string save_dir = dataset->dataset_folder + '/' + dataset->camera_name + "/3D_data/";
+            dataset->create_ground_truth_folder(save_dir);
+            Backprojector bp(dataset, -1, -1, -1);
+            bp.save_clouds(save_dir);
+        }
+
+        // Exit if we are running in the visualization mode
+        if (!generate) {
+            return 0;
+        }
     }
 
-    if (show == -2)
-        FrameSequenceVisualizer fsv(frames, dataset);
-
-    if (save_3d) {
-        std::string save_dir = dataset->dataset_folder + '/' + dataset->camera_name + "/3D_data/";
-        dataset->create_ground_truth_folder(save_dir);
-        Backprojector bp(dataset, -1, -1, -1);
-        bp.save_clouds(save_dir);
-    }
-
-    // Exit if we are running in the visualization mode
-    if (!generate) {
-        return 0;
-    }
-
+    // Generate the GT frames from the list frames
     // Projecting the clouds and generating masks / depth maps
-    auto processor_count = std::thread::hardware_concurrency();
-    // If not able to detect hardware concurrency
-    if (processor_count == 0) processor_count = 1; 
+    {
+        auto processor_count = std::thread::hardware_concurrency();
+        // If not able to detect hardware concurrency
+        if (processor_count == 0) processor_count = 1; 
 
-    for (uint64_t i = 0; i < frames.size(); i+=processor_count) {
-        std::cout << "\r\tGenerating Frame \t" << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
-        // Quick and easy concurrency without spawning hundreds of threads simultaneously (results in big speedup)
-        for (uint64_t j = 0; j < processor_count; j++) {
-            if (i+j < frames.size()) frames[i+j].generate_async();
+        for (uint64_t i = 0; i < frames.size(); i+=processor_count) {
+            std::cout << "\r\tGenerating Frame \t" << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
+            // Quick and easy concurrency without spawning hundreds of threads simultaneously (results in big speedup)
+            for (uint64_t j = 0; j < processor_count; j++) {
+                if (i+j < frames.size()) frames[i+j].generate_async();
+            }
+
+            for (uint64_t j = 0; j < processor_count; j++) {
+                if (i+j < frames.size()) frames[i+j].join();
+            }
         }
+        std::cout << std::endl;
+    }
 
-        for (uint64_t j = 0; j < processor_count; j++) {
-            if (i+j < frames.size()) frames[i+j].join();
+    // Save the GT frames to disk
+    {
+        // Create / clear ground truth folder
+        dataset->create_ground_truth_folder();
+
+        auto processor_count = std::thread::hardware_concurrency();
+        // If not able to detect hardware concurrency
+        if (processor_count == 0) processor_count = 1; 
+
+        std::cout << std::endl << _yellow("Writing depth and mask ground truth") << std::endl;
+        for (uint64_t i = 0; i < frames.size(); i+=processor_count) {
+            std::cout << "\r\tWriting Frame \t" << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
+            // Quick and easy concurrency without spawning hundreds of threads simultaneously (results in big speedup)
+            for (uint64_t j = 0; j < processor_count; j++) {
+                if (i+j < frames.size()) frames[i+j].save_gt_images_async();
+            }
+
+            for (uint64_t j = 0; j < processor_count; j++) {
+                if (i+j < frames.size()) frames[i+j].join();
+            }
         }
     }
 
-    std::cout << std::endl;
+    // Save meta.txt
+    {
+        std::cout << std::endl << _yellow("Writing meta") << std::endl;
+        std::string meta_fname = dataset->gt_folder + "/meta.txt";
+        std::ofstream meta_file(meta_fname, std::ofstream::out);
+        meta_file << "{\n";
+        meta_file << dataset->meta_as_dict() + "\n";
+        meta_file << ", 'frames': [\n";
+        for (uint64_t i = 0; i < frames.size(); ++i) {
+            meta_file << frames[i].as_dict() << ",\n\n";
 
-    // Create / clear ground truth folder
-    dataset->create_ground_truth_folder();
-
-    // Save ground truth depth
-    std::cout << std::endl << _yellow("Writing depth and mask ground truth") << std::endl;
-    for (uint64_t i = 0; i < frames.size(); i+=processor_count) {
-        std::cout << "\r\tWriting Frame \t" << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
-        // Quick and easy concurrency without spawning hundreds of threads simultaneously (results in big speedup)
-        for (uint64_t j = 0; j < processor_count; j++) {
-            if (i+j < frames.size()) frames[i+j].save_gt_images_async();
+            if (i % 10 == 0) {
+                std::cout << "\r\tWritten meta " << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
+            }
         }
 
-        for (uint64_t j = 0; j < processor_count; j++) {
-            if (i+j < frames.size()) frames[i+j].join();
+        meta_file << "]\n";
+        std::cout << std::endl;
+
+        std::cout << std::endl << _yellow("Writing full trajectory") << std::endl;
+        meta_file << ", 'full_trajectory': [\n";
+        for (uint64_t i = 0; i < dataset->cam_tj.size(); ++i) {
+            DatasetFrame frame(dataset, i, dataset->cam_tj[i].ts.toSec(), -1);
+
+            for (auto &obj_tj : dataset->obj_tjs) {
+                if (obj_tj.second.size() == 0) continue;
+                frame.add_object_pos_id(obj_tj.first, std::min(i, obj_tj.second.size() - 1));
+            }
+
+            meta_file << frame.as_dict() << ",\n\n";
+
+            if (i % 10 == 0) {
+                std::cout << "\r\tWritten " << i + 1 << "\t/\t" << dataset->cam_tj.size() << "\t" << std::flush;
+            }
         }
+        meta_file << "]\n";
+        std::cout << std::endl;
+
+        std::cout << std::endl << _yellow("Writing imu") << std::endl;
+        meta_file << ", 'imu': {";
+        for (auto &imu : dataset->imu_info) {
+            meta_file << "'" + imu.first + "': [\n";
+            for (uint64_t i = 0; i < imu.second.size(); ++i) {
+                meta_file << imu.second[i].as_dict() << ",\n";
+            }
+            meta_file << "],\n";
+        }
+        meta_file << "\n}";
+
+        meta_file << "\n}\n";
+        meta_file.close();
     }
-
-    // Save meta
-    std::cout << std::endl << _yellow("Writing meta") << std::endl;
-    std::string meta_fname = dataset->gt_folder + "/meta.txt";
-    std::ofstream meta_file(meta_fname, std::ofstream::out);
-    meta_file << "{\n";
-    meta_file << dataset->meta_as_dict() + "\n";
-    meta_file << ", 'frames': [\n";
-    for (uint64_t i = 0; i < frames.size(); ++i) {
-        meta_file << frames[i].as_dict() << ",\n\n";
-
-        if (i % 10 == 0) {
-            std::cout << "\r\tWritten meta " << i + 1 << "\t/\t" << frames.size() << "\t" << std::flush;
-        }
-    }
-
-    meta_file << "]\n";
-    std::cout << std::endl;
-
-    std::cout << std::endl << _yellow("Writing full trajectory") << std::endl;
-    meta_file << ", 'full_trajectory': [\n";
-    for (uint64_t i = 0; i < dataset->cam_tj.size(); ++i) {
-        DatasetFrame frame(dataset, i, dataset->cam_tj[i].ts.toSec(), -1);
-
-        for (auto &obj_tj : dataset->obj_tjs) {
-            if (obj_tj.second.size() == 0) continue;
-            frame.add_object_pos_id(obj_tj.first, std::min(i, obj_tj.second.size() - 1));
-        }
-
-        meta_file << frame.as_dict() << ",\n\n";
-
-        if (i % 10 == 0) {
-            std::cout << "\r\tWritten " << i + 1 << "\t/\t" << dataset->cam_tj.size() << "\t" << std::flush;
-        }
-    }
-    meta_file << "]\n";
-    std::cout << std::endl;
-
-    std::cout << std::endl << _yellow("Writing imu") << std::endl;
-    meta_file << ", 'imu': {";
-    for (auto &imu : dataset->imu_info) {
-        meta_file << "'" + imu.first + "': [\n";
-        for (uint64_t i = 0; i < imu.second.size(); ++i) {
-            meta_file << imu.second[i].as_dict() << ",\n";
-        }
-        meta_file << "],\n";
-    }
-    meta_file << "\n}";
-
-    meta_file << "\n}\n";
-    meta_file.close();
 
     // Save events.txt
     dataset->write_eventstxt(dataset->gt_folder + "/events.txt");
