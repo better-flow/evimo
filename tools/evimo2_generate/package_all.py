@@ -165,7 +165,7 @@ def subgroup_from_name(f):
 def move_all(groups, idir, odir, dry_run):
     dataset_folders = sorted(get_dataset_folders(idir))
 
-    for f in dataset_folders[0:2]:
+    for f in dataset_folders:
         gid = group_id_from_name(f, groups)
         if gid is None:
             print (f, "has no group!")
