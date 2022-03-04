@@ -62,13 +62,8 @@ for cam in ${CameraArray[@]}; do
     npy_folder_to_npz_delete_npy $1/$cam"/ground_truth/dataset_mask.npz" $1/$cam"/ground_truth/mask_npy"&
     zip_pids+=($!)
 
-    if [ -d $1"/classical_npy" ] 
-    then
-        echo "Not compressing dataset_classical, it doesn't exist"
-    else
-        npy_folder_to_npz_delete_npy $1/$cam"/ground_truth/dataset_classical.npz" $1/$cam"/ground_truth/classical_npy"&
-        zip_pids+=($!)
-    fi
+    npy_folder_to_npz_delete_npy $1/$cam"/ground_truth/dataset_classical.npz" $1/$cam"/ground_truth/classical_npy"&
+    zip_pids+=($!)
 
     if [ $cam = "flea3_7" ]
     then
