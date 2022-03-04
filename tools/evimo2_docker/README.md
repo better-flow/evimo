@@ -13,6 +13,7 @@ Run docker container
 Once inside compile the evimo C++ and python tools by running:
 ```bash
 cd ~/catkin_ws; catkin_make; pip3 install -e ~/pydvs/lib; cd
+source ~/catkin_ws/devel/setup.bash
 ```
 
 `catkin_make` only needs to be run once because `catkin_ws` is stored on the host and mounted into the container.
@@ -22,7 +23,7 @@ cd ~/catkin_ws; catkin_make; pip3 install -e ~/pydvs/lib; cd
 * Creates a `docker_home` folder on the host, it is persistent between containers
 * Adds a command to source required ROS environment variables to the containers `.bashrc`
 * Creates a `catkin_ws` with ROS dependencies in `docker_home`
-* Clones the `pydvs` python package to `docker_home`
+* Clones the `pydvs` python package to `evimo2_docker`. It is not cloned to `docker_home` in order to avoid accidental deletion.
 
 Because all source code is in the `docker_home` folder, which is mounted into the running container, code changes and ROS compilation is persistent across containers. This allows easy code editing from the host.
 

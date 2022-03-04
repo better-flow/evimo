@@ -32,14 +32,14 @@ else
            catkin_ws/src/rpg_dvs_ros/dvxplorer_ros_driver
 fi
 
+# Back to evimo2_docker
+cd ..
+
 if [ -d "pydvs" ] 
 then
-    echo "pydvs already exists, skipping creation"
+    echo "pydvs already exists, skipping creation to avoid deleting work"
 else
     git clone https://github.com/aftersomemath/pydvs --branch evimo2_regen
 fi
-
-# Back to evimo2_docker
-cd ..
 
 docker build --tag ev_imo:1.0 .

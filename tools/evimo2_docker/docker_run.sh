@@ -12,6 +12,7 @@ docker run -it \
     --volume=$(pwd)"/docker_home:/home/$USER" \
     --volume=$(pwd)"/../../evimo:/home/$USER/catkin_ws/src/evimo" \
     --volume=$(pwd)"/../../tools:/home/$USER/tools" \
+    --volume=$(pwd)"/pydvs:/home/$USER/pydvs" \
     --volume=$1":/home/$USER/raw" \
     --volume="/etc/group:/etc/group:ro" \
     --volume="/etc/passwd:/etc/passwd:ro" \
