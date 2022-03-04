@@ -161,15 +161,6 @@ public:
     }
 };
 
-
-uint64_t uint64_t_abs_diff(uint64_t x, uint64_t y) {
-    if (x > y) {
-        return x - y;
-    } else {
-        return y - x;
-    }
-}
-
 int main (int argc, char** argv) {
 
     // Initialize ROS
@@ -321,51 +312,6 @@ int main (int argc, char** argv) {
                 continue; // Skip this GT frame
             }
 
-            // Test if events are suitable for generation of a GT frame
-            if (dataset->event_array.size() > 0) {
-                // Find a slice of events
-                uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
-                uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
-                while (event_low  < dataset->event_array.size() - 1 && dataset->event_array[event_low].timestamp  < ts_low)  event_low ++;
-                while (event_high < dataset->event_array.size() - 1 && dataset->event_array[event_high].timestamp < ts_high) event_high ++;
-
-                // Find out if closest events are too far away from the desired ts_low, ts_high
-                // If so skip the entire GT frame
-                uint64_t de_low  = uint64_t_abs_diff(ts_low,  dataset->event_array[event_low ].timestamp);
-                uint64_t de_high = uint64_t_abs_diff(ts_high, dataset->event_array[event_high].timestamp);
-
-                if (de_low > max_event_gap * 1e9 || de_high > max_event_gap * 1e9) {
-                    std::cout << ref_ts << " " << dataset->slice_width / 2.0 << " "
-                             << ts_low << " " << ts_high << " "
-                             << event_low << " " << event_high << " "
-                             << frame_id_real << std::endl;
-
-                    std::cout << _red("Gap in event window boundaries: ") << double(de_low) * 1e-9 << " / "
-                              << double(de_high) * 1e-9 << " sec. skipping..." << std::endl;
-                    frame_id_real ++;
-                    continue;
-                }
-
-                // Check time delta between every event in the window
-                // if its too large skip generation of a GT frame
-                for (size_t event_id = event_low + 1; event_id <= event_high; event_id++) {
-                    auto event_gap = dataset->event_array[event_id].timestamp - dataset->event_array[event_id - 1].timestamp;
-                    if (event_gap > max_event_gap * 1e9) {
-                        std::cout << _red("Gap in events ") << event_id - 1 << " -> " << event_id << _red(" detected: ") 
-                                  << double(event_gap) * 1e-9 << " sec. skipping..." << std::endl;
-                        frame_id_real++;
-                        continue;
-                    }
-                }
-            }
-
-            // If less than 10 events in the window skip generating the GT frame
-            if (dataset->event_array.size() > 0 && event_high - event_low < 10) {
-                std::cout << _red("No events at: ") << ref_ts << " sec. skipping..." << std::endl;
-                frame_id_real ++;
-                continue;
-            }
-
             // If the last generated GT frame is too close to ref_ts then skip
             // generating the GT frame, but do not increment the frame_id_real
             // so that the next GT frame is considered consecutive
@@ -380,7 +326,23 @@ int main (int argc, char** argv) {
             // Add the event_slice times to the GT frame
             auto &frame = frames.back();
             if (dataset->event_array.size() > 0) {
-                frame.add_event_slice_ids(event_low, event_high);
+                // Find a slice of events that lie within the interval ts_low to ts_high
+                uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
+                uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
+                while (event_low  < dataset->event_array.size() - 1 && dataset->event_array[event_low].timestamp  < ts_low)  event_low ++;
+                while (event_high < dataset->event_array.size() - 1 && dataset->event_array[event_high].timestamp < ts_high) event_high ++;
+
+                // If ts_high is outside the interval, bump it back by one, this gauruntees the event is within the interval
+                // because the loop above exits when dataset->event_array[event_high].timestamp >= ts_high
+                if (dataset->event_array[event_high].timestamp >= ts_high) {
+                    event_high--;
+                }
+
+                // If the lowest event is outside the interval, then the interval has no events
+                // Make sure the interval is not empty
+                if (event_low <= event_high && dataset->event_array[event_low].timestamp <= ts_high) {
+                    frame.add_event_slice_ids(event_low, event_high);
+                } 
             }
 
             // Add a classical image to the GT frame
