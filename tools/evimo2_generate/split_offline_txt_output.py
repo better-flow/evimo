@@ -13,7 +13,7 @@ from tqdm import tqdm
 import shutil
 import pprint
 
-MIN_INTERVAL_SEC = 0.04
+MIN_INTERVAL_SEC = 0.4
 MAX_GAP_SEC = 1.0
 
 # aos2soa does not suffice because there are dropped poses
