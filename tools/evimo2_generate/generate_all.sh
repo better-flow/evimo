@@ -9,13 +9,13 @@ folders=($folders)
 
 # Optionally use this hack to run just a few
 # folders=(
-# ./imo/eval/scene13_dyn_test_00
-# ./imo/eval/scene13_dyn_test_05
+# ~/EVIMO/raw/imo/eval/scene13_dyn_test_00
+# ~/EVIMO/raw/imo/eval/scene13_dyn_test_05
 # )
 
 for folder in "${folders[@]}"
 do
-    sequence_folder=$DATA_ROOT/$folder
+    sequence_folder=$folder
     bash ./generate.sh $sequence_folder no_wait_for_zip
 done
 

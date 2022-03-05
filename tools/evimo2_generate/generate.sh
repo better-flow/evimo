@@ -34,16 +34,10 @@ fi
 
 
 declare -a CameraArray=("flea3_7" "samsung_mono" "left_camera" "right_camera")
-declare -a zip_pids=()
 for cam in ${CameraArray[@]}; do
     echo $cam
 
     rm -rf $1/$cam/ground_truth
-
-    S_NAME=$(basename $1)
-    VIS_FOLDER=$1/$cam/ground_truth/vis
-    VIDEO_DST=$1/${S_NAME}_${cam}.mp4
-    rm $VIDEO_DST
 
     roslaunch evimo event_imo_offline.launch show:=-1 folder:=$1 camera_name:=$cam \
                                              generate:=true \
@@ -51,31 +45,57 @@ for cam in ${CameraArray[@]}; do
                                              fps:=60 \
                                              t_offset:=0 \
                                              t_len:=-1
+done
 
-    python3 $PYDVS_DIR/samples/evimo-gen.py --base_dir $1/$cam/ground_truth --skip_slice_vis --evimo2_npz --evimo2_no_compress
+# This script splits the output of the offline tool using information from all the cameras
+python3 split_offline_txt_output.py --base_dir $1
 
-    # Compress npy to npz seperate process to save time several hours when doing a full generation of the dataset
 
-    npy_folder_to_npz_delete_npy $1/$cam"/ground_truth/dataset_depth.npz" $1/$cam"/ground_truth/depth_npy"&
-    zip_pids+=($!)
+declare -a zip_pids=()
+for cam in ${CameraArray[@]}; do
+    # Get a sorted list of ground truth split folders
+    gt_folders=$(find "$1/$cam" -mindepth 1 -maxdepth 1 -type d -name "ground_truth_*")
+    gt_folders=$(echo $gt_folders | xargs -n1 | sort | xargs)
+    gt_folders=($gt_folders)
 
-    npy_folder_to_npz_delete_npy $1/$cam"/ground_truth/dataset_mask.npz" $1/$cam"/ground_truth/mask_npy"&
-    zip_pids+=($!)
 
-    npy_folder_to_npz_delete_npy $1/$cam"/ground_truth/dataset_classical.npz" $1/$cam"/ground_truth/classical_npy"&
-    zip_pids+=($!)
+    for gt_folder in "${gt_folders[@]}"; do
+        echo $gt_folder
+        python3 $PYDVS_DIR/samples/evimo-gen.py --base_dir $gt_folder --skip_slice_vis --evimo2_npz --evimo2_no_compress
 
-    if [ $cam = "flea3_7" ]
-    then
-        fps=30
-    else
-        fps=60
-    fi
+        # Compress npy to npz seperate process to save time when doing a full generation of the dataset
+        npy_folder_to_npz_delete_npy $gt_folder"/dataset_depth.npz" $gt_folder"/depth_npy"&
+        zip_pids+=($!)
 
-    ffmpeg -r $fps -i $VIS_FOLDER/frame_%10d.png -c:v libx264 -vf \
-        "pad=ceil(iw/2)*2:ceil(ih/2)*2" -pix_fmt yuv420p \
-        $VIDEO_DST
-    rm -rf $VIS_FOLDER
+        npy_folder_to_npz_delete_npy $gt_folder"/dataset_mask.npz" $gt_folder"/mask_npy"&
+        zip_pids+=($!)
+
+        npy_folder_to_npz_delete_npy $gt_folder"/dataset_classical.npz" $gt_folder"/classical_npy"&
+        zip_pids+=($!)
+
+
+        # Generate video
+        S_NAME=$(basename $1)
+        GT_NAME=$(basename $gt_folder)
+        VIS_FOLDER=$gt_folder/vis
+        VIDEO_DST=$1/${S_NAME}_${cam}_${GT_NAME}.mp4
+        rm $VIDEO_DST
+
+        if [ $cam = "flea3_7" ]
+        then
+            fps=30
+        else
+            fps=60
+        fi
+
+        ffmpeg -r $fps -i $VIS_FOLDER/frame_%10d.png -c:v libx264 -vf \
+            "pad=ceil(iw/2)*2:ceil(ih/2)*2" -pix_fmt yuv420p \
+            $VIDEO_DST
+        rm -rf $VIS_FOLDER
+    done
+
+    # To save disk space
+    rm -rf $1/$cam/ground_truth
 done
 
 # wait for all zip pids

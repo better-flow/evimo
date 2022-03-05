@@ -9,13 +9,12 @@ folders=($folders)
 
 # Optionally use this hack to run just a few
 # folders=(
-# ./imo/eval/scene13_dyn_test_00
-# ./imo/eval/scene13_dyn_test_05
-# ./imo/eval/scene14_dyn_test_03
+# ~/EVIMO/raw/imo/eval/scene13_dyn_test_00
+# ~/EVIMO/raw/imo/eval/scene13_dyn_test_05
 # )
 
 for folder in "${folders[@]}"
 do
-    sequence_folder=$DATA_ROOT/$folder
+    sequence_folder=$folder
     bash ./clear.sh $sequence_folder
 done

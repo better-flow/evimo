@@ -132,11 +132,11 @@ def slice_txt_dataset(input_folder, output_folder, gt_times, dataset_txt):
                     if 'gt_frame' in frame:
                         input_frame_name = os.path.join(input_folder, frame['gt_frame'])
                         output_frame_name = os.path.join(output_folder, frame['gt_frame'])
-                        shutil.copyfile(input_frame_name, output_frame_name) # Replace with move
+                        shutil.move(input_frame_name, output_frame_name)
                     if 'classical_frame' in frame:
                         input_frame_name = os.path.join(input_folder, frame['classical_frame'])
                         output_frame_name = os.path.join(output_folder, frame['classical_frame'])
-                        shutil.copyfile(input_frame_name, output_frame_name) # Replace with move
+                        shutil.move(input_frame_name, output_frame_name)
 
         elif key == 'full_trajectory':
             if key not in sliced_dataset_txt:
