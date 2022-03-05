@@ -13,6 +13,9 @@ from tqdm import tqdm
 import shutil
 import pprint
 
+MIN_INTERVAL_SEC = 0.04
+MAX_GAP_SEC = 1.0
+
 # aos2soa does not suffice because there are dropped poses
 def frames_meta_to_arrays(all_objects_pose_list):
     objects_arrays = {}
@@ -253,7 +256,7 @@ if __name__ == '__main__':
     # Because all events cameras have identical GT times and there is always an event camera
     # we can use just one event camera's GT timestamps to determine the splits
     # Use the one that everything was compared to
-    gt_timestamps_split = determine_gt_splits(to_compare_gt_frame_times[1], min_interval_sec=0.4, max_gap_s=1.0)
+    gt_timestamps_split = determine_gt_splits(to_compare_gt_frame_times[1], min_interval_sec=MIN_INTERVAL_SEC, max_gap_s=MAX_GAP_SEC)
 
     for i, gt_times in enumerate(gt_timestamps_split):
         print('Split {}'.format(i))

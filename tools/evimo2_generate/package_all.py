@@ -4,6 +4,7 @@ import sys, os, shutil, subprocess, argparse
 # its a dataset folder is at least one of camera_folders is in it, as well as objectstxt:
 camera_folders = set(['flea3_7', 'left_camera', 'right_camera', 'samsung_mono'])
 objectstxt = 'objects.txt'
+# This will ignore all ground_truth_XXXXXX folders
 blacklisted = set(['ground_truth'])
 copy_not_move_list = set(['objects.txt', 'calib.txt', 'extrinsics.txt', 'params.txt', '.bag'])
 
@@ -77,49 +78,49 @@ class RawSelector(Selector):
 
 
 class TxtSelector(Selector):
-    def __init__(self, folder, camera_name):
+    def __init__(self, folder, camera_name, ground_truth):
         super().__init__(folder)
 
         self.required  = ['objects.txt'] + [os.path.join(camera_name, f_) for f_ in ['calib.txt', 'extrinsics.txt', 'params.txt']]
         self.required_tgt = self.required.copy()
 
-        self.required += [os.path.join(camera_name, 'ground_truth', f_) for f_ in ['events.txt', 'meta.txt', 'position_plots.pdf']]
+        self.required += [os.path.join(camera_name, ground_truth, f_) for f_ in ['events.txt', 'meta.txt', 'position_plots.pdf']]
         self.required_tgt += ['events.txt', 'meta.txt', 'position_plots.pdf']
 
-        if (not os.path.exists(os.path.join(folder, camera_name, 'ground_truth'))):
+        if (not os.path.exists(os.path.join(folder, camera_name, ground_truth))):
             return
 
-        for f in os.listdir(os.path.join(folder, camera_name, 'ground_truth')):
+        for f in os.listdir(os.path.join(folder, camera_name, ground_truth)):
             if ('.png' in f):
-                self.required.append(os.path.join(camera_name, 'ground_truth', f))
+                self.required.append(os.path.join(camera_name, ground_truth, f))
                 self.required_tgt.append(os.path.join('img', f))
 
 
 class NpzSelector(Selector):
-    def __init__(self, folder, camera_name):
+    def __init__(self, folder, camera_name, ground_truth):
         super().__init__(folder)
 
-        self.required = [os.path.join(camera_name, 'ground_truth', 'dataset_events_t.npy'),
-                         os.path.join(camera_name, 'ground_truth', 'dataset_events_xy.npy'),
-                         os.path.join(camera_name, 'ground_truth', 'dataset_events_p.npy'),
-                         os.path.join(camera_name, 'ground_truth', 'dataset_info.npz'),
-                         os.path.join(camera_name, 'ground_truth', 'dataset_depth.npz'),
-                         os.path.join(camera_name, 'ground_truth', 'dataset_mask.npz'),
-                         os.path.join(camera_name, 'ground_truth', 'dataset_classical.npz')]
+        self.required = [os.path.join(camera_name, ground_truth, 'dataset_events_t.npy'),
+                         os.path.join(camera_name, ground_truth, 'dataset_events_xy.npy'),
+                         os.path.join(camera_name, ground_truth, 'dataset_events_p.npy'),
+                         os.path.join(camera_name, ground_truth, 'dataset_info.npz'),
+                         os.path.join(camera_name, ground_truth, 'dataset_depth.npz'),
+                         os.path.join(camera_name, ground_truth, 'dataset_mask.npz'),
+                         os.path.join(camera_name, ground_truth, 'dataset_classical.npz')]
 
-        self.required_tgt = [os.path.join(self.sequence_name, 'dataset_events_t.npy'),
-                             os.path.join(self.sequence_name, 'dataset_events_xy.npy'),
-                             os.path.join(self.sequence_name, 'dataset_events_p.npy'),
-                             os.path.join(self.sequence_name, 'dataset_info.npz'),
-                             os.path.join(self.sequence_name, 'dataset_depth.npz'),
-                             os.path.join(self.sequence_name, 'dataset_mask.npz'),
-                             os.path.join(self.sequence_name, 'dataset_classical.npz')]
+        self.required_tgt = ['dataset_events_t.npy',
+                             'dataset_events_xy.npy',
+                             'dataset_events_p.npy',
+                             'dataset_info.npz',
+                             'dataset_depth.npz',
+                             'dataset_mask.npz',
+                             'dataset_classical.npz']
 
 
 class VideoSelector(Selector):
-    def __init__(self, folder, camera_name):
+    def __init__(self, folder, camera_name, ground_truth):
         super().__init__(folder)
-        self.required = [self.sequence_name + '_' + camera_name + '.mp4']
+        self.required = [self.sequence_name + '_' + camera_name + '_' + ground_truth +'.mp4']
         self.required_tgt = self.required.copy()
 
 
@@ -136,8 +137,9 @@ def get_dataset_folders(folder):
     if (is_df): ret.append(folder)
 
     for f in subfolder_names:
-        if (f in blacklisted): continue
-        ret += get_dataset_folders(os.path.join(folder, f))
+        for b in blacklisted:
+            if (b in f): continue
+            ret += get_dataset_folders(os.path.join(folder, f))
     return ret
 
 def group_id_from_name(fname, groups):
@@ -165,7 +167,7 @@ def subgroup_from_name(f):
 def move_all(groups, idir, odir, dry_run):
     dataset_folders = sorted(get_dataset_folders(idir))
 
-    for f in dataset_folders:
+    for f in dataset_folders[0:1]:
         gid = group_id_from_name(f, groups)
         if gid is None:
             print (f, "has no group!")
@@ -177,7 +179,7 @@ def move_all(groups, idir, odir, dry_run):
         if subgroup is None:
             continue
 
-        print('Copying: ', f)
+        print('Moving: ', f)
 
         # Attempt to copy the raw files into the output directory
         raw = RawSelector(f)
@@ -188,14 +190,19 @@ def move_all(groups, idir, odir, dry_run):
 
         for c in camera_folders:
             if os.path.exists(os.path.join(f, c)):
-                npz = NpzSelector(f, c)
-                npz.copy(os.path.join(odir, 'npz', c, g, subgroup), dry_run=dry_run)
+                potential_ground_truths = os.listdir(os.path.join(f, c))
+                # npz and txt run for each ground_truth
+                for potential_ground_truth in potential_ground_truths:
+                    if 'ground_truth_' in potential_ground_truth:
+                        ground_truth = potential_ground_truth
+                        npz = NpzSelector(f, c, ground_truth)
+                        npz.copy(os.path.join(odir, 'npz', c, g, subgroup, raw.sequence_name+'_'+ground_truth[-6:]), dry_run=dry_run)
 
-                mp4 = VideoSelector(f, c)
-                mp4.copy(os.path.join(odir, 'video', c, g, subgroup), dry_run=dry_run)
+                        txt = TxtSelector(f, c, ground_truth)
+                        txt.copy(os.path.join(odir, 'txt', c, g, subgroup, raw.sequence_name+'_'+ground_truth[-6:]), dry_run=dry_run)
 
-                txt = TxtSelector(f, c)
-                txt.copy(os.path.join(odir, 'txt', c, g, subgroup, raw.sequence_name), dry_run=dry_run)
+                        mp4 = VideoSelector(f, c, ground_truth)
+                        mp4.copy(os.path.join(odir, 'video', c, g, subgroup), dry_run=dry_run)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
