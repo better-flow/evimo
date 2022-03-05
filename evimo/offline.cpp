@@ -250,36 +250,31 @@ int main (int argc, char** argv) {
         long int cam_tj_id = 0;
         std::map<int, long int> obj_tj_ids;
         uint64_t event_low = 0, event_high = 0;
-        start_ts -= dt;
         while (true) {
-            // Increment start_ts forward by one dt
-            // It has to be done here so that the continue statements
-            // below do not stop start_ts from updating
-            // it is decremented just before this loop to fix the off by one error
-            start_ts += dt;
+            auto ref_ts = start_ts + frame_id_real * dt;
 
             // If using a classical camera
             if (with_images) {
                 if (frame_id_real >= dataset->image_ts.size()) break; // If classical camera, but no frames, just exit the loop
-                start_ts = dataset->image_ts[frame_id_real].toSec(); // Otherwise force the staring timestamp to the first frame
+                ref_ts = dataset->image_ts[frame_id_real].toSec(); // Otherwise force the staring timestamp to the first frame
 
-                // If the last generated GT frame is too close to start_ts
+                // If the last generated GT frame is too close to ref_ts
                 // then there are frames from the conventional camera that are timestamped incorrectly
-                if (frames.size() > 0 && std::fabs(frames.back().get_timestamp() - start_ts) < 1e-4) {
-                    std::cout << _red("Duplicate frame encountered at: ") << start_ts << " sec. exiting..." << std::endl;
+                if (frames.size() > 0 && std::fabs(frames.back().get_timestamp() - ref_ts) < 1e-4) {
+                    std::cout << _red("Duplicate frame encountered at: ") << ref_ts << " sec. exiting..." << std::endl;
                     return -1;
                 }
             }
 
-            // Find the trajectory id's with the closest timestamp greater than or equal to start_ts
+            // Find the trajectory id's with the closest timestamp greater than or equal to ref_ts
             // Find the right id for the camera
-            while (cam_tj_id < dataset->cam_tj.size() && dataset->cam_tj[cam_tj_id].ts.toSec() < start_ts) {
+            while (cam_tj_id < dataset->cam_tj.size() && dataset->cam_tj[cam_tj_id].ts.toSec() < ref_ts) {
                 cam_tj_id ++;
             }
             // Find the right id for every object
             for (auto &obj_tj : dataset->obj_tjs) {
                 while (obj_tj_ids[obj_tj.first] < obj_tj.second.size()
-                       && obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() < start_ts) {
+                       && obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() < ref_ts) {
                     obj_tj_ids[obj_tj.first] ++;
                 }
             }
@@ -319,14 +314,14 @@ int main (int argc, char** argv) {
             }
             else {
                 // All checks have passed, schedule creation of a GT frame
-                frames.emplace_back(dataset, cam_tj_id, start_ts, frame_id_real);
+                frames.emplace_back(dataset, cam_tj_id, ref_ts, frame_id_real);
 
                 // Add the event_slice times to the GT frame
                 auto &frame = frames.back();
                 if (dataset->event_array.size() > 0) {
                     // Find a slice of events that lie within the interval ts_low to ts_high
-                    uint64_t ts_low  = (start_ts < dataset->slice_width) ? 0 : (start_ts - dataset->slice_width / 2.0) * 1000000000;
-                    uint64_t ts_high = (start_ts + dataset->slice_width / 2.0) * 1000000000;
+                    uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
+                    uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
                     while (event_low  < dataset->event_array.size() - 1 && dataset->event_array[event_low].timestamp  < ts_low)  event_low ++;
                     while (event_high < dataset->event_array.size() - 1 && dataset->event_array[event_high].timestamp < ts_high) event_high ++;
 
