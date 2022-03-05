@@ -284,23 +284,26 @@ int main (int argc, char** argv) {
 
             // Check that the left ids are valid
             bool left_side_undefined = false;
-            if (cam_tj_id - 1 < 0) {
+            if (cam_tj_id - 1 < 0 && dataset->cam_tj[cam_tj_id].ts.toSec() != ref_ts) {
                 left_side_undefined = true;
             }
             for (auto &obj_tj : dataset->obj_tjs) {
-                if (obj_tj_ids[obj_tj.first] - 1 < 0) {
+                if (obj_tj_ids[obj_tj.first] - 1 < 0 && obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() != ref_ts) {
                     left_side_undefined = true;
                 }
             }
 
             // Check that difference between right and left times is not too big
+            // the check can only be done if the left side is well defined
             bool left_right_time_diff_too_big = false;
             double left_right_time_diff_thresh = 0.02; // Vicon runs at 200 Hz so this is reasonable
-            if (dataset->cam_tj[cam_tj_id].ts.toSec() - dataset->cam_tj[cam_tj_id-1].ts.toSec() > left_right_time_diff_thresh) {
+            if (cam_tj_id - 1 >= 0
+                && dataset->cam_tj[cam_tj_id].ts.toSec() - dataset->cam_tj[cam_tj_id-1].ts.toSec() > left_right_time_diff_thresh) {
                 left_right_time_diff_too_big = true;
             }
             for (auto &obj_tj : dataset->obj_tjs) {
-                if (obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]-1].ts.toSec() > left_right_time_diff_thresh) {
+                if (obj_tj_ids[obj_tj.first] - 1 >= 0
+                    && obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec() - obj_tj.second[obj_tj_ids[obj_tj.first]-1].ts.toSec() > left_right_time_diff_thresh) {
                     left_right_time_diff_too_big = true;
                 }
             }
@@ -470,13 +473,15 @@ int main (int argc, char** argv) {
                 }
 
                 // Make sure the objects pose is well defined
-                if (cam_ts == obj_tj.second[obj_tj_id].ts.toSec()) {
-                    frame.add_object_pos_id(obj_tj.first, obj_tj_id);
-                }
-                else if (obj_tj_id > 0
-                    && obj_tj_id < obj_tj.second.size()
-                    && obj_tj.second[obj_tj_id].ts.toSec() - obj_tj.second[obj_tj_id-1].ts.toSec() < 0.02) {
-                    frame.add_object_pos_id(obj_tj.first, obj_tj_id);
+                if (obj_tj_id < obj_tj.second.size()) {
+                    if (cam_ts == obj_tj.second[obj_tj_id].ts.toSec()) {
+                        frame.add_object_pos_id(obj_tj.first, obj_tj_id);
+                    }
+                    else if (obj_tj_id > 0
+                        && obj_tj_id < obj_tj.second.size()
+                        && obj_tj.second[obj_tj_id].ts.toSec() - obj_tj.second[obj_tj_id-1].ts.toSec() < 0.02) {
+                        frame.add_object_pos_id(obj_tj.first, obj_tj_id);
+                    }
                 }
             }
 
