@@ -274,8 +274,8 @@ public:
         //auto Q = room_scan->get_static().getRotation();
         //std::cout << "\t" << T.getX() << "\t" << T.getY() << "\t" << T.getZ()
         //          << "\t" << Q.getW() <<"\t" << Q.getX() << "\t" << Q.getY() << "\t" << Q.getZ() << std::endl << std::endl;
-        std::cout << "time offset pose to events:  " << this->get_time_offset_pose_to_event() << std::endl;
-        std::cout << "time offset image to events: " << this->get_time_offset_image_to_event() << std::endl;
+        std::cout << "time offset pose to events or image:  " << this->get_time_offset_pose_to_event_or_image() << std::endl;
+        //std::cout << "time offset image to events: " << this->get_time_offset_image_to_event() << std::endl;
     }
 
     void create_ground_truth_folder(std::string folder="") {
@@ -354,28 +354,29 @@ public:
     }
 
     // Time offset getters
+    float get_time_offset_pose_to_host() {
+        return 0.0;
+    }
+
     float get_time_offset_image_to_host() {
+        return this->get_time_offset_pose_to_host() - this->get_time_offset_pose_to_event_or_image();
+    }
+
+    float get_time_offset_event_to_host() {
+        return this->get_time_offset_pose_to_host() - this->get_time_offset_pose_to_event_or_image();
+    }
+
+
+    float get_time_offset_pose_to_host_correction() {
         return 0.0;
     }
 
     float get_time_offset_image_to_host_correction() {
-        return 0.0;
-    }
-
-    float get_time_offset_pose_to_host() {
-        return this->get_time_offset_event_to_host() + this->get_time_offset_pose_to_event();
-    }
-
-    float get_time_offset_pose_to_host_correction() {
-        return this->get_time_offset_event_to_host_correction() + this->get_time_offset_pose_to_event_correction();
-    }
-
-    float get_time_offset_event_to_host() {
-        return this->get_time_offset_image_to_host() - this->get_time_offset_image_to_event();
+        return this->get_time_offset_pose_to_host_correction() - this->get_time_offset_pose_to_event_or_image_correction();
     }
 
     float get_time_offset_event_to_host_correction() {
-        return this->get_time_offset_image_to_host_correction() - this->get_time_offset_image_to_event_correction();
+        return this->get_time_offset_pose_to_host_correction() - this->get_time_offset_pose_to_event_or_image_correction();
     }
 
     static void on_trackbar(int v, void *object) {
@@ -386,19 +387,15 @@ public:
 
 private:
     // slider-controlled:
-    float get_time_offset_image_to_event() {
-        return this->image_to_event_to + this->get_time_offset_image_to_event_correction();
+    float get_time_offset_pose_to_event_or_image() {
+        return this->pose_to_event_to + this->get_time_offset_pose_to_event_or_image_correction();
     }
 
-    float get_time_offset_image_to_event_correction() {
-        return Dataset::normval(this->image_to_event_to_slider, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_TIM_SC);
-    }
+    // float get_time_offset_image_to_event_correction() {
+    //     return Dataset::normval(this->image_to_event_to_slider, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_TIM_SC);
+    // }
 
-    float get_time_offset_pose_to_event() {
-        return this->pose_to_event_to + get_time_offset_pose_to_event_correction();
-    }
-
-    float get_time_offset_pose_to_event_correction() {
+    float get_time_offset_pose_to_event_or_image_correction() {
         return Dataset::normval(this->pose_to_event_to_slider, Dataset::MAXVAL, Dataset::MAXVAL * Dataset::INT_TIM_SC);
     }
 
@@ -522,8 +519,8 @@ private:
                 << Q.getW() << "\t" << Q.x() << "\t" << Q.y() << "\t" << Q.z() << std::endl;
         }
 
-        ofs << this->get_time_offset_pose_to_event() << std::endl;
-        ofs << this->get_time_offset_image_to_event() << std::endl;
+        ofs << this->get_time_offset_pose_to_event_or_image() << std::endl;
+        ofs << 0.0 << std::endl; // image_to_event is deprecated, set to zero
 
         ofs.close();
         return true;
@@ -561,6 +558,11 @@ private:
         if (!ifs.good()) {
             this->image_to_event_to = 0;
             std::cout << _yellow("Time offset (img) is not specified;") << " setting to " << this->image_to_event_to << std::endl;
+        }
+
+        if (this->image_to_event_to != 0) {
+            std::cout << _red("Deprecated parameter image_to_event_to is being used. Exiting.") << std::endl;
+            std::exit(-1);
         }
 
         ifs.close();
