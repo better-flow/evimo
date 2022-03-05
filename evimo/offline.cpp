@@ -306,51 +306,52 @@ int main (int argc, char** argv) {
             }
 
             if (left_side_undefined || left_right_time_diff_too_big) {
-
+                // Schedule creation of a GT frame without depth or mask output
+                frames.emplace_back(dataset, cam_tj_id, ref_ts, frame_id_real, true);
             }
             else {
-                // All checks have passed, schedule creation of a GT frame
-                frames.emplace_back(dataset, cam_tj_id, ref_ts, frame_id_real);
-
-                // Add the event_slice times to the GT frame
-                auto &frame = frames.back();
-                if (dataset->event_array.size() > 0) {
-                    // Find a slice of events that lie within the interval ts_low to ts_high
-                    uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
-                    uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
-                    while (event_low  < dataset->event_array.size() - 1 && dataset->event_array[event_low].timestamp  < ts_low)  event_low ++;
-                    while (event_high < dataset->event_array.size() - 1 && dataset->event_array[event_high].timestamp < ts_high) event_high ++;
-
-                    // If ts_high is outside the interval, bump it back by one, this gauruntees the event is within the interval
-                    // because the loop above exits when dataset->event_array[event_high].timestamp >= ts_high
-                    if (dataset->event_array[event_high].timestamp >= ts_high) {
-                        event_high--;
-                    }
-
-                    // If the lowest event is outside the interval, then the interval has no events
-                    // Make sure the interval is not empty
-                    if (event_low <= event_high && dataset->event_array[event_low].timestamp <= ts_high) {
-                        frame.add_event_slice_ids(event_low, event_high);
-                    } 
-                }
-
-                // Add a classical image to the GT frame
-                if (with_images) frame.add_img(dataset->images[frame_id_real]);
-
-                // Print information about the frame
-                std::cout << frame_id_real << ": cam "
-                          << std::setprecision(2) << dataset->cam_tj[cam_tj_id].ts.toSec()
-                          << " (" << cam_tj_id << "[" << std::setprecision(0) << dataset->cam_tj[cam_tj_id].occlusion * 100 << "%])";
-                for (auto &obj_tj : dataset->obj_tjs) {
-                    if (obj_tj.second.size() != 0) {
-                        std::cout << " obj_" << obj_tj.first << " "
-                                  << std::setprecision(2) << obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec()
-                                  << " (" << obj_tj_ids[obj_tj.first] << "[" << std::setprecision(0) << obj_tj.second[obj_tj_ids[obj_tj.first]].occlusion * 100 <<  "%])";
-                        frame.add_object_pos_id(obj_tj.first, obj_tj_ids[obj_tj.first]);
-                    }
-                }
-                std::cout << std::setprecision(6) << std::endl;
+                // Schedule creation of a GT frame
+                frames.emplace_back(dataset, cam_tj_id, ref_ts, frame_id_real, false);
             }
+
+            // Add the event_slice times to the GT frame
+            auto &frame = frames.back();
+            if (dataset->event_array.size() > 0) {
+                // Find a slice of events that lie within the interval ts_low to ts_high
+                uint64_t ts_low  = (ref_ts < dataset->slice_width) ? 0 : (ref_ts - dataset->slice_width / 2.0) * 1000000000;
+                uint64_t ts_high = (ref_ts + dataset->slice_width / 2.0) * 1000000000;
+                while (event_low  < dataset->event_array.size() - 1 && dataset->event_array[event_low].timestamp  < ts_low)  event_low ++;
+                while (event_high < dataset->event_array.size() - 1 && dataset->event_array[event_high].timestamp < ts_high) event_high ++;
+
+                // If ts_high is outside the interval, bump it back by one, this gauruntees the event is within the interval
+                // because the loop above exits when dataset->event_array[event_high].timestamp >= ts_high
+                if (dataset->event_array[event_high].timestamp >= ts_high) {
+                    event_high--;
+                }
+
+                // If the lowest event is outside the interval, then the interval has no events
+                // Make sure the interval is not empty
+                if (event_low <= event_high && dataset->event_array[event_low].timestamp <= ts_high) {
+                    frame.add_event_slice_ids(event_low, event_high);
+                } 
+            }
+
+            // Add a classical image to the GT frame
+            if (with_images) frame.add_img(dataset->images[frame_id_real]);
+
+            // Print information about the frame
+            std::cout << frame_id_real << ": cam "
+                      << std::setprecision(2) << dataset->cam_tj[cam_tj_id].ts.toSec()
+                      << " (" << cam_tj_id << "[" << std::setprecision(0) << dataset->cam_tj[cam_tj_id].occlusion * 100 << "%])";
+            for (auto &obj_tj : dataset->obj_tjs) {
+                if (obj_tj.second.size() != 0) {
+                    std::cout << " obj_" << obj_tj.first << " "
+                              << std::setprecision(2) << obj_tj.second[obj_tj_ids[obj_tj.first]].ts.toSec()
+                              << " (" << obj_tj_ids[obj_tj.first] << "[" << std::setprecision(0) << obj_tj.second[obj_tj_ids[obj_tj.first]].occlusion * 100 <<  "%])";
+                    frame.add_object_pos_id(obj_tj.first, obj_tj_ids[obj_tj.first]);
+                }
+            }
+            std::cout << std::setprecision(6) << std::endl;
 
             // We have generated (or skipped) one gt frame so increment frame_id_real
             frame_id_real ++;

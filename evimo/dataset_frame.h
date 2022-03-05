@@ -24,6 +24,7 @@ protected:
     // Thread handle
     std::thread thread_handle;
     bool async_gen_in_progress;
+    bool no_gt_depth_mask;
 public:
     std::shared_ptr<Dataset> dataset_handle;
 
@@ -125,11 +126,12 @@ public:
     }
 
     // ---------
-    DatasetFrame(std::shared_ptr<Dataset> &dataset_handle, uint64_t cam_p_id, double ref_ts, unsigned long int fid)
+    DatasetFrame(std::shared_ptr<Dataset> &dataset_handle, uint64_t cam_p_id, double ref_ts, unsigned long int fid, bool no_gt_depth_mask=false)
         : dataset_handle(dataset_handle), async_gen_in_progress(false)
         , cam_pose_id(cam_p_id), timestamp(ref_ts), frame_id(fid), event_slice_ids(0, 0)
         , depth(dataset_handle->res_x, dataset_handle->res_y, CV_32F, cv::Scalar(0))
-        , mask(dataset_handle->res_x, dataset_handle->res_y, CV_8U, cv::Scalar(0)) {
+        , mask(dataset_handle->res_x, dataset_handle->res_y, CV_8U, cv::Scalar(0))
+        , no_gt_depth_mask(no_gt_depth_mask) {
         
         // if (this->dataset_handle->cam_tj.size() > 0)
         //     this->cam_pose_id = TimeSlice(this->dataset_handle->cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
@@ -215,28 +217,30 @@ public:
             this->project_cloud(cl, pcl::PolygonMesh::Ptr(nullptr), 0, nodist);
         }
 
-        // Generate mask and depth
-        for (auto &obj : this->dataset_handle->clouds) {
-            //if (obj.second->has_no_mesh()) continue;
-            auto id = obj.first;
-            this->dataset_handle->obj_tjs.at(id).set_filtering_window_size(this->dataset_handle->pose_filtering_window);
-            //this->obj_pose_ids[id] = TimeSlice(this->dataset_handle->obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
+        if (!this->no_gt_depth_mask) {
+            // Generate mask and depth
+            for (auto &obj : this->dataset_handle->clouds) {
+                //if (obj.second->has_no_mesh()) continue;
+                auto id = obj.first;
+                this->dataset_handle->obj_tjs.at(id).set_filtering_window_size(this->dataset_handle->pose_filtering_window);
+                //this->obj_pose_ids[id] = TimeSlice(this->dataset_handle->obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
 
-            if (this->obj_pose_ids.find(id) == this->obj_pose_ids.end()) {
-                std::cout << _yellow("Warning! ") << "No pose for object "
-                          << id << ", frame id = " << this->frame_id << std::endl;
-                continue;
+                if (this->obj_pose_ids.find(id) == this->obj_pose_ids.end()) {
+                    std::cout << _yellow("Warning! ") << "No pose for object "
+                              << id << ", frame id = " << this->frame_id << std::endl;
+                    continue;
+                }
+
+                auto obj_pose = this->_get_raw_object_pose(id);
+                auto cl = obj.second->transform_to_camframe(cam_tf, obj_pose.pq);
+                this->project_cloud(cl, obj.second->get_mesh(), id, nodist);
             }
 
-            auto obj_pose = this->_get_raw_object_pose(id);
-            auto cl = obj.second->transform_to_camframe(cam_tf, obj_pose.pq);
-            this->project_cloud(cl, obj.second->get_mesh(), id, nodist);
-        }
-
-        // Add marker labels
-        for (auto &obj : this->dataset_handle->clouds) {
-            auto markerpos = obj.second->marker_cl_in_camframe(cam_tf);
-            this->add_marker_labels(markerpos, nodist);
+            // Add marker labels
+            for (auto &obj : this->dataset_handle->clouds) {
+                auto markerpos = obj.second->marker_cl_in_camframe(cam_tf);
+                this->add_marker_labels(markerpos, nodist);
+            }
         }
     }
 
@@ -266,27 +270,31 @@ public:
     std::string as_dict() {
         std::string ret = "{\n";
         ret += "'id': " + std::to_string(this->frame_id) + ",\t\t";
-        ret += "'ts': " + std::to_string(this->get_timestamp()) + ",\n";
-        ret += "'cam': {\n";
-        //ret += "\t'vel': " + this->get_camera_velocity().as_dict() + ",\n";
+        ret += "'ts': " + std::to_string(this->get_timestamp());
 
-        // Represent camera poses in the frame of the initial camera pose (p0)
-        auto p0 = this->dataset_handle->cam_tj[0];
-        auto cam_pose = this->_get_raw_camera_pose();
-        auto cam_tf = this->dataset_handle->cam_E.inverse() * (cam_pose - p0).pq * this->dataset_handle->cam_E;
-        ret += "\t'pos': " + Pose(cam_pose.ts, cam_tf).as_dict() + ",\n";
-        ret += "\t'ts': " + std::to_string(this->get_true_camera_pose().ts.toSec()) + "},\n";
+        if (!this->no_gt_depth_mask) {
+            ret += ",\n'cam': {\n";
+            //ret += "\t'vel': " + this->get_camera_velocity().as_dict() + ",\n";
 
-        // object poses
-        for (auto &pair : this->obj_pose_ids) {
-            ret += "'" + std::to_string(pair.first) + "': {\n";
-            //ret += "\t'vel': " + this->get_object_velocity(pair.first).as_dict() + ",\n";
-            ret += "\t'pos': " + this->get_object_pose_cam_frame(pair.first).as_dict() + ",\n";
-            ret += "\t'ts': " + std::to_string(this->get_object_pose_cam_frame(pair.first).ts.toSec()) + "},\n";
+            // Represent camera poses in the frame of the initial camera pose (p0)
+            auto p0 = this->dataset_handle->cam_tj[0];
+            auto cam_pose = this->_get_raw_camera_pose();
+            auto cam_tf = this->dataset_handle->cam_E.inverse() * (cam_pose - p0).pq * this->dataset_handle->cam_E;
+            ret += "\t'pos': " + Pose(cam_pose.ts, cam_tf).as_dict() + ",\n";
+            ret += "\t'ts': " + std::to_string(this->get_true_camera_pose().ts.toSec()) + "},\n";
+
+            // object poses
+            for (auto &pair : this->obj_pose_ids) {
+                ret += "'" + std::to_string(pair.first) + "': {\n";
+                //ret += "\t'vel': " + this->get_object_velocity(pair.first).as_dict() + ",\n";
+                ret += "\t'pos': " + this->get_object_pose_cam_frame(pair.first).as_dict() + ",\n";
+                ret += "\t'ts': " + std::to_string(this->get_object_pose_cam_frame(pair.first).ts.toSec()) + "},\n";
+            }
+
+            ret += "'gt_frame': '" + this->gt_img_name + "'";
         }
 
         // image paths
-        ret += "'gt_frame': '" + this->gt_img_name + "'";
         if (this->img.rows == this->mask.rows && this->img.cols == this->mask.cols) {
             ret += ",\n'classical_frame': '" + this->rgb_img_name + "'";
         }
@@ -296,15 +304,17 @@ public:
     }
 
     void save_gt_images() {
-        cv::Mat _depth, _mask;
-        this->depth.convertTo(_depth, CV_16UC1, 1000);
-        this->mask.convertTo(_mask, CV_16UC1, 1000);
-        std::vector<cv::Mat> ch = {_depth, _depth, _mask};
-        cv::Mat gt_frame_i16(this->mask.rows, this->mask.cols, CV_16UC3, cv::Scalar(0, 0, 0));
-        cv::merge(ch, gt_frame_i16);
+        if (!this->no_gt_depth_mask) {
+            cv::Mat _depth, _mask;
+            this->depth.convertTo(_depth, CV_16UC1, 1000);
+            this->mask.convertTo(_mask, CV_16UC1, 1000);
+            std::vector<cv::Mat> ch = {_depth, _depth, _mask};
+            cv::Mat gt_frame_i16(this->mask.rows, this->mask.cols, CV_16UC3, cv::Scalar(0, 0, 0));
+            cv::merge(ch, gt_frame_i16);
 
-        gt_frame_i16.convertTo(gt_frame_i16, CV_16UC3);
-        cv::imwrite(this->dataset_handle->gt_folder + "/" + this->gt_img_name, gt_frame_i16);
+            gt_frame_i16.convertTo(gt_frame_i16, CV_16UC3);
+            cv::imwrite(this->dataset_handle->gt_folder + "/" + this->gt_img_name, gt_frame_i16);
+        }
 
         if (this->img.rows == this->mask.rows && this->img.cols == this->mask.cols) {
             cv::imwrite(this->dataset_handle->gt_folder + "/" + this->rgb_img_name, this->img);
