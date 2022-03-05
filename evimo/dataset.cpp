@@ -237,14 +237,8 @@ bool Dataset::read_bag_file(std::string bag_name,
         this->clouds[obj_tj.first]->convert_to_vicon_tf(obj_cloud_to_vicon_tf[obj_tj.first]);
     }
 
-    // Force the first timestamp of the event cloud to be 0
-    // trajectories
-    auto time_offset = ros::Time(0);
-    if (n_events == 0) {
-        time_offset = this->cam_tj[0].ts;
-    } else {
-        //time_offset = first_event_message_ts + ros::Duration(this->get_time_offset_event_to_host());
-        time_offset.fromNSec(this->event_array[0].timestamp);
+
+    if (n_events > 0) {
         std::cout << "Event timestamp range (nsec):\t(" << this->event_array.front().timestamp 
                   << " - " << this->event_array.back().timestamp << ")" << std::endl;
     }
@@ -256,6 +250,12 @@ bool Dataset::read_bag_file(std::string bag_name,
         std::cout << "Camera tj timestamp range:\t(" << this->cam_tj[0].ts
                   << " - " << this->cam_tj[this->cam_tj.size() - 1].ts << ")" << std::endl;
     }
+
+    // Use bag start time as the removed time offset
+    // so that time is synchronized between all cameras
+    // in the generated dataset
+    //auto time_offset = this->cam_tj[0].ts;
+    auto time_offset = bag_start_ts;
 
     std::cout << std::endl << "Removing time offset: " << _green(std::to_string(time_offset.toSec()))
               << std::endl << std::endl;
@@ -281,7 +281,17 @@ bool Dataset::read_bag_file(std::string bag_name,
 
     for (uint64_t i = 0; i < this->image_ts.size(); ++i)
         this->image_ts[i] = ros::Time((this->image_ts[i] - time_offset).toSec() < 0 ? 0 : (this->image_ts[i] - time_offset).toSec());
+
     // events
+    uint64_t num_e_erase = 0;
+    for (num_e_erase = 0; num_e_erase < this->event_array.size(); num_e_erase++) {
+        if (this->event_array[num_e_erase].timestamp >= time_offset.toNSec()) {
+            break;
+        }
+    }
+    this->event_array.erase(this->event_array.begin(), this->event_array.begin()+num_e_erase);
+    n_events = this->event_array.size();
+
     for (auto &e : this->event_array)
         e.timestamp -= time_offset.toNSec();
 

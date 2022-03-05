@@ -232,17 +232,16 @@ int main (int argc, char** argv) {
     with_images = (dataset->images.size() > 0); // We are using a classical camera
     std::cout << "Found " << dataset->images.size() << " camera images\n";
 
-    // Align the timestamps
-    double start_ts = 0.0;
-    if (dataset->cam_tj.size() > 0) start_ts = dataset->cam_tj[0].ts.toSec();
-    std::cout << "Actual start timestamp: " << start_ts << "\n";
-
     std::cout << "Vicon occlusion info per ground truth frame:" << std::endl;
     // Make a list of GT frames to generate
     std::vector<DatasetFrame> frames;
     {
         unsigned long int frame_id_real = 0;
         double dt = 1.0 / FPS;
+        // start_ts always starts at dt because there is almost never interesting information at t=0
+        // so starting at dt avoids some empty GT frames
+        double start_ts = dt;
+        std::cout << "Actual start timestamp: " << start_ts << "\n";
         long int cam_tj_id = 0;
         std::map<int, long int> obj_tj_ids;
         uint64_t event_low = 0, event_high = 0;
