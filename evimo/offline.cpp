@@ -339,7 +339,7 @@ int main (int argc, char** argv) {
             // Add a classical image to the GT frame
             if (with_images) frame.add_img(dataset->images[frame_id_real]);
 
-            // Print information about the frame
+            // Print information about the frame and add the objects tractory id's to the GT frame
             std::cout << frame_id_real << ": cam "
                       << std::setprecision(2) << dataset->cam_tj[cam_tj_id].ts.toSec()
                       << " (" << cam_tj_id << "[" << std::setprecision(0) << dataset->cam_tj[cam_tj_id].occlusion * 100 << "%])";
@@ -469,7 +469,15 @@ int main (int argc, char** argv) {
                     obj_tj_id++;
                 }
 
-                frame.add_object_pos_id(obj_tj.first, obj_tj_id);
+                // Make sure the objects pose is well defined
+                if (cam_ts == obj_tj.second[obj_tj_id].ts.toSec()) {
+                    frame.add_object_pos_id(obj_tj.first, obj_tj_id);
+                }
+                else if (obj_tj_id > 0
+                    && obj_tj_id < obj_tj.second.size()
+                    && obj_tj.second[obj_tj_id].ts.toSec() - obj_tj.second[obj_tj_id-1].ts.toSec() < 0.02) {
+                    frame.add_object_pos_id(obj_tj.first, obj_tj_id);
+                }
             }
 
             meta_file << frame.as_dict() << ",\n\n";
