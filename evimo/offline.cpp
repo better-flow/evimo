@@ -358,7 +358,7 @@ int main (int argc, char** argv) {
                         frame.add_object_pos_id(obj_tj.first, obj_tj_ids[obj_tj.first]);
                     }
                 }
-                std::cout << std::endl;
+                std::cout << std::setprecision(6) << std::endl;
             }
 
             // We have generated (or skipped) one gt frame so increment frame_id_real
@@ -465,11 +465,19 @@ int main (int argc, char** argv) {
         std::cout << std::endl << _yellow("Writing full trajectory") << std::endl;
         meta_file << ", 'full_trajectory': [\n";
         for (uint64_t i = 0; i < dataset->cam_tj.size(); ++i) {
-            DatasetFrame frame(dataset, i, dataset->cam_tj[i].ts.toSec(), -1);
+            auto cam_ts = dataset->cam_tj[i].ts.toSec();
+            DatasetFrame frame(dataset, i, cam_ts, -1);
 
             for (auto &obj_tj : dataset->obj_tjs) {
                 if (obj_tj.second.size() == 0) continue;
-                frame.add_object_pos_id(obj_tj.first, std::min(i, obj_tj.second.size() - 1));
+
+                long int obj_tj_id = 0;
+                while (obj_tj_id < obj_tj.second.size()
+                       && obj_tj.second[obj_tj_id].ts.toSec() < cam_ts) {
+                    obj_tj_id++;
+                }
+
+                frame.add_object_pos_id(obj_tj.first, obj_tj_id);
             }
 
             meta_file << frame.as_dict() << ",\n\n";

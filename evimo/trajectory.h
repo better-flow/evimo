@@ -155,6 +155,49 @@ public:
         this->occlusion = this->occlusion / float(p.markers.size());
     }
 
+    // Construct a pose by linearly interpolating two other poses
+    Pose(Pose& left_pose, Pose& right_pose, double interp_time)
+        : ts(interp_time)
+    {
+        double left_time = left_pose.ts.toSec();
+        double right_time = right_pose.ts.toSec();
+
+        if (interp_time < left_time || interp_time > right_time) {
+            std::cout << std::endl << "Interpolated pose constructor called with invalid interp_time: "
+            << left_time << " " << interp_time << " " << right_time << std::endl;
+            std::exit(-1);
+        }
+
+        double alpha = (interp_time - left_time) / (right_time - left_time);
+
+        tf::Vector3 left_p   = left_pose.pq .getOrigin();
+        tf::Vector3 right_p  = right_pose.pq.getOrigin();
+        tf::Vector3 interp_p = alpha * (right_p - left_p) + left_p;
+
+        tf::Quaternion left_q   = left_pose .pq.getRotation();
+        tf::Quaternion right_q  = right_pose.pq.getRotation();
+        tf::Quaternion interp_q = tf::slerp(left_q, right_q, alpha);
+
+        pq = tf::Transform(interp_q, interp_p);
+
+        occlusion = std::max(left_pose.occlusion, right_pose.occlusion);
+
+        if (left_pose.markers.size() != right_pose.markers.size()) {
+            std::cout << "Interpolated pose constructor called with poses with diffent amounts of markers" << std::endl;
+            std::exit(-1);
+        }
+
+        for (int i = 0; i < left_pose.markers.size(); i++) {
+            float interp_x = alpha * (std::get<0>(right_pose.markers[i]) - std::get<0>(left_pose.markers[i])) + std::get<0>(left_pose.markers[0]);
+            float interp_y = alpha * (std::get<1>(right_pose.markers[i]) - std::get<1>(left_pose.markers[i])) + std::get<1>(left_pose.markers[1]);
+            float interp_z = alpha * (std::get<2>(right_pose.markers[i]) - std::get<2>(left_pose.markers[i])) + std::get<2>(left_pose.markers[2]);
+
+            std::string interp_name = std::get<3>(right_pose.markers[i]);
+
+            markers.emplace_back(interp_x, interp_y, interp_z, interp_name);
+        }
+    }
+
     void setT(std::valarray<float> t) {
         tf::Vector3 T(t[0], t[1], t[2]);
         this->pq.setOrigin(T);

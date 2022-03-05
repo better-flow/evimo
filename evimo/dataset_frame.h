@@ -130,15 +130,17 @@ public:
         , cam_pose_id(cam_p_id), timestamp(ref_ts), frame_id(fid), event_slice_ids(0, 0)
         , depth(dataset_handle->res_x, dataset_handle->res_y, CV_32F, cv::Scalar(0))
         , mask(dataset_handle->res_x, dataset_handle->res_y, CV_8U, cv::Scalar(0)) {
-        if (this->dataset_handle->cam_tj.size() > 0)
-            this->cam_pose_id = TimeSlice(this->dataset_handle->cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
+        
+        // if (this->dataset_handle->cam_tj.size() > 0)
+        //     this->cam_pose_id = TimeSlice(this->dataset_handle->cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
+        
         this->gt_img_name  = "depth_mask_" + std::to_string(this->frame_id) + ".png";
         this->rgb_img_name = "img_" + std::to_string(this->frame_id) + ".png";
     }
 
     void add_object_pos_id(int id, uint64_t obj_p_id) {
         this->obj_pose_ids.insert(std::make_pair(id, obj_p_id));
-        this->obj_pose_ids[id] = TimeSlice(this->dataset_handle->obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
+        //this->obj_pose_ids[id] = TimeSlice(this->dataset_handle->obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
     }
 
     void add_event_slice_ids(uint64_t event_low, uint64_t event_high) {
@@ -190,16 +192,6 @@ public:
         return this->timestamp - this->dataset_handle->get_time_offset_pose_to_host_correction();
     }
 
-    std::string get_info() {
-        std::string s;
-        s += std::to_string(frame_id) + ": " + std::to_string(get_timestamp()) + "\t";
-        s += std::to_string(get_true_camera_pose().ts.toSec()) + "\t";
-        for (auto &obj : this->dataset_handle->clouds) {
-            s += std::to_string(this->_get_raw_object_pose(obj.first).ts.toSec()) + "\t";
-        }
-        return s;
-    }
-
     // Generate frame (eiter with distortion or without)
     void generate(bool nodist=false) {
         this->depth = cv::Mat(this->depth.rows, this->depth.cols, CV_32F, cv::Scalar(0));
@@ -207,7 +199,7 @@ public:
 
         this->dataset_handle->update_cam_calib();
         this->dataset_handle->cam_tj.set_filtering_window_size(this->dataset_handle->pose_filtering_window);
-        this->cam_pose_id = TimeSlice(this->dataset_handle->cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
+        //this->cam_pose_id = TimeSlice(this->dataset_handle->cam_tj).find_nearest(this->get_timestamp(), this->cam_pose_id);
         auto cam_tf = this->get_true_camera_pose();
         // FIXME
         auto corrected_ts = cam_tf.ts.toSec() - this->get_timestamp();
@@ -228,7 +220,7 @@ public:
             //if (obj.second->has_no_mesh()) continue;
             auto id = obj.first;
             this->dataset_handle->obj_tjs.at(id).set_filtering_window_size(this->dataset_handle->pose_filtering_window);
-            this->obj_pose_ids[id] = TimeSlice(this->dataset_handle->obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
+            //this->obj_pose_ids[id] = TimeSlice(this->dataset_handle->obj_tjs.at(id)).find_nearest(this->get_timestamp(), this->obj_pose_ids[id]);
 
             if (this->obj_pose_ids.find(id) == this->obj_pose_ids.end()) {
                 std::cout << _yellow("Warning! ") << "No pose for object "
@@ -276,7 +268,7 @@ public:
         ret += "'id': " + std::to_string(this->frame_id) + ",\t\t";
         ret += "'ts': " + std::to_string(this->get_timestamp()) + ",\n";
         ret += "'cam': {\n";
-        ret += "\t'vel': " + this->get_camera_velocity().as_dict() + ",\n";
+        //ret += "\t'vel': " + this->get_camera_velocity().as_dict() + ",\n";
 
         // Represent camera poses in the frame of the initial camera pose (p0)
         auto p0 = this->dataset_handle->cam_tj[0];
@@ -448,13 +440,26 @@ protected:
 
     Pose _get_raw_camera_pose() {
         if (this->cam_pose_id >= this->dataset_handle->cam_tj.size()) {
-            std::cout << _yellow("Warning! ") << "Camera pose out of bounds for "
+            std::cout << _yellow("Warning! ") << "Camera right pose out of bounds for "
                       << " frame id " << this->frame_id << " with "
                       << this->dataset_handle->cam_tj.size() << " trajectory records and "
                       << "trajectory id = " << this->cam_pose_id << std::endl;
             return this->dataset_handle->cam_tj[this->dataset_handle->cam_tj.size() - 1];
         }
-        return this->dataset_handle->cam_tj[this->cam_pose_id];
+
+        if (this->cam_pose_id == 0) {
+            // std::cout << _yellow("Warning! ") << "Camera left pose out of bounds for "
+            //           << " frame id " << this->frame_id << " with "
+            //           << this->dataset_handle->cam_tj.size() << " trajectory records and "
+            //           << "trajectory id = " << this->cam_pose_id << std::endl;
+            return this->dataset_handle->cam_tj[0];
+        }
+
+        auto left_pose  = this->dataset_handle->cam_tj[this->cam_pose_id-1];
+        auto right_pose = this->dataset_handle->cam_tj[this->cam_pose_id];
+        auto interp_pose = Pose(left_pose, right_pose, this->timestamp);
+
+        return interp_pose;
     }
 
     Pose _get_raw_object_pose(int id) {
@@ -465,13 +470,26 @@ protected:
         auto obj_pose_id = this->obj_pose_ids.at(id);
         auto obj_tj_size = this->dataset_handle->obj_tjs.at(id).size();
         if (obj_pose_id >= obj_tj_size) {
-            std::cout << _yellow("Warning! ") << "Object (" << id << ") pose "
+            std::cout << _yellow("Warning! ") << "Object (" << id << ") right pose "
                       << "out of bounds for frame id " << this->frame_id << " with "
                       << obj_tj_size << " trajectory records and "
                       << "trajectory id = " << obj_pose_id << std::endl;
             return this->dataset_handle->obj_tjs.at(id)[obj_tj_size - 1];
         }
-        return this->dataset_handle->obj_tjs.at(id)[obj_pose_id];
+
+        if (obj_pose_id == 0) {
+            std::cout << _yellow("Warning! ") << "Object (" << id << ") left pose "
+                      << "out of bounds for frame id " << this->frame_id << " with "
+                      << obj_tj_size << " trajectory records and "
+                      << "trajectory id = " << obj_pose_id << std::endl;
+            return this->dataset_handle->obj_tjs.at(id)[0];
+        }
+
+        auto left_pose  = this->dataset_handle->obj_tjs.at(id)[obj_pose_id-1];
+        auto right_pose = this->dataset_handle->obj_tjs.at(id)[obj_pose_id];
+        auto interp_pose = Pose(left_pose, right_pose, this->timestamp);
+
+        return interp_pose;
     }
 };
 
