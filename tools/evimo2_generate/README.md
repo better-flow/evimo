@@ -32,10 +32,10 @@ Generating a single sequence can take a few minutes to an hour depending on the 
 ```
 cd evimo/tools/evimo2_docker
 ./docker_build.sh
-./docker_run.sh /media/$USER/EVIMO/raw
+./docker_run.sh /media/$USER/EVIMO
 cd ~/catkin_ws; catkin_make; pip3 install -e ~/pydvs/lib; cd
 source ~/catkin_ws/devel/setup.bash
-cd ~/tools/evimo2_generate; ./generate.sh ~/raw/imo/eval/scene13_dyn_test_00
+cd ~/tools/evimo2_generate; ./generate.sh ~/EVIMO/raw/imo/eval/scene13_dyn_test_00
 ```
 
 ## Generate everything
@@ -44,10 +44,10 @@ Generating the entire dataset can take days.
 ```
 cd evimo/tools/evimo2_docker
 ./docker_build.sh
-./docker_run.sh /media/$USER/EVIMO/raw
+./docker_run.sh /media/$USER/EVIMO
 cd ~/catkin_ws; catkin_make; pip3 install -e ~/pydvs/lib; cd
 source ~/catkin_ws/devel/setup.bash
-cd ~/tools/evimo2_generate; ./generate_all.sh ~/raw
+cd ~/tools/evimo2_generate; ./generate_all.sh ~/EVIMO/raw
 ```
 
 See the detailed tools descriptions below for more information.
@@ -60,12 +60,12 @@ Deletes all generated files but leaves the raw recordings
 
 Clear all:
 ```
-./clear_all.sh ~/raw
+./clear_all.sh ~/EVIMO/raw
 ```
 
 Clear a specific recording:
 ```
-./clear.sh ~/raw/imo/eva/scene13_dyn_test_00
+./clear.sh ~/EVIMO/raw/imo/eva/scene13_dyn_test_00
 ```
 
 ## Generate
@@ -83,7 +83,7 @@ Generate all:
 
 Generate a specific recording:
 ```
-./generate.sh ~/raw/imo/eva/scene13_dyn_test_00
+./generate.sh ~/EVIMO/raw/imo/eva/scene13_dyn_test_00
 ```
 
 ## Package
@@ -93,7 +93,7 @@ Checks that files that should have been made by `generate.sh` are present and co
 To do a dry run (check for missing generated files)
 
 ```
-./package_all.py ~/raw ~/raw/packaged dry
+./package_all.py ~/EVIMO/raw ~/EVIMO/packaged dry
 ```
 
 To do a real run (moves files and copies those that can't be moved):
@@ -101,7 +101,7 @@ To do a real run (moves files and copies those that can't be moved):
 Moving instead of copying saves over a 1 TB of drive space.
 
 ```
-./package_all.py ~/raw ~/raw/packaged move
+./package_all.py ~/EVIMO/raw ~/EVIMO/packaged move
 ```
 
 ## Compress
@@ -110,7 +110,7 @@ Checks that files that should have been made by `generate.sh` are present and co
 To do a dry run:
 
 ```
-./compress_packaged.py ~/raw/packaged ~/raw/compressed dry
+./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed dry
 ```
 
 To do a real run (moves files and copies those that can't be moved):
@@ -118,5 +118,5 @@ To do a real run (moves files and copies those that can't be moved):
 Moving instead of copying saves over a 1 TB of drive space.
 
 ```
-./compress_packaged.py ~/raw/packaged ~/raw/compressed compress
+./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed compress
 ```

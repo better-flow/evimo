@@ -3,7 +3,7 @@
 # The first argument is full path to evimo_data_config
 # https://github.com/better-flow/evimo_data_config
 # For example:
-# ./docker_run.sh /media/$USER/EVIMO/raw
+# ./docker_run.sh /media/$USER/EVIMO
 
 docker run -it \
     --user=$(id -u $USER):$(id -g $USER) \
@@ -13,7 +13,7 @@ docker run -it \
     --volume=$(pwd)"/../../evimo:/home/$USER/catkin_ws/src/evimo" \
     --volume=$(pwd)"/../../tools:/home/$USER/tools" \
     --volume=$(pwd)"/pydvs:/home/$USER/pydvs" \
-    --volume=$1":/home/$USER/raw" \
+    --volume=$1":/home/$USER/EVIMO" \
     --volume="/etc/group:/etc/group:ro" \
     --volume="/etc/passwd:/etc/passwd:ro" \
     --volume="/etc/shadow:/etc/shadow:ro" \
