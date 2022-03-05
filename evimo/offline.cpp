@@ -235,13 +235,9 @@ int main (int argc, char** argv) {
     // Align the timestamps
     double start_ts = 0.0;
     if (dataset->cam_tj.size() > 0) start_ts = dataset->cam_tj[0].ts.toSec();
-    if (dataset->event_array.size() > 0) start_ts = std::max(double(dataset->event_array.front().timestamp) * 1e-9, start_ts);
-    for (auto &obj_tj : dataset->obj_tjs)
-        start_ts = std::max(start_ts, obj_tj.second[0].ts.toSec());
-    start_ts += 1e-3; // ensure the first pose is surrounded by events
     std::cout << "Actual start timestamp: " << start_ts << "\n";
-    std::cout << "Vicon occlusion info per ground truth frame:" << std::endl;
 
+    std::cout << "Vicon occlusion info per ground truth frame:" << std::endl;
     // Make a list of GT frames to generate
     std::vector<DatasetFrame> frames;
     {
