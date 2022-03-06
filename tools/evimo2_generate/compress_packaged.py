@@ -25,18 +25,17 @@ def compress_all_list(idir, compressed_dir):
 
     for g in os.listdir(os.path.join(idir)):
         for subgroup in os.listdir(os.path.join(idir, g)):
-            for dtype in os.listdir(os.path.join(idir, g, subgroup)):
-                if (g == 'raw'):
+            if (g == 'raw' or g == 'video'):
+                base_list.append(os.path.join(idir, g))
+                fin_list.append(subgroup)
+                fout_list.append(os.path.join(compressed_dir, g))
+                fname_list.append(g + '_' + subgroup + '.tar.gz')
+            else:
+                for c in os.listdir(os.path.join(idir, g, subgroup)):
                     base_list.append(os.path.join(idir, g))
-                    fin_list.append(os.path.join(subgroup, dtype))
+                    fin_list.append(os.path.join(subgroup, c))
                     fout_list.append(os.path.join(compressed_dir, g))
-                    fname_list.append(g + '_' + dtype + '_' + c + '.tar.gz')
-                else:
-                    for c in os.listdir(os.path.join(idir, g, subgroup, dtype)):
-                        base_list.append(os.path.join(idir, g))
-                        fin_list.append(os.path.join(subgroup, dtype, c))
-                        fout_list.append(os.path.join(compressed_dir, g))
-                        fname_list.append(g + '_' + subgroup + '_' + dtype + '_' + c + '.tar.gz')
+                    fname_list.append(g + '_' + subgroup + '_' + c + '.tar.gz')
 
     return base_list, fin_list, fout_list, fname_list
 
