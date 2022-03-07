@@ -104,7 +104,7 @@ def visualize_event_camera(t, events, depth, depth_timestamps, camera_resolution
     return event_bgr
 
 def on_trackbar(t_ms):
-    t = t_ms / 1000.0
+    t = (t_ms / 1000.0) + t_start
 
     # Make images for flea3_7 if in sequence else black
     if flea3_7_classical_timestamps is not None:
@@ -152,8 +152,8 @@ def snap_to_time(event,x,y,flags,param):
             last_tick = (t_end - t_start) * pixels_per_second + first_tick
             if x >= first_tick and x <= last_tick:
                 t = ((t_end - t_start) * (x - first_tick) / (last_tick - first_tick)) + t_start
-                t_ms = int(t * 1000)
-                cv2.setTrackbarPos(trackbar_name, title_window, t_ms)
+                t_id = int((t-t_start) * 1000)
+                cv2.setTrackbarPos(trackbar_name, title_window, t_id)
 
 def group_files_by_sequence_name(files):
     files_grouped = {}
@@ -176,29 +176,42 @@ def make_timestamp_plot(flea3_7_timestamps, left_camera_timestamps, right_camera
     fig = plt.figure()
     canvas = FigureCanvas(fig)
 
+    def get_first_tick_and_pixels_per_second(ax):
+        # https://stackoverflow.com/a/44012582
+        # https://discourse.matplotlib.org/t/pixel-position-of-x-y-axis/11098/5
+        xtickslocs = ax.get_xticks()
+        ymin, _ = ax.get_ylim()
+        xticks_pixels = ax.transData.transform([(xtick, ymin) for xtick in xtickslocs])
+        first_tick = xticks_pixels[0][0]
+        pixels_per_second = (xticks_pixels[1][0] - xticks_pixels[0][0]) / (xtickslocs[1] - xtickslocs[0])
+        axis_loc = ax.bbox.extents
+        first_tick = axis_loc[0]
+
+        return first_tick, pixels_per_second
+
     if flea3_7_timestamps is not None:
-        plt.subplot(4,1,1)
+        ax = plt.subplot(4,1,1)
         plt.plot(flea3_7_timestamps[:-1], flea3_7_timestamps[1:] - flea3_7_timestamps[:-1])
         plt.xlim([t_start, t_end])
         plt.ylim([0, 3.0/60.0])
         plt.ylabel('{}'.format('flea3_7'))
 
     if left_camera_timestamps is not None:
-        plt.subplot(4,1,2)
+        ax = plt.subplot(4,1,2)
         plt.plot(left_camera_timestamps[:-1], left_camera_timestamps[1:] - left_camera_timestamps[:-1])
         plt.xlim([t_start, t_end])
         plt.ylim([0, 3.0/60.0])
         plt.ylabel('{}'.format('left_camera'))
 
     if right_camera_timestamps is not None:
-        plt.subplot(4,1,3)
+        ax = plt.subplot(4,1,3)
         plt.plot(right_camera_timestamps[:-1], right_camera_timestamps[1:] - right_camera_timestamps[:-1])
         plt.xlim([t_start, t_end])
         plt.ylim([0, 3.0/60.0])
         plt.ylabel('{}'.format('right_camera'))
 
     if samsung_mono_timestamps is not None:
-        plt.subplot(4,1,4)
+        ax = plt.subplot(4,1,4)
         plt.plot(samsung_mono_timestamps[:-1], samsung_mono_timestamps[1:] - samsung_mono_timestamps[:-1])
         plt.xlim([t_start, t_end])
         plt.ylim([0, 3.0/60.0])
@@ -206,20 +219,19 @@ def make_timestamp_plot(flea3_7_timestamps, left_camera_timestamps, right_camera
 
     plt.subplot(4,1,1)
     plt.title('depth GT frame time delta (s)')
-    ax = plt.subplot(4,1,4)
+    plt.subplot(4,1,4)
     plt.xlim([t_start, t_end])
     plt.xlabel('Sequence time (s)')
 
     plt.tight_layout()
 
-    # https://stackoverflow.com/a/44012582
-    xtickslocs = ax.get_xticks()
-    ymin, _ = ax.get_ylim()
-    xticks_pixels = ax.transData.transform([(xtick, ymin) for xtick in xtickslocs])
-    first_tick = xticks_pixels[0][0]
-    pixels_per_second = (xticks_pixels[1][0] - xticks_pixels[0][0]) / (xtickslocs[1] - xtickslocs[0])
-
     canvas.draw()
+
+    for i, timestamps in enumerate((flea3_7_timestamps, left_camera_timestamps, right_camera_timestamps, samsung_mono_timestamps)):
+        if type(timestamps) == np.ndarray:
+            ax = plt.subplot(4,1,i+1)
+            first_tick, pixels_per_second = get_first_tick_and_pixels_per_second(ax)
+            break
 
     width, height = fig.get_size_inches() * fig.get_dpi()
     data = np.frombuffer(canvas.tostring_rgb(), dtype='uint8').reshape(int(height), int(width), 3)
@@ -275,7 +287,8 @@ if __name__ == '__main__':
     else:
         flea3_7_data = None
         flea3_7_depth = None
-        flea3_7_timestamps = None
+        flea3_7_depth_timestamps = None
+        flea3_7_classical_timestamps = None
 
     if 'left_camera' in folders:
         left_camera_events = load_events(folders['left_camera'])
@@ -357,8 +370,8 @@ if __name__ == '__main__':
     title_window = args.seq
     cv2.namedWindow(title_window)
 
-    trackbar_name = 't (ms)'
-    slider_max = int(1000 * t_end)
+    trackbar_name = 't - t_start (ms)'
+    slider_max = int(1000 * (t_end - t_start))
     cv2.createTrackbar(trackbar_name, title_window , int(slider_max/2), slider_max, on_trackbar)
     cv2.setMouseCallback(title_window, snap_to_time)
 
