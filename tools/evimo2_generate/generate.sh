@@ -48,8 +48,8 @@ for cam in ${CameraArray[@]}; do
 done
 
 # This script splits the output of the offline tool using information from all the cameras
+rm -rf $1/$cam/ground_truth_*
 python3 split_offline_txt_output.py --base_dir $1
-
 
 declare -a zip_pids=()
 for cam in ${CameraArray[@]}; do
