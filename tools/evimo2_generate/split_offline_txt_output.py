@@ -247,10 +247,11 @@ if __name__ == '__main__':
         if to_compare_gt_frame_times is None:
             to_compare_gt_frame_times = (camera, camera_gt_frame_times[camera])
         else:
-            if not np.all(to_compare_gt_frame_times[1] == camera_gt_frame_times[camera]):
-                print(to_compare_gt_frame_times[1])
-                print(camera_gt_frame_times[camera])
-                raise Exception('event camera frame times are not consistent between cameras {} and {}'.format(to_compare_gt_frame_times[0], camera))
+            if camera in camera_gt_frame_times:
+                if not np.all(to_compare_gt_frame_times[1] == camera_gt_frame_times[camera]):
+                    print(to_compare_gt_frame_times[1])
+                    print(camera_gt_frame_times[camera])
+                    raise Exception('event camera frame times are not consistent between cameras {} and {}'.format(to_compare_gt_frame_times[0], camera))
 
 
     # Because all events cameras have identical GT times and there is always an event camera

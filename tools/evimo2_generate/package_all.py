@@ -18,12 +18,13 @@ class Selector:
         self.required_tgt  = []
         self.whitelist_tgt = []
 
-    def check_required(self):
+    def check_required(self, dst):
         file_missing = False
-        for f in self.required:
-            if (not os.path.exists(os.path.join(self.folder, f))):
-                print ("Required file is missing! skipping sequence/camera!:", self.folder, f)
+        for f1, f2 in zip(self.required, self.required_tgt):
+            if not os.path.exists(os.path.join(self.folder, f1)) and not os.path.exists(os.path.join(dst, f2)):
+                print ("Required file is missing in src or destination! skipping rest of sequence!:", self.folder, f1)
                 file_missing = True
+                break
         if file_missing:
             return False
 
@@ -38,7 +39,7 @@ class Selector:
         return True
 
     def copy(self, dst, dry_run=False): 
-        if (not self.check_required()): return False
+        if (not self.check_required(dst)): return False
         src_list  = [os.path.join(self.folder, f) for f in (self.required + self.whitelist)]
 
         tgt_list = []
@@ -57,10 +58,12 @@ class Selector:
 
             if copy_not_move:
                 if not dry_run:
-                    shutil.copyfile(src_list[i], tgt_list[i])
+                    if not os.path.exists(tgt_list[i]):
+                        shutil.copyfile(src_list[i], tgt_list[i])
             else:
                 if not dry_run:
-                    shutil.move(src_list[i], tgt_list[i])
+                    if not os.path.exists(tgt_list[i]):
+                        shutil.move(src_list[i], tgt_list[i])
 
         return True
 
@@ -191,18 +194,35 @@ def move_all(groups, idir, odir, dry_run):
         for c in camera_folders:
             if os.path.exists(os.path.join(f, c)):
                 potential_ground_truths = os.listdir(os.path.join(f, c))
+
+                a_ground_truth_found = False
+                file_not_found = False
+
                 # npz and txt run for each ground_truth
                 for potential_ground_truth in potential_ground_truths:
                     if 'ground_truth_' in potential_ground_truth:
+                        a_ground_truth_found = True
                         ground_truth = potential_ground_truth
                         npz = NpzSelector(f, c, ground_truth)
-                        npz.copy(os.path.join(odir, 'npz', c, g, subgroup, raw.sequence_name+'_'+ground_truth[-6:]), dry_run=dry_run)
+                        if not npz.copy(os.path.join(odir, 'npz', c, g, subgroup, raw.sequence_name+'_'+ground_truth[-6:]), dry_run=dry_run):
+                            file_not_found = True
+                            continue
 
                         txt = TxtSelector(f, c, ground_truth)
-                        txt.copy(os.path.join(odir, 'txt', c, g, subgroup, raw.sequence_name+'_'+ground_truth[-6:]), dry_run=dry_run)
+                        if not txt.copy(os.path.join(odir, 'txt', c, g, subgroup, raw.sequence_name+'_'+ground_truth[-6:]), dry_run=dry_run):
+                            file_not_found = True
+                            continue
 
                         mp4 = VideoSelector(f, c, ground_truth)
-                        mp4.copy(os.path.join(odir, 'video', c, g, subgroup), dry_run=dry_run)
+                        if not mp4.copy(os.path.join(odir, 'video', c, g, subgroup), dry_run=dry_run):
+                            file_not_found = True
+                            continue
+
+                if not a_ground_truth_found:
+                    print('No ground truths for camera {}!'.format(c))
+
+                if file_not_found:
+                    break
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
