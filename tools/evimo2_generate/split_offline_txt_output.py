@@ -244,10 +244,10 @@ if __name__ == '__main__':
     # Check that frame times are consistent between event cameras
     to_compare_gt_frame_times = None
     for camera in event_cameras_list:
-        if to_compare_gt_frame_times is None:
-            to_compare_gt_frame_times = (camera, camera_gt_frame_times[camera])
-        else:
-            if camera in camera_gt_frame_times:
+        if camera in camera_gt_frame_times:
+            if to_compare_gt_frame_times is None:
+                to_compare_gt_frame_times = (camera, camera_gt_frame_times[camera])
+            else:
                 if not np.all(to_compare_gt_frame_times[1] == camera_gt_frame_times[camera]):
                     print(to_compare_gt_frame_times[1])
                     print(camera_gt_frame_times[camera])
