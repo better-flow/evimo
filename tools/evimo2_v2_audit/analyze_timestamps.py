@@ -106,7 +106,7 @@ def calc_depth_valid_stats(depth_timestamps, data_start_first_last, gap_detectio
 
     return num_invalid_range, valid_total_range, invalid_max_range
 
-def analyze_timetamps(category, purpose, name, sequence_group, plot=True):
+def analyze_timetamps(category, purpose, name, sequence_group, plot=True, id=0):
     timestamp_infos = {}
 
     for camera in sequence_group:
@@ -184,8 +184,8 @@ def analyze_timetamps(category, purpose, name, sequence_group, plot=True):
 
         plt.tight_layout()
 
-        plt.savefig(os.path.join(plot_output_dir, '{}_{}_{}.png'.format(
-            category.ljust(10, 'a'), purpose.ljust(10, 'a'), name)))
+        plt.savefig(os.path.join(plot_output_dir, '{:06d}_{}_{}_{}.png'.format(
+            id, category, purpose, name)))
         plt.close()
 
     flea3_7      = 'flea3_7'      if 'flea3_7'      in timestamp_infos else ''
@@ -276,8 +276,11 @@ if __name__ == '__main__':
     #    csv_line = analyze_timetamps(*f)
     #    csv_lines.append(csv_line)
 
+    def analyze_timetamps_enumerate(i, args):
+        return analyze_timetamps(*args, id=i)
+
     with Pool(int(multiprocessing.cpu_count()/2)) as p:
-        csv_lines = list(tqdm(p.istarmap(analyze_timetamps, files_grouped_by_sequence), total=len(files_grouped_by_sequence)))
+        csv_lines = list(tqdm(p.istarmap(analyze_timetamps_enumerate, enumerate(files_grouped_by_sequence)), total=len(files_grouped_by_sequence)))
 
     csv_header = (
         'category,' +
