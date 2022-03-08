@@ -18,12 +18,34 @@ from extract_event_and_frame_times import (get_sequence_name,
                                            get_purpose,
                                            make_dir_if_needed)
 
-IMG_HEIGHT = int(240*1.5)
-IMG_WIDTH = int(320*1.5)
+IMG_HEIGHT = int(240*1.25)
+IMG_WIDTH = int(320*1.25)
 
 MAX_VIS_DEPTH = 1.5
 EVENT_COUNT_DT = 0.002
 EVENTS_IN_EVENT_COUNT = 5000
+
+
+# From pydvs evimo-gen.py
+def mask_to_color(mask):
+    colors = [[84, 71, 140],   [44, 105, 154],  [4, 139, 168],
+              [13, 179, 158],  [22, 219, 147],  [131, 227, 119],
+              [185, 231, 105], [239, 234, 90],  [241, 196, 83],
+              [242, 158, 76],  [239, 71, 111],  [255, 209, 102],
+              [6, 214, 160],   [17, 138, 178],  [7, 59, 76],
+              [6, 123, 194],   [132, 188, 218], [236, 195, 11],
+              [243, 119, 72],  [213, 96, 98]]
+
+    cmb = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.float32)
+    m_ = np.max(mask) + 500
+    m_ = max(m_, 3500)
+
+    maxoid = int(m_ / 1000)
+    for i in range(maxoid):
+        cutoff_lo = 1000.0 * (i + 1.0) - 5
+        cutoff_hi = 1000.0 * (i + 1.0) + 5
+        cmb[np.where(np.logical_and(mask>=cutoff_lo, mask<=cutoff_hi))] = np.array(colors[i % len(colors)])
+    return cmb
 
 
 # For some reason this is faster than numpy's search sorted
@@ -103,6 +125,16 @@ def visualize_event_camera(t, events, depth, depth_timestamps, camera_resolution
 
     return event_bgr
 
+def visualize_event_camera_mask(t, timestamps, masks, out_width, out_height):
+    if masks is not None:
+        i = np.searchsorted(timestamps, t, side='right') - 1
+        m = get_frame_by_index(masks, i)
+        m = cv2.resize(m, dsize=(out_width, out_height), interpolation=cv2.INTER_NEAREST).astype(np.float32)
+        col_mask = mask_to_color(m)
+        return col_mask.astype(np.uint8)
+    else:
+        return np.zeros((out_height, out_width, 3), dtype=np.uint8)
+
 def on_trackbar(t_ms):
     t = (t_ms / 1000.0) + t_start
 
@@ -114,19 +146,26 @@ def on_trackbar(t_ms):
             flea3_7_depth_bgr = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
         # There is data, make visualization frames
         else:
+            # Visualize color image with mask on top
             i_classical = np.searchsorted(flea3_7_classical_timestamps, t) - 1
             flea3_7_img = get_frame_by_index(flea3_7_data, i_classical)
             flea3_7_img_bgr = cv2.resize(flea3_7_img, dsize=(IMG_WIDTH, IMG_HEIGHT))
 
             i_depth = np.searchsorted(flea3_7_depth_timestamps, t) - 1
+            flea3_7_m = get_frame_by_index(flea3_7_mask, i_depth)
+            flea3_7_m = cv2.resize(flea3_7_m, dsize=(IMG_WIDTH, IMG_HEIGHT), interpolation=cv2.INTER_NEAREST).astype(np.float32)
+            col_mask = mask_to_color(flea3_7_m)
 
+            flea3_7_m = (255 * (flea3_7_m - np.nanmin(flea3_7_m)) / (np.nanmax(flea3_7_m) - np.nanmin(flea3_7_m))).astype(np.uint8)
+            mask_more_than_0 = flea3_7_m > 0
+
+            flea3_7_img_bgr[mask_more_than_0] = flea3_7_img_bgr[mask_more_than_0] * 0.2 + col_mask[mask_more_than_0] * 0.8
+
+            # Visualize depth
             flea3_7_d = get_frame_by_index(flea3_7_depth, i_depth)
             flea3_7_d = cv2.resize(flea3_7_d, dsize=(IMG_WIDTH, IMG_HEIGHT))
             flea3_7_d = np.clip(flea3_7_d.astype(np.float32) * (255 / MAX_VIS_DEPTH / 1000), 0.0, 255.0).astype(np.uint8)
             flea3_7_depth_bgr = cv2.cvtColor(flea3_7_d, cv2.COLOR_GRAY2BGR)
-
-            flea3_7_img_bgr = cv2.addWeighted(flea3_7_img_bgr, 0.5, flea3_7_depth_bgr, 0.5, 0.0)
-
     else:
         flea3_7_img_bgr = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
         flea3_7_depth_bgr = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
@@ -135,20 +174,27 @@ def on_trackbar(t_ms):
     right_camera_event_bgr = visualize_event_camera(t, right_camera_events, right_camera_depth, right_camera_timestamps, right_camera_resolution, IMG_WIDTH, IMG_HEIGHT)
     samsung_mono_event_bgr = visualize_event_camera(t, samsung_mono_events, samsung_mono_depth, samsung_mono_timestamps, samsung_mono_resolution, IMG_WIDTH, IMG_HEIGHT)
 
+    left_camera_mask_bgr = visualize_event_camera_mask(t, left_camera_timestamps, left_camera_mask, IMG_WIDTH, IMG_HEIGHT)
+    right_camera_mask_bgr = visualize_event_camera_mask(t, right_camera_timestamps, right_camera_mask, IMG_WIDTH, IMG_HEIGHT)
+    samsung_mono_mask_bgr = visualize_event_camera_mask(t, samsung_mono_timestamps, samsung_mono_mask, IMG_WIDTH, IMG_HEIGHT)
+
     red_line_loc = (t - t_start) * pixels_per_second + first_tick
     plot_bgr_line = cv2.line(np.copy(plot_bgr), (int(red_line_loc), 0),(int(red_line_loc), plot_bgr.shape[0]), (0, 0, 255), 1)
 
-    top_row = np.hstack((cv2.flip(flea3_7_img_bgr, -1), cv2.flip(flea3_7_depth_bgr, -1), samsung_mono_event_bgr))
-    bottom_row = np.hstack((cv2.flip(left_camera_event_bgr, -1), right_camera_event_bgr, plot_bgr_line))
+    top_row = np.hstack((cv2.flip(flea3_7_depth_bgr, -1), samsung_mono_event_bgr, cv2.flip(left_camera_event_bgr, -1), right_camera_event_bgr))
+    mid_row = np.hstack((cv2.flip(flea3_7_img_bgr, -1), samsung_mono_mask_bgr, cv2.flip(left_camera_mask_bgr, -1), right_camera_mask_bgr))
+    zeros = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
+    bottom_row = np.hstack((plot_bgr_line, zeros, zeros, zeros))
 
-    total_image = np.vstack((top_row, bottom_row))
+
+    total_image = np.vstack((top_row, mid_row, bottom_row))
     cv2.imshow(title_window, total_image)
 
 
 def snap_to_time(event,x,y,flags,param):
     if event == cv2.EVENT_LBUTTONDOWN:
-        if y >= IMG_HEIGHT and y < 2 * IMG_HEIGHT:
-            x = x - IMG_WIDTH * 2
+        if y >= 2*IMG_HEIGHT and y < 3 * IMG_HEIGHT:
+            x = x - IMG_WIDTH * 0
             last_tick = (t_end - t_start) * pixels_per_second + first_tick
             if x >= first_tick and x <= last_tick:
                 t = ((t_end - t_start) * (x - first_tick) / (last_tick - first_tick)) + t_start
@@ -271,8 +317,11 @@ if __name__ == '__main__':
 
     print('Opening npy files')
     if 'flea3_7' in folders:
+        print('flea3_7 frames')
         flea3_7_data = np.load(os.path.join(folders['flea3_7'], 'dataset_classical.npz'))
         flea3_7_depth = np.load(os.path.join(folders['flea3_7'], 'dataset_depth.npz'))
+        flea3_7_mask = np.load(os.path.join(folders['flea3_7'], 'dataset_mask.npz'))
+        print('flea3_7_dataset_info')
         meta = np.load(os.path.join(folders['flea3_7'], 'dataset_info.npz'), allow_pickle=True)['meta'].item()
         frame_infos = meta['frames']
         flea3_7_depth_timestamps = []
@@ -287,12 +336,16 @@ if __name__ == '__main__':
     else:
         flea3_7_data = None
         flea3_7_depth = None
+        flea3_7_mask = None
         flea3_7_depth_timestamps = None
         flea3_7_classical_timestamps = None
 
     if 'left_camera' in folders:
+        print('left_camera frames')
         left_camera_events = load_events(folders['left_camera'])
         left_camera_depth = np.load(os.path.join(folders['left_camera'], 'dataset_depth.npz'))
+        left_camera_mask = np.load(os.path.join(folders['left_camera'], 'dataset_mask.npz'))
+        print('left_camera dataset_info')
         meta = np.load(os.path.join(folders['left_camera'], 'dataset_info.npz'), allow_pickle=True)['meta'].item()
         frame_infos = meta['frames']
         left_camera_timestamps = []
@@ -302,12 +355,16 @@ if __name__ == '__main__':
         left_camera_timestamps = np.array(left_camera_timestamps)
     else:
         left_camera_events = None
+        left_camera_mask = None
         left_camera_depth = None
         left_camera_timestamps = None
 
     if 'right_camera' in folders:
+        print('right_camera frames')
         right_camera_events = load_events(folders['right_camera'])
         right_camera_depth = np.load(os.path.join(folders['right_camera'], 'dataset_depth.npz'))
+        right_camera_mask = np.load(os.path.join(folders['right_camera'], 'dataset_mask.npz'))
+        print('right_camera dataset_info')
         meta = np.load(os.path.join(folders['right_camera'], 'dataset_info.npz'), allow_pickle=True)['meta'].item()
         frame_infos = meta['frames']
         right_camera_timestamps = []
@@ -317,12 +374,16 @@ if __name__ == '__main__':
         right_camera_timestamps = np.array(right_camera_timestamps)
     else:
         right_camera_events = None
+        right_camera_mask = None
         right_camera_depth = None
         right_camera_timestamps = None
 
     if 'samsung_mono' in folders:
+        print('samsung_mono frames')
         samsung_mono_events = load_events(folders['samsung_mono'])
         samsung_mono_depth = np.load(os.path.join(folders['samsung_mono'], 'dataset_depth.npz'))
+        samsung_mono_mask = np.load(os.path.join(folders['samsung_mono'], 'dataset_mask.npz'))
+        print('samsung_mono dataset_info')
         meta = np.load(os.path.join(folders['samsung_mono'], 'dataset_info.npz'), allow_pickle=True)['meta'].item()
         frame_infos = meta['frames']
         samsung_mono_timestamps = []
@@ -332,6 +393,7 @@ if __name__ == '__main__':
         samsung_mono_timestamps = np.array(samsung_mono_timestamps)
     else:
         samsung_mono_events = None
+        samsung_mono_mask = None
         samsung_mono_depth = None
         samsung_mono_timestamps = None
 
