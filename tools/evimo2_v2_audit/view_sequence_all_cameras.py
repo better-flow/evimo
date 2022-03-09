@@ -22,7 +22,7 @@ IMG_HEIGHT = int(240*1.25)
 IMG_WIDTH = int(320*1.25)
 
 MAX_VIS_DEPTH = 1.5
-EVENT_COUNT_DT = 0.002
+EVENT_COUNT_DT = 0.005
 EVENTS_IN_EVENT_COUNT = 5000
 
 
@@ -76,13 +76,12 @@ def get_frame_by_index(frames, index):
     return np.copy(frames[frame_name]) # To extract and keep in RAM
 
 def visualize_event_camera(t, events, depth, depth_timestamps, camera_resolution, out_width, out_height):
-    min_event_brightness = 100
-
     # Make images for left_camera if in sequence else black
     if events is not None:
         # Black if there is no data at this time
         if t < events[0, 0] or t > events[-1, 0] + 1/60.0:
-            event_count_green = None
+            event_count = None
+            event_count_normalized = None
         # There is data, make visualization
         else:
             i_left = my_search_sorted(events[:, 0], t) - 1
@@ -95,7 +94,7 @@ def visualize_event_camera(t, events, depth, depth_timestamps, camera_resolution
             event_count = cv2.resize(event_count, dsize=(out_width, out_height))
 
             max_count = np.max(event_count)
-            event_count_green = (event_count * ((255-min_event_brightness) / max_count)).astype(np.uint8) + min_event_brightness
+            event_count_normalized = (event_count * 255 / max_count).astype(np.uint8)
 
         # Visualize depth if possible
         if not (t < depth_timestamps[0] or  t > depth_timestamps[-1] + 1/60.0):
@@ -108,32 +107,39 @@ def visualize_event_camera(t, events, depth, depth_timestamps, camera_resolution
             depth_bgr = None
 
         # Compose images as appropriate
-        if event_count_green is None and depth_bgr is None:
+        if event_count_normalized is None and depth_bgr is None:
             event_bgr = np.zeros((out_height, out_width, 3), dtype=np.uint8)
-        elif event_count_green is None:
+        elif event_count_normalized is None:
             event_bgr = depth_bgr
         elif depth_bgr is None:
             event_bgr = np.zeros((out_height, out_width, 3), dtype=np.uint8)
-            event_bgr[:, :, 1][event_count_green > min_event_brightness] = event_count_green[event_count_green > min_event_brightness]
+            event_bgr[:, :, 1] = event_count_normalized
         else:
-            depth_bgr[:, :, 0][event_count_green > min_event_brightness] = 0
-            depth_bgr[:, :, 1][event_count_green > min_event_brightness] = event_count_green[event_count_green > min_event_brightness]
-            depth_bgr[:, :, 2][event_count_green > min_event_brightness] = 0
-            event_bgr = depth_bgr
+            event_count_bgr = np.dstack((np.zeros((out_height, out_width), dtype=np.uint8), event_count_normalized, np.zeros((out_height, out_width), dtype=np.uint8)))
+            event_bgr_float = depth_bgr.astype(np.float32) + event_count_bgr.astype(np.float32)
+            event_bgr = np.clip(event_bgr_float, 0, 255).astype(np.uint8)
     else:
+        event_count_normalized = None
         event_bgr = np.zeros((out_height, out_width, 3), dtype=np.uint8)
 
-    return event_bgr
+    return event_bgr, event_count_normalized
 
-def visualize_event_camera_mask(t, timestamps, masks, out_width, out_height):
+def visualize_event_camera_mask(t, timestamps, masks, out_width, out_height, event_count_normalized=None):
     if masks is not None:
         i = np.searchsorted(timestamps, t, side='right') - 1
         m = get_frame_by_index(masks, i)
         m = cv2.resize(m, dsize=(out_width, out_height), interpolation=cv2.INTER_NEAREST).astype(np.float32)
         col_mask = mask_to_color(m)
-        return col_mask.astype(np.uint8)
+        col_mask = col_mask.astype(np.uint8)
     else:
-        return np.zeros((out_height, out_width, 3), dtype=np.uint8)
+        col_mask = np.zeros((out_height, out_width, 3), dtype=np.uint8)
+
+    event_count_bgr = np.dstack((event_count_normalized, event_count_normalized, event_count_normalized))
+
+    col_mask = col_mask.astype(np.float32) + event_count_bgr.astype(np.float32)
+    col_mask = np.clip(col_mask, 0, 255).astype(np.uint8)
+
+    return col_mask
 
 def on_trackbar(t_ms):
     t = (t_ms / 1000.0) + t_start
@@ -170,13 +176,13 @@ def on_trackbar(t_ms):
         flea3_7_img_bgr = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
         flea3_7_depth_bgr = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
 
-    left_camera_event_bgr = visualize_event_camera(t, left_camera_events, left_camera_depth, left_camera_timestamps, left_camera_resolution, IMG_WIDTH, IMG_HEIGHT)
-    right_camera_event_bgr = visualize_event_camera(t, right_camera_events, right_camera_depth, right_camera_timestamps, right_camera_resolution, IMG_WIDTH, IMG_HEIGHT)
-    samsung_mono_event_bgr = visualize_event_camera(t, samsung_mono_events, samsung_mono_depth, samsung_mono_timestamps, samsung_mono_resolution, IMG_WIDTH, IMG_HEIGHT)
+    left_camera_event_bgr, left_camera_event_count = visualize_event_camera(t, left_camera_events, left_camera_depth, left_camera_timestamps, left_camera_resolution, IMG_WIDTH, IMG_HEIGHT)
+    right_camera_event_bgr, right_camera_event_count = visualize_event_camera(t, right_camera_events, right_camera_depth, right_camera_timestamps, right_camera_resolution, IMG_WIDTH, IMG_HEIGHT)
+    samsung_mono_event_bgr, samsung_mono_event_count = visualize_event_camera(t, samsung_mono_events, samsung_mono_depth, samsung_mono_timestamps, samsung_mono_resolution, IMG_WIDTH, IMG_HEIGHT)
 
-    left_camera_mask_bgr = visualize_event_camera_mask(t, left_camera_timestamps, left_camera_mask, IMG_WIDTH, IMG_HEIGHT)
-    right_camera_mask_bgr = visualize_event_camera_mask(t, right_camera_timestamps, right_camera_mask, IMG_WIDTH, IMG_HEIGHT)
-    samsung_mono_mask_bgr = visualize_event_camera_mask(t, samsung_mono_timestamps, samsung_mono_mask, IMG_WIDTH, IMG_HEIGHT)
+    left_camera_mask_bgr  = visualize_event_camera_mask(t, left_camera_timestamps, left_camera_mask, IMG_WIDTH, IMG_HEIGHT, left_camera_event_count)
+    right_camera_mask_bgr = visualize_event_camera_mask(t, right_camera_timestamps, right_camera_mask, IMG_WIDTH, IMG_HEIGHT, right_camera_event_count)
+    samsung_mono_mask_bgr = visualize_event_camera_mask(t, samsung_mono_timestamps, samsung_mono_mask, IMG_WIDTH, IMG_HEIGHT, samsung_mono_event_count)
 
     red_line_loc = (t - t_start) * pixels_per_second + first_tick
     plot_bgr_line = cv2.line(np.copy(plot_bgr), (int(red_line_loc), 0),(int(red_line_loc), plot_bgr.shape[0]), (0, 0, 255), 1)
