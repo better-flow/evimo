@@ -98,7 +98,7 @@ To do a dry run (check for missing generated files)
 
 To do a real run (moves files and copies those that can't be moved):
 
-Moving instead of copying saves over a 1 TB of drive space.
+Moving instead of copying saves over a 1 TB of drive space and makes the process fit on a 4TB drive.
 
 ```
 ./package_all.py ~/EVIMO/raw ~/EVIMO/packaged move
@@ -114,8 +114,6 @@ To do a dry run:
 ```
 
 To do a real run (moves files and copies those that can't be moved):
-
-Moving instead of copying saves over a 1 TB of drive space.
 
 ```
 ./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed compress

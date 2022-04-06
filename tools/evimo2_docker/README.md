@@ -8,7 +8,7 @@ Build docker container
 `./docker_build.sh`
 
 Run docker container
-`./docker_run.sh /media/$USER/EVIMO`
+`./docker_run.sh /media/$(USER)/EVIMO`
 
 Once inside compile the evimo C++ and python tools by running:
 ```bash
