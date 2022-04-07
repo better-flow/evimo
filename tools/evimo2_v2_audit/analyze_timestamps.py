@@ -49,6 +49,8 @@ def split_timestamps_by_valid_periods(depth_timestamps, gap_detection_threshold)
     delta_t = depth_timestamps[1:] - depth_timestamps[:-1]
     gap_starts = delta_t >= gap_detection_threshold
 
+    starts_ends_invalid_periods = []
+    starts_ends_invalid_period = []
     valid_periods_timestamps = []
     valid_period_timestamps = []
     for i, t in enumerate(depth_timestamps):
@@ -57,47 +59,31 @@ def split_timestamps_by_valid_periods(depth_timestamps, gap_detection_threshold)
         if i < len(depth_timestamps) - 1 and gap_starts[i] == True:
             valid_periods_timestamps.append(np.array(valid_period_timestamps))
             valid_period_timestamps = []
-        
+            starts_ends_invalid_periods.append(np.array((t, depth_timestamps[i+1])))
+
         if i == len(depth_timestamps) - 1:
             valid_periods_timestamps.append(np.array(valid_period_timestamps))
             valid_period_timestamps = []
 
-    return valid_periods_timestamps
-
-def find_start_end_invalid_periods(depth_timestamps, data_start_first_last, gap_detection_threshold):
-    starts_ends_invalid_periods = []
-
-    if data_start_first_last[0] < depth_timestamps[0]:
-        starts_ends_invalid_periods.append(np.array([data_start_first_last[0], depth_timestamps[0]]))
-
-    delta_t = depth_timestamps[1:] - depth_timestamps[:-1]
-    gap_starts = delta_t >= gap_detection_threshold
-
-    for i, gap_started in enumerate(gap_starts):
-        if gap_started:
-            starts_ends_invalid_periods.append(np.array([depth_timestamps[i], depth_timestamps[i+1]]))
-
-    if data_start_first_last[1] > depth_timestamps[-1]:
-        starts_ends_invalid_periods.append(np.array([depth_timestamps[-1], data_start_first_last[1]]))
-
-    return starts_ends_invalid_periods
+    return valid_periods_timestamps, starts_ends_invalid_periods
 
 def calc_depth_valid_stats(depth_timestamps, data_start_first_last, gap_detection_threshold):
-    valid_periods_timestamps    = split_timestamps_by_valid_periods(depth_timestamps, gap_detection_threshold)
-    starts_ends_invalid_periods = find_start_end_invalid_periods   (depth_timestamps, data_start_first_last, gap_detection_threshold)
+    valid_periods_timestamps, starts_ends_invalid_periods = (
+        split_timestamps_by_valid_periods(depth_timestamps, gap_detection_threshold))
 
     valid_ranges = []
     for timestamps in valid_periods_timestamps:
         valid_ranges.append(timestamps[-1] - timestamps[0])
     valid_ranges = np.array(valid_ranges)
+    valid_total_range = np.sum(valid_ranges)
 
+    #starts_ends_invalid_periods = find_start_end_invalid_periods(depth_timestamps, data_start_first_last, gap_detection_threshold)
     invalid_ranges = []
     for start_end in starts_ends_invalid_periods:
         invalid_ranges.append(start_end[1] - start_end[0])
     invalid_ranges = np.array(invalid_ranges)
 
     num_invalid_range  = invalid_ranges.shape[0]
-    valid_total_range = np.sum(valid_ranges)
 
     if invalid_ranges.shape[0] > 0:
         invalid_max_range = np.max(invalid_ranges)
@@ -142,12 +128,6 @@ def analyze_timetamps(category, purpose, name, sequence_group, plot=True, id=0):
         classical_frames_shape      = timestamp_info['classical_frames_shape']
         depth_shape                 = timestamp_info['depth_shape']
         depth_timestamps            = timestamp_info['depth_timestamps']
-
-        # Check some basic assumptions
-        # if classical_frames_shape.shape != ():
-        #     assert depth_timestamps.shape[0] == classical_frames_shape[0]
-
-        # assert depth_shape[0] == depth_timestamps.shape[0]
 
         if plot:
             if camera == 'flea3_7':
@@ -217,14 +197,6 @@ def analyze_timetamps(category, purpose, name, sequence_group, plot=True, id=0):
     (samsung_mono_num_invalid, samsung_mono_total_valid, samsung_mono_max_invalid) = (
         calc_depth_valid_stats(timestamp_infos['samsung_mono']['depth_timestamps'], (samsung_mono_data_start, samsung_mono_data_end), 2.5/60.0) if 'samsung_mono' in timestamp_infos else ('', '', ''))
 
-    #if name == 'depth_var_1_ud':
-        #print(name)
-        #calc_depth_valid(timestamp_infos['flea3_7']['depth_timestamps'], 2.5/30.0)
-        #print(flea3_7_gaps_valid)
-        #print(timestamp_infos['flea3_7']['depth_timestamps'])
-        #print(timestamp_infos['flea3_7']['classical_frames_shape'])
-        #raise Exception('hi')
-
     csv_line = [category, purpose, name,
                 flea3_7, left_camera, right_camera, samsung_mono,
                 flea3_7_data_range, left_camera_range, right_camera_range, depth_camera_range,
@@ -271,11 +243,6 @@ if __name__ == '__main__':
     files_grouped_by_sequence.sort(key = lambda x: x[1])
     files_grouped_by_sequence.sort(key = lambda x: x[0])
 
-    # csv_lines = []
-    # for f in files_grouped_by_sequence:
-    #    csv_line = analyze_timetamps(*f)
-    #    csv_lines.append(csv_line)
-
     def analyze_timetamps_enumerate(i, args):
         return analyze_timetamps(*args, id=i)
 
@@ -286,11 +253,11 @@ if __name__ == '__main__':
         'category,' +
         'purpose,' +
         'sequence name,' +
-        'flea3_7?,' + 'left_camera?,' + 'right_camera?,' + 'samsung_mono?,' +
-        's data,' + 's data,' + 's data,' + 's data,' +
-        's depth,' + 's depth,' + 's depth,' + 's depth,' +
-        'max invalid,' + 'max_invalid,' + 'max_invalid,' + 'max_invalid,' +
-        'num invalid,' + 'num invalid,' + 'num invalid,' + 'num invalid'
+        'flea3_7 (f37),' + 'left_camera (le),' + 'right_camera (re),' + 'samsung_mono (se),' +
+        'f37 sec data,' + 'le sec data,' + 'lr sec data,' + 'se sec data,' +
+        'f37 sec depth,' + 'le sec depth,' + 'lr sec depth,' + 'se sec depth,' +
+        'f37 max invalid,' + 'le max_invalid,' + 'lr max_invalid,' + 'se max_invalid,' +
+        'f37 num invalid,' + 'le num invalid,' + 'lr num invalid,' + 'se num invalid'
     )
 
     csv_file = csv_header + '\n'
@@ -298,7 +265,7 @@ if __name__ == '__main__':
     for line in csv_lines:
         txt_csv_line = ''
         for l in line:
-            txt_csv_line = txt_csv_line + '{}, '.format(l)
+            txt_csv_line = txt_csv_line + '{},'.format(l)
         txt_csv_line = txt_csv_line + '\n'
 
         csv_file = csv_file + txt_csv_line
