@@ -81,19 +81,21 @@
     <div class="container">
       <div class="row">
         <div class="col-md-12">
-          <h1 class="">Download EVIMO 2</h1>
+          <h1 class="">Download EVIMO 2 v2</h1>
           <p>Please refer to our <a href="https://github.com/better-flow/evimo/wiki">Wiki</a> for detailed instructions on how to read and parse
           the ground truth. </p>
 
           <p>The authors would appreciate if you cite our papers:</p>
           <ol>
-	        <li>EV-IMO: Motion Segmentation Dataset and Learning Pipeline for Event Cameras 
+          <li>EV-IMO: Motion Segmentation Dataset and Learning Pipeline for Event Cameras 
             <a href="evimo.bib"><i>[bibtex]</i></a>
             </li>
-	        <li>Learning Visual Motion Segmentation Using Event Surfaces
+          <li>Learning Visual Motion Segmentation Using Event Surfaces
             <a href="surfaces.bib"><i>[bibtex]</i></a>
             </li>
-		  </ol>
+          </ol>
+
+          <p> Looking for EVIMO 2 v1? Check <a href="download_evimo_2_v1.html">this page.</a> New projects should use EVIMO 2 v2 because it has much better temporal synchronization between sensors and a much more efficient npz format.
 
         </div>
       </div>
@@ -102,1242 +104,778 @@
 
   <hr>
 
-		<div class="section">
-			<div class="container">
-				<h1> The EVIMO2 Dataset </h1>
-				<h2> The Recording Setup </h2>
-				<div class="col-md-6">
-					<p>
-                    Our sensor rig is shown in the image; 2 PROPHESEE Gen3 (640&times;480) are set up in a stereo configuration
-                    (we provide extrinsic and intrinsic calibration with the data). A Samsung DVS Gen3 (640&times;480)
-                    is in the lower middle of the rig. All event cameras are covered with IR cut filters to avoid
-                    interference with Vicon motion capture system. Additionally, an RGB camera (Flea3 USB3) is used to
-                    provide classical image frames. All four cameras are spatially and temporally calibrated and record
-                    simultaneously.
-
-					</p>
-					<div class="row"> <h3> Prophesee Cameras (&times;2) </h3>
-						<ul>
-							<li>Resolution:  640&times;480 </li>
-							<li>FOV: ~70<span>&#176;</span> </li>
-						</ul>
-					</div>
-					<div class="row"> <h3> Samsung DVS Gen3 </h3>
-						<ul>
-							<li>Resolution:   640&times;480   </li>
-							<li>FOV: ~75<span>&#176;</span> </li>
-						</ul>
-					</div>
-					<div class="row"> <h3> Flea3 (RGB) </h3>
-						<ul>
-							<li>Resolution:  2080&times;1552  </li>
-							<li>FOV: ~65<span>&#176;</span> </li>
-						</ul>
-					</div>
-				</div>
-				<div class="col-md-6"> 
-					<figure>
-					<img src="img/rig.jpeg" alt="A picture of the rig with two prophese cameras on the sides, a samsung camera in the middle and a flea on the top" class="img-responsive fit-image"/>
-					<figcaption style="text-align: center"> Fig: Our sensor setup; the calibration is provided with the
+    <div class="section">
+      <div class="container">
+        <h2> Recording Setup </h2>
+        <div class="col-md-6">
+          <p>
+            Our sensor rig is shown in the image; 2 Prophesee Gen3 (DVS) (640&times;480) are set up in a stereo configuration
+            (we provide extrinsic and intrinsic calibration with the data). A Samsung DVS Gen3 (640&times;480)
+            is in the lower middle of the rig. All event cameras are covered with IR cut filters to avoid
+            interference with Vicon motion capture system. Additionally, an RGB camera (Flea3 USB3) is used to
+            provide classical image frames. All four cameras are spatially and temporally calibrated and record
+            simultaneously.
+          </p>
+          <div class="row"> <h3> Prophesee Gen3 (DVS) (&times;2) </h3>
+            <ul>
+              <li>Resolution:  640&times;480 </li>
+              <li>FOV: ~70<span>&#176;</span> </li>
+            </ul>
+          </div>
+          <div class="row"> <h3> Samsung DVS Gen3 </h3>
+            <ul>
+              <li>Resolution:   640&times;480   </li>
+              <li>FOV: ~75<span>&#176;</span> </li>
+            </ul>
+          </div>
+          <div class="row"> <h3> Flea3 (RGB) </h3>
+            <ul>
+              <li>Resolution:  2080&times;1552  </li>
+              <li>FOV: ~65<span>&#176;</span> </li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6"> 
+          <figure>
+          <img src="img/rig.jpeg" alt="A picture of the rig with two prophese cameras on the sides, a samsung camera in the middle and a flea on the top" class="img-responsive fit-image"/>
+          <figcaption style="text-align: center"> Fig: Our sensor setup; the calibration is provided with the
                     data</figcaption>
-					</figure>
-				</div>
-
-			</div>
-		</div>
-
-		<div class="section">
-			<div class="container">
-				<div class="row" id="rig_IMO"> <h3>Information by Sequence Type</h3>
-					<div class="col-md-10" style="">
-						<!--<p> A paragraph?</p>-->
-
-						<table class="table table-bordered table-hover table-striped w-auto">
-							<tr>
-								<th style="width: 40%; text-align: center">Sequence Type</th style="text-align: center">
-								<th style="width: 10%; text-align: center"># Train Sequences</th style="text-align: center">
-								<th style="width: 10%; text-align: center"># Test Sequences</th style="text-align: center">
-								<th style="width: 15%; text-align: center">Total Train Duration (s)</th style="text-align: center">
-								<th style="width: 15%; text-align: center">Total Test Duration (s)</th style="text-align: center">
-								<th style="text-align: center">Size (GB) (npz)</th style="text-align: center">
-							</tr>
-
-							<tr>
-								<td style="vertical-align: center; text-align: left;">Motion Segmentation</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-							</tr>
-
-							<tr>
-								<td style="vertical-align: center; text-align: left;">Motion Segmentation (Low Light)</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-							</tr>
-
-							<tr>
-								<td style="vertical-align: center; text-align: left;">Structure from Motion/Object Recognition</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-							</tr>
-
-							<tr>
-								<td style="vertical-align: center; text-align: left;">Structure from Motion/Object Recognition (Low Light)</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-							</tr>
-
-							<tr>
-								<td style="vertical-align: center; text-align: left;">Rudimentary Motion in Planar Scenes</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">N/A</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">N/A</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-							</tr>
-
-							<tr>
-								<td style="vertical-align: center; text-align: left;">Rudimentary Motion in Planar Scenes (Low Light)</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">N/A</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-								<td style="vertical-align: center; text-align: center;">N/A</td>
-								<td style="vertical-align: center; text-align: center;">X</td>
-							</tr>
-
-							<tr>
-								<td style="vertical-align: center; text-align: left;">Totals</td>
-								<td style="vertical-align: center; text-align: center;">Y</td>
-								<td style="vertical-align: center; text-align: center;">Y</td>
-								<td style="vertical-align: center; text-align: center;">Y</td>
-								<td style="vertical-align: center; text-align: center;">Y</td>
-								<td style="vertical-align: center; text-align: center;">Y</td>
-							</tr>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
-
-
-		<div class="section">
-			<div class="container">
-				<div class="container">
-					<div class="row" id="rig_IMO"> <h3> Sequences for Motion Segmentation</h3>
-						<div class="col-md-10" style="">
-							<p> A tabletop scenario (shot with all 4 cameras up-close) with up to 20 objects moving
-                            independently from the camera. Pixelwise masks, depth maps and trajectories are provided.
-                            This dataset is also suitable for object recognition tasks.</p>
-
-							<table class="table table-bordered table-hover table-striped w-auto">
-								<tr>
-									<th style="width=10%; text-align: center">Camera</th style="text-align: center">
-									<th style="width=65%; text-align: center">Download Links</th style="text-align: center">
-									<th style="text-align: center">Selected Previews (hover for animation) </th style="text-align: center">
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">flea3_7</td>
-									<td style="vertical-align: center; text-align: center;">
-										<a href="https://drive.google.com/file/d/1-CABNw4SIdODje1H6TfdZotRQNY0v6Xe/view?usp=sharing">
-											<i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a><i>(X.X GB)</i>
-										&nbsp;&nbsp;
-										<a href="https://drive.google.com/file/d/11zlfxPsqP-ZOfCefP8g3gEoVYwk5gPgy/view?usp=sharing">
-										  <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a><i>(X.X GB)</i>
-									</td>
-									<td rowspan="4" style="vertical-align: center; text-align: center;">
-										<img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
-									</td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">left_camera</td>
-
-									<td style="vertical-align: center; text-align: center;">
-										<a href="https://drive.google.com/file/d/1-g4Na96-0rpQNMQHjJPJvF0ngMcf9sxh/view?usp=sharing">
-											<i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a><i>(X.X GB)</i>
-										&nbsp;&nbsp;
-										<a href="https://drive.google.com/file/d/12bXm4nK--0IgM-Tmulc5lmg96jT6oO4e/view?usp=sharing">
-										  <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a><i>(X.X GB)</i>
-									</td>
-									<!--<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_left_camera.gif'" onmouseout="this.src='img/gif/imo_left_camera.png'" src="img/gif/imo_left_camera.png" class="moveonhover" /></td>-->
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">right_camera</td>
-
-									<td style="vertical-align: center; text-align: center;">
-										<a href="https://drive.google.com/file/d/10F7_b9znykInqzmHj4rt3wYo6KPVOxTD/view?usp=sharing">
-											<i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a><i>(X.X GB)</i>
-										&nbsp;&nbsp;
-										<a href="https://drive.google.com/file/d/137_uCn0xwVXPYhI4EZY_ooObX-77oxSg/view?usp=sharing">
-										  <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a><i>(X.X GB)</i>
-									</td>
-									<!--<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_right_camera.gif'" onmouseout="this.src='img/gif/imo_right_camera.png'" src="img/gif/imo_right_camera.png" class="moveonhover" /></td>-->
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">samsung_mono</td>
-
-									<td style="vertical-align: center; text-align: center;">
-										<a href="https://drive.google.com/file/d/10yE76O91ZoMbI74dn-f61BvI9mPcWrUH/view?usp=sharing">
-											<i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a><i>(X.X GB)</i>
-										&nbsp;&nbsp;
-										<a href="https://drive.google.com/file/d/144IB2bZeJx3GkZkM2D5ivHAYSI9xdp6s/view?usp=sharing">
-										  <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a><i>(X.X GB)</i>
-									</td>
-									<!--<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>-->
-								</tr>
-
-							</table>
-
-              <p><a href="https://drive.google.com/file/d/11S629-C0iLzG8KrYOpO9XNzkYIzpYupm/view?usp=sharing">ROS Bags (raw data) <span class="glyphicon glyphicon-download text-primary"> </span></a></p>
-
-							<button type="button" class="collapsible">Click to show detailed sequence info</button>
-							<div class="collapsiblevideo">
-								<table class="table table-bordered table-hover table-striped">
-									<tr>
-										<th colspan="3" style="width: 100%; text-align: center">Training Sequences</th style="text-align: center">
-									</tr>
-
-									<tr >
-										<th style="width: 10%; text-align: center">Sequence</th style="text-align: center">
-										<th style="width: 10%; text-align: center">Duration</th style="text-align: center">
-										<th style="width: 10%; text-align: center"># Objects</th style="text-align: center">
-										<th style="text-align: center">Video Preview</th style="text-align: center">
-										<th style="width: 10%; text-align: center">Full Video</th style="text-align: center">
-									</tr>
-
-									<tr>
-										<td style="vertical-align: center; text-align: center;">scene7_00</td>
-										<td style="vertical-align: center; text-align: center;"> 10 s</td>
-										<td style="vertical-align: center; text-align: center;"> X </td>
-										<td style="vertical-align: center; text-align: center;">
-											<button type="button" class="collapsible">Click to show video</button>
-											<div class="collapsiblevideo">
-												Flea 3 with Segmentation, Samsung Events over Segmentation, Depth
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-											</div>
-										</td>
-										<td style="vertical-align: center; text-align: center;"> GDriveFolder? </td>
-									</tr>
-
-									<tr>
-										<td style="vertical-align: center; text-align: center;">scene7_00</td>
-										<td style="vertical-align: center; text-align: center;"> 10 s</td>
-										<td style="vertical-align: center; text-align: center;"> X </td>
-										<td style="vertical-align: center; text-align: center;">
-											<button type="button" class="collapsible">Click to show video</button>
-											<div class="collapsiblevideo">
-												Flea 3 with Segmentation, Samsung Events over Segmentation, Depth
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-											</div>
-										</td>
-										<td style="vertical-align: center; text-align: center;"> GDriveFolder? </td>
-									</tr>
-
-									<tr>
-										<td style="vertical-align: center; text-align: center;">scene7_00</td>
-										<td style="vertical-align: center; text-align: center;"> 10 s</td>
-										<td style="vertical-align: center; text-align: center;"> X </td>
-										<td style="vertical-align: center; text-align: center;">
-											<button type="button" class="collapsible">Click to show video</button>
-											<div class="collapsiblevideo">
-												Flea 3 with Segmentation, Samsung Events over Segmentation, Depth
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-											</div>
-										</td>
-										<td style="vertical-align: center; text-align: center;"> GDriveFolder? </td>
-									</tr>
-
-									<tr>
-										<td style="vertical-align: center; text-align: center;">scene7_00</td>
-										<td style="vertical-align: center; text-align: center;"> 10 s</td>
-										<td style="vertical-align: center; text-align: center;"> X </td>
-										<td style="vertical-align: center; text-align: center;">
-											<button type="button" class="collapsible">Click to show video</button>
-											<div class="collapsiblevideo">
-												Flea 3 with Segmentation, Samsung Events over Segmentation, Depth
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-											</div>
-										</td>
-										<td style="vertical-align: center; text-align: center;"> GDriveFolder? </td>
-									</tr>
-
-									<tr>
-										<th colspan="3" style="width: 100%; text-align: center">Evaluation Sequences</th style="text-align: center">
-									</tr>
-
-									<tr >
-										<th style="width: 10%; text-align: center">Sequence</th style="text-align: center">
-										<th style="width: 10%; text-align: center">Duration</th style="text-align: center">
-										<th style="width: 10%; text-align: center"># Objects</th style="text-align: center">
-										<th style="text-align: center">Video Preview</th style="text-align: center">
-										<th style="width: 10%; text-align: center">Full Video</th style="text-align: center">
-									</tr>
-
-									<tr>
-										<td style="vertical-align: center; text-align: center;">scene7_00</td>
-										<td style="vertical-align: center; text-align: center;"> 10 s</td>
-										<td style="vertical-align: center; text-align: center;"> X </td>
-										<td style="vertical-align: center; text-align: center;">
-											<button type="button" class="collapsible">Click to show video</button>
-											<div class="collapsiblevideo">
-												Flea 3 with Segmentation, Samsung Events over Segmentation, Depth
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-											</div>
-										</td>
-										<td style="vertical-align: center; text-align: center;"> GDriveFolder? </td>
-									</tr>
-
-									<tr>
-										<td style="vertical-align: center; text-align: center;">scene7_00</td>
-										<td style="vertical-align: center; text-align: center;"> 10 s</td>
-										<td style="vertical-align: center; text-align: center;"> X </td>
-										<td style="vertical-align: center; text-align: center;">
-											<button type="button" class="collapsible">Click to show video</button>
-											<div class="collapsiblevideo">
-												Flea 3 with Segmentation, Samsung Events over Segmentation, Depth
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-											</div>
-										</td>
-										<td style="vertical-align: center; text-align: center;"> GDriveFolder? </td>
-									</tr>
-
-									<tr>
-										<td style="vertical-align: center; text-align: center;">scene7_00</td>
-										<td style="vertical-align: center; text-align: center;"> 10 s</td>
-										<td style="vertical-align: center; text-align: center;"> X </td>
-										<td style="vertical-align: center; text-align: center;">
-											<button type="button" class="collapsible">Click to show video</button>
-											<div class="collapsiblevideo">
-												Flea 3 with Segmentation, Samsung Events over Segmentation, Depth
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-											</div>
-										</td>
-										<td style="vertical-align: center; text-align: center;"> GDriveFolder? </td>
-									</tr>
-
-									<tr>
-										<td style="vertical-align: center; text-align: center;">scene7_00</td>
-										<td style="vertical-align: center; text-align: center;"> 10 s</td>
-										<td style="vertical-align: center; text-align: center;"> X </td>
-										<td style="vertical-align: center; text-align: center;">
-											<button type="button" class="collapsible">Click to show video</button>
-											<div class="collapsiblevideo">
-												Flea 3 with Segmentation, Samsung Events over Segmentation, Depth
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-	  										<img width="49%" src="img/gif/imo_samsung_mono.gif" />
-											</div>
-										</td>
-										<td style="vertical-align: center; text-align: center;"> GDriveFolder? </td>
-									</tr>
-
-								</table>
-							</div>
-						</div>
-					</div>
-
-					<div class="row" id="rig_IMO"> <h3> Sequences for Motion Segmentation</h3>
-						<div class="col-md-10" style="">
-							<p> A tabletop scenario (shot with all 4 cameras up-close) with up to 20 objects moving
-                            independently from the camera. Pixelwise masks, depth maps and trajectories are provided.
-                            This dataset is also suitable for object recognition tasks. The ROS bags are <a href="https://drive.google.com/file/d/11S629-C0iLzG8KrYOpO9XNzkYIzpYupm/view?usp=sharing">
-								here
-								<span class="glyphicon glyphicon-download text-primary"> </span>
-							</a>. </p>
-							<table class="table table-bordered table-hover table-striped w-auto">
-								<tr >
-									<th style="width=10%; text-align: center">Camera</th style="text-align: center">
-									<th style="width=65%; text-align: center"> Download Links</th style="text-align: center">
-									<th style="text-align: center">Preview (hover for animation) </th style="text-align: center">
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">flea3_7</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-CABNw4SIdODje1H6TfdZotRQNY0v6Xe/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/11zlfxPsqP-ZOfCefP8g3gEoVYwk5gPgy/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;">
-										<img onmouseover="this.src='img/gif/imo_flea3_7.gif'" onmouseout="this.src='img/gif/imo_flea3_7.png'" src="img/gif/imo_flea3_7.png" />
-									</td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">left_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-g4Na96-0rpQNMQHjJPJvF0ngMcf9sxh/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12bXm4nK--0IgM-Tmulc5lmg96jT6oO4e/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_left_camera.gif'" onmouseout="this.src='img/gif/imo_left_camera.png'" src="img/gif/imo_left_camera.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">right_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10F7_b9znykInqzmHj4rt3wYo6KPVOxTD/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/137_uCn0xwVXPYhI4EZY_ooObX-77oxSg/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_right_camera.gif'" onmouseout="this.src='img/gif/imo_right_camera.png'" src="img/gif/imo_right_camera.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">samsung_mono</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10yE76O91ZoMbI74dn-f61BvI9mPcWrUH/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/144IB2bZeJx3GkZkM2D5ivHAYSI9xdp6s/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
-								</tr>
-
-							</table>
-						</div>
-					</div>
-                    <!--
-					<div class="row"> <h3> Sequences for Independently Moving Objects with a Non Continuous Stream of Events</h3>
-						<div class="col-md-10" style="">
-							<p> These sequences contain various independently moving object with some events missing. The ROS bags are <a href="https://drive.google.com/file/d/11T4dmRvdHu2IHkBLq98u1EiNKUbFppAe/view?usp=sharing">
-								here
-								<span class="glyphicon glyphicon-download text-primary"> </span>
-							</a> </p>.
-							<table class="table table-bordered table-hover table-striped">
-								<tr>
-									<th style="text-align: center">Camera</th>
-									<th style="text-align: center"> Download Links</th>
-									<th style="text-align: center">Preview (Hover for animation)</th>
-								</tr>
-								<tr>
-									<td style="vertical-align: center; text-align: center;">flea3_7</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-DP2cFe0IQiniktv-EnPdd3R4MD9T-JV/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1260fklziGEYHVHF3yhagpz6fGtSpyp1Q/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_gaps_flea3_7.gif'" onmouseout="this.src='img/gif/imo_gaps_flea3_7.png'" src="img/gif/imo_gaps_flea3_7.png" class="moveonhover" /></td>
-								</tr>
-								<tr>
-									<td style="vertical-align: center; text-align: center;">left_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-j9Z_8MFHslPPwVgPnZv7CbZgs802uwY/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/drive/folders/1RmzgMX1_1c4ssrJiYemCgQPl2juNNb61?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_gaps_left_camera.gif'" onmouseout="this.src='img/gif/imo_gaps_left_camera.png'" src="img/gif/imo_gaps_left_camera.png" class="moveonhover" /></td>
-								</tr>
-								<tr>
-									<td style="vertical-align: center; text-align: center;">right_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10I5JMrkUjKAevTPvXkq5ElYWINiCwq-Q/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/13B-weTGmgEdNosMtIAglIHuhZ2cpPgag/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_gaps_right_camera.gif'" onmouseout="this.src='img/gif/imo_gaps_right_camera.png'" src="img/gif/imo_gaps_right_camera.png" class="moveonhover" /></td>
-								</tr>
-								<tr>
-									<td style="vertical-align: center; text-align: center;">samsung_mono</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10zUQ9VprjAurU-65UzFMwuC8iXihRGix/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/14B52C6NSDFnWNECleOXaabFruFf-N3n6/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_gaps_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_gaps_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
-								</tr>
-							</table>
-						</div>
-					</div> -->
-					<div class="row"> <h3> Motion Segmentation in Low Light </h3>
-						<div class="col-md-10" style="">
-
-							<p> These sequences were shot in low light - they feature high amounts of noise for
-                            event cameras and can be extremely challenging.
-							The ROS bags are
-							<a href="https://drive.google.com/file/d/11V97bfN03gmtqzyaLCIQgn_YRVu0xpvx/view?usp=sharing">here <span class="glyphicon glyphicon-download text-primary"></span></a></p>
-							<table class="table table-bordered table-hover table-striped">
-								<tr>
-									<th style="text-align: center">Camera</th>
-									<th style="text-align: center"> Download Links</th>
-									<th style="text-align: center">Preview (Hover for animation)</th>
-								</tr>
-								<tr>
-									<td style="vertical-align: center; text-align: center;">left_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-olftYdWgY4kP--XoAqmVLABdBx_7cI0/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12ecMywrufmo6RXVmH8MifkOgfdz-phyL/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_ll_left_camera.gif'" onmouseout="this.src='img/gif/imo_ll_left_camera.png'" src="img/gif/imo_ll_left_camera.png" class="moveonhover" /></td>
-								</tr>
-								<tr>
-									<td style="vertical-align: center; text-align: center;">right_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10QJg9SzgGne3rvW3nP6aDcc6rwzkk-Jc/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/13GKbtwO7QNt_PIeEMmKH8BytGIJEKicY/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_ll_left_camera.gif'" onmouseout="this.src='img/gif/imo_ll_left_camera.png'" src="img/gif/imo_ll_left_camera.png" class="moveonhover" /></td>
-								</tr>
-								<tr>
-									<td style="vertical-align: center; text-align: center;">samsung_mono</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/111cws9r3wH45r4QvsXaRdKRxPddkP5M3/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/14C4aHOr7nQJuO1UoPkDr9RGYx31KT21B/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/imo_ll_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_ll_samsung_mono.png'" src="img/gif/imo_ll_samsung_mono.png" class="moveonhover" /></td>
-								</tr>
-							</table>
-						</div>
-					</div>
-
-					<div class="row" id="rig_SFM"> <h3> Structure from Motion / Object Recognition </h3>
-						<div class="col-md-10" style="">
-							<p> The sequences feature a variety of objects scattered on the tabletop, but the scene is
-                            rigid (no independent motion). The objects provide depth variation and some degree of
-                            diversity from recording to
-                            recording, and additionally allow to evaluate object recognition algorithms (pixelwise masks
-                            are provided). The ROS bags are
-							<a href="https://drive.google.com/file/d/11fH9Ka4CmGwjdl14GO3AIiwelcDwWYKC/view?usp=sharing ">
-								here <span class="glyphicon glyphicon-download text-primary"></span>
-							</a> </p>
-							<table class="table table-bordered table-hover table-striped">
-								<tr>
-									<th style="text-align: center">This Camera</th>
-									<th style="text-align: center"> Download Links</th>
-									<th style="text-align: center">Preview (Hover for animation)</th>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">flea3_7</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-WiSOCfWABZEY4YaEsVVInv41zrtdNAW/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12XitR4O78pTCNg2kgBTajKhnrJl1EnLg/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_flea3_7.gif'" onmouseout="this.src='img/gif/sfm_flea3_7.png'" src="img/gif/sfm_flea3_7.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">left_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/106ahx0HW2Jqu-5FPRZ_DJG6p1wBWB3Qh/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/130ZLUeju1UPMprMPSmfv0NPWghowJY1O/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_left_camera.gif'" onmouseout="this.src='img/gif/sfm_left_camera.png'" src="img/gif/sfm_left_camera.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">right_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10mB5CN1bwUh0BiIwc706q1k9B8uomJ6o/view?usp=sharing ">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1YwSmaL56mN9jGlex4hsw2XeVn5xBddW0/view?usp=sharing ">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_right_camera.gif'" onmouseout="this.src='img/gif/sfm_right_camera.png'" src="img/gif/sfm_right_camera.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">samsung_mono</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/11ExymKec8mlxb2Ok7xTK6X1Oz8BcUXhQ/view?usp=sharing ">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/14WTVi1O9grdR9d1l-7ZZmV4PprExpIit/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_samsung_mono.gif'" onmouseout="this.src='img/gif/sfm_samsung_mono.png'" src="img/gif/sfm_samsung_mono.png" class="moveonhover" /></td>
-								</tr>
-
-							</table>
-						</div>
-					</div>
-
-                    <!--
-					<div class="row"> <h3> Structure from Motion with Non Continuous Stream of Events</h3>
-						<div class="col-md-10" style="">
-							<p> These are partial sequences missing events shot in regular lighting. The ROS bags are
-							<a href="https://drive.google.com/file/d/11hEicfHpeigrcqD8UP3hyRapDR30WzsS/view?usp=sharing">
-								here <span class="glyphicon glyphicon-download text-primary"> </span></a></p>
-							<table class="table table-bordered table-hover table-striped">
-								<tr>
-									<th style="text-align: center">Camera</th>
-									<th style="text-align: center"> Download Links</th>
-									<th style="text-align: center">Preview (Hover for animation)</th>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">flea3_7</td>
-
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-ZRYFhE_KwRNDZK_06j8QhstO90FQWEB/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12Yq9KatMV79v6DeTNa3LnBfGZV4QG9bU/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-									</td>
-									<td style="vertical-align: center; text-align: center;">
-										<img onmouseover="this.src='img/gif/sfm_gaps_flea3_7.gif'" onmouseout="this.src='img/gif/sfm_gaps_flea3_7.png'" src="img/gif/sfm_gaps_flea3_7.png" class="moveonhover" />
-									</td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">left_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10BYSo8sijQBX_jNCKMXk7pULze0wl650/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/130xSqYTOETHDyny2vJ0AT9jU-D7VN5ZE/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_gaps_left_camera.gif'" onmouseout="this.src='img/gif/sfm_gaps_left_camera.png'" src="img/gif/sfm_gaps_left_camera.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">right_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10p4tKMTX4Hedyfq3CZsKzR1IHZMFwXAN/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/13syDyGTDsUMR3RtJp0j49cWkV-5_0eHc/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_gaps_right_camera.gif'" onmouseout="this.src='img/gif/sfm_gaps_right_camera.png'" src="img/gif/sfm_gaps_right_camera.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">samsung_mono</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/11NvwTO0xrN8FMSmyRy71_1DaTZbQotxe/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/14_E8-hsruSg1KVshqd7-V6stjJ8ucXrh/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_gaps_samsung_mono.gif'" onmouseout="this.src='img/gif/sfm_gaps_samsung_mono.png'" src="img/gif/sfm_samsung_mono.png" class="moveonhover" /></td>
-								</tr>
-
-							</table>
-						</div>
-					</div>
-
-                    -->
-
-					<div class="row"> <h3> Structure from Motion in Low Light</h3>
-						<div class="col-md-10" style="">
-							<p> These sequences were shot in low light - they feature high amounts of noise for
-                            event cameras and can be extremely challenging. The ROS bags are
-							<a href="https://drive.google.com/file/d/11mzsZcZVWBMLXrrkei77QAT8TVaQalja/view?usp=sharing">
-								here <span class="glyphicon glyphicon-download text-primary"> </span>
-							</a> </p>
-							<table class="table table-bordered table-hover table-striped w-auto">
-								<tr>
-									<th style="text-align: center">Camera</th>
-									<th style="text-align: center"> Download Links</th>
-									<th style="text-align: center">Preview (Hover for animation)</th>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">flea3_7</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-aiIoPGHIJuSv7scfye5B5LRVfkpudsd/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12azGen795Id00y8ksz5KyKYjl697cZqL/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_ll_flea3_7.gif'" onmouseout="this.src='img/gif/sfm_ll_flea3_7.png'" src="img/gif/sfm_ll_flea3_7.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">left_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10CljxpcrEzzJdq7I8h43kr9MMGTSACNY/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/130ymhzLQ0yVBb7rXzx4r5-J0luRUSbT7/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_ll_left_camera.gif'" onmouseout="this.src='img/gif/sfm_ll_left_camera.png'" src="img/gif/sfm_ll_left_camera.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">right_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10p8ELvXiAFOg6gHVnRsB1pASJnPyhEa-/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/13yjiQw-Bj6xeabHg45HVE-oaO4Z8hu2e/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_right_camera.gif'" onmouseout="this.src='img/gif/sfm_right_camera.png'" src="img/gif/sfm_right_camera.png" class="moveonhover" /></td>
-								</tr>
-
-								<tr>
-									<td style="vertical-align: center; text-align: center;">samsung_mono</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/11RGCvhTB36VaZvA2FI-kipcxg8_Iu_0P/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/14pubg3VQut9sShkFRq8MuwB_lK3PHwG9/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sfm_ll_samsung_mono.gif'" onmouseout="this.src='img/gif/sfm_ll_samsung_mono.png'" src="img/gif/sfm_ll_samsung_mono.png" class="moveonhover" /></td>
-								</tr>
-
-							</table>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="section">
-			<div class="container">
-				<h2 id="rig_sanity"> Benchmarking and Sanity Check Recordings</h2>
-				<div class="col-md-10" style="">
-					<p> The following recordings contain primitive scenarios with rudimentary motions and are provided
-                    primarily for sanity testing, benchmarking and debugging of software. 
-					</p>
-					<div class="row"> <h3>Sanity Check Recordings In Regular Lighting </h3>
-						These are sequences shot in a well lit scenes.
-						The ROS bags can be found 
-						<a href="https://drive.google.com/file/d/11XLeS7QbWnL5zKV7rT6poB8M9Kf27k3h/view?usp=sharing">here <span class="glyphicon glyphicon-download text-primary"> </span></a>.  <table class="table table-bordered table-hover table-striped w-auto">
-							<thead>
-								<th style="text-align: center"> Camera </th>
-								<th style="text-align: center"> Download Links </th>
-								<th style="text-align: center"> Preview (Hover for animation) </th>
-							</thead>
-							<tr>
-								<td style="vertical-align: center; text-align: center;">flea3_7</td>
-								<td style="vertical-align: center; text-align: center;" class="list-group">
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-It6Uo672L3FwzzDmRk4XwShL9ZQwnIK/view?usp=sharing">
-											<p>data <i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12BzPpENRnO7Wu5dG2TZ5uz_wZdLxfTWF/view?usp=sharing">
-											<p>data <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-								</td>
-								<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_flea3_7.gif'" onmouseout="this.src='img/gif/sanity_flea3_7.png'" src="img/gif/sanity_flea3_7.png" class="moveonhover" /></td>
-							</tr>
-							<tr>
-								<td style="vertical-align: center; text-align: center;">left_camera</td>
-								<td style="vertical-align: center; text-align: center;" class="list-group">
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-wj6L4x9nOD7vKWIMJBBkKptaliS-0ZY/view?usp=sharing">
-											<p>data <i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12gwX7R61zHUBNcmhMbRrTblENtp175F-/view?usp=sharing">
-											<p>data <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-								</td>
-								<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_left_camera.gif'" onmouseout="this.src='img/gif/sanity_left_camera.png'" src="img/gif/sanity_left_camera.png" class="moveonhover" /></td>
-							</tr>
-							<tr>
-								<td style="vertical-align: center; text-align: center;">right_camera</td>
-								<td style="vertical-align: center; text-align: center;" class="list-group">
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10RXggmyvNZI8wXthBdMxfe1ofH78fpHX/view?usp=sharing">
-											<p>data <i>.npz</i><span class="glyphicon glyphicon-download text-primary"></span>
-										</a> </p>
-									</li> <li class="list-unstyled"> <a href="https://drive.google.com/file/d/13Mput4816v8eRzjzduynJ-Qg8zOjLDp9/view?usp=sharing">
-											<p>data <i>.txt</i><span class="glyphicon glyphicon-download text-primary"></span>
-										</a></p>
-									</li>
-
-								</td>
-								<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_right_camera.gif'" onmouseout="this.src='img/gif/sanity_right_camera.png'" src="img/gif/sanity_right_camera.png" class="moveonhover" /></td>
-							</tr>
-							<tr>
-								<td style="vertical-align: center; text-align: center;">samsung_mono</td>
-								<td style="vertical-align: center; text-align: center;" class="list-group">
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1143tyuRPiuLYRLhdbflEZctzchqJVFFI/view?usp=sharing">
-											<p>data <i>.npz</i><span class="glyphicon glyphicon-download text-primary"></span>
-										</a> </p>
-									</li> <li class="list-unstyled"> <a href="https://drive.google.com/file/d/14Cb8YwsdZcsNYTUvP43ceVb_PUijzV1l/view?usp=sharing">
-											<p>data <i>.text</i><span class="glyphicon glyphicon-download text-primary"></span>
-										</a></p>
-									</li>
-
-								</td>
-								<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_samsung_mono.gif'" onmouseout="this.src='img/gif/sanity_samsung_mono.png'" src="img/gif/sanity_samsung_mono.png" class="moveonhover" /></td>
-							</tr>
-						</table>
-					</div>
-					<!--<div class="row"> <h3>Sanity Check Sequences With Discontinuous Events </h3>
-						These sequences suffer from USB buffer overflow; the stream of events is not continuous.
-						The ROS bags can be found 
-						<a href="https://drive.google.com/file/d/11bqB5WR9rHBO0GW7H-1xmbjzVPyhm-ve/view?usp=sharing">here <span class="glyphicon glyphicon-download text-primary"> </span></a>.  <table class="table table-bordered table-hover table-striped w-auto">
-							<table class="table table-bordered table-hover table-striped w-auto">
-								<thead>
-									<th style="text-align: center"> Camera </th>
-									<th style="text-align: center"> Download Links </th>
-									<th style="text-align: center"> Preview (Hover for animation) </th>
-								</thead>
-								<tr>
-									<td>flea3_7</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-S-spzNlmu6BuSFoJBX_N9To9wXZPkI-/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12EBzqrUk-AKvFLhqZRqt6j0dFn1tuAKs/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_gaps_flea3_7.gif'" onmouseout="this.src='img/gif/sanity_gaps_flea3_7.png'" src="img/gif/sanity_gaps_flea3_7.png" class="moveonhover" /></td>
-								</tr>
-								<tr>
-									<td>left_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-xUCcavgfd-qhj_DApf5tq94k0PCK7nD/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12hD7pIVA5BoCennstschqvxYyDLsmrqL/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_gaps_left_camera.gif'" onmouseout="this.src='img/gif/sanity_gaps_left_camera.png'" src="img/gif/sanity_gaps_left_camera.png" class="moveonhover" /></td>
-								</tr>
-								<tr>
-									<td>right_camera</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10Zeex_nAKkpY7UnmKwL5SP3rzRPSqkNA/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/13MtKFH9c_AVFR-kgdRkl6CTzFDxbfBC5/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_gaps_right_camera.gif'" onmouseout="this.src='img/gif/sanity_gaps_right_camera.png'" src="img/gif/sanity_right_camera.png" class="moveonhover" /></td>
-								</tr>
-								<tr>
-									<td>samsung_mono</td>
-									<td style="vertical-align: center; text-align: center;" class="list-group">
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/114xrsIm7gfXUiNND7UYrY9FoZN27FY_G/view?usp=sharing">
-												<p>data <i>.npz</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-
-										<li class="list-unstyled"> <a href="https://drive.google.com/file/d/14Je2OyQ6PVWLq2QiXLHmOkRk5RKIBYJx/view?usp=sharing">
-												<p>data <i>.txt</i>
-												<span class="glyphicon glyphicon-download text-primary"> </span>
-											</a> </p>
-										</li>
-
-									</td>
-									<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_gaps_samsung_mono.gif'" onmouseout="this.src='img/gif/sanity_gaps_samsung_mono.png'" src="img/gif/sanity_gaps_samsung_mono.png" class="moveonhover" /></td>
-								</tr>
-
-							</table>
-					</div>-->
-					<div class="row"> <h3>Sanity Check Sequences in Low Light </h3>
-						These are sequences that were shot in low light. 
-						The ROS bags for this can be downloaded here.  
-						<a href="https://drive.google.com/file/d/11dC8s92C5QoUULi4jrMiykigJa1LdiwV/view?usp=sharing">
-							here <span class="glyphicon glyphicon-download text-primary"> </span>
-						</a> </p>
-
-						<table class="table table-bordered table-hover table-striped w-auto">
-							<thead>
-								<th style="text-align: center"> Camera </th>
-								<th style="text-align: center"> Download Links </th>
-								<th style="text-align: center"> Preview (Hover for animation) </th>
-							</thead>
-							<tr>
-								<td>flea3_7</td>
-								<td style="vertical-align: center; text-align: center;" class="list-group">
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1-UOmx-L0SM4uCl2_HMstzOGVMF8ezHL8/view?usp=sharing">
-											<p>data <i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12Ktr5TdjUcWEbbTQzxD999QXnFS45wbQ/view?usp=sharing">
-											<p>data <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-								</td>
-								<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_ll_flea3_7.gif'" onmouseout="this.src='img/gif/sanity_ll_flea3_7.png'" src="img/gif/sanity_ll_flea3_7.png" class="moveonhover" /></td>
-							</tr>
-							<tr>
-								<td>left_camera</td>
-								<td style="vertical-align: center; text-align: center;" class="list-group">
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/102OSGjUR2N2pHPO6l5YOHT5FdwI82xqY/view?usp=sharing">
-											<p>data <i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/12q5vcA55xuLJSRtiXJiTh3X0o8wneeUg/view?usp=sharing">
-											<p>data <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-								</td>
-								<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_ll_left_camera.gif'" onmouseout="this.src='img/gif/sanity_ll_left_camera.png'" src="img/gif/sanity_ll_left_camera.png" class="moveonhover" /></td>
-							</tr>
-							<tr>
-								<td>right_camera</td>
-								<td style="vertical-align: center; text-align: center;" class="list-group">
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/10i1Kbkh7OtoSMDDJqRZoC2UjmepVR5Ul/view?usp=sharing">
-											<p>data <i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/13WJ9E1KetsSrHklP6M5GBcubg2U68Kb2/view?usp=sharing">
-											<p>data <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-								</td>
-								<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_ll_right_camera.gif'" onmouseout="this.src='img/gif/sanity_ll_right_camera.png'" src="img/gif/sanity_ll_right_camera.png" class="moveonhover" /></td>
-							</tr>
-							<tr>
-								<td>samsung_mono</td>
-								<td style="vertical-align: center; text-align: center;" class="list-group">
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/1194iBM6SfWjjLdlrkfZBdxBwdgWq-VXF/view?usp=sharing">
-											<p>data <i>.npz</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-
-									<li class="list-unstyled"> <a href="https://drive.google.com/file/d/14UrxFeaqlvYNPjYlEbL0cYwrdfANmsa7/view?usp=sharing">
-											<p>data <i>.txt</i>
-											<span class="glyphicon glyphicon-download text-primary"> </span>
-										</a> </p>
-									</li>
-
-								</td>
-								<td style="vertical-align: center; text-align: center;"><img onmouseover="this.src='img/gif/sanity_ll_samsung_mono.gif'" onmouseout="this.src='img/gif/sanity_ll_samsung_mono.png'" src="img/gif/sanity_ll_samsung_mono.png" class="moveonhover" /></td>
-							</tr>
-
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
-
+          </figure>
+        </div>
+
+      </div>
+    </div>
     <hr>
+
+    <div class="section">
+      <div class="container">
+        <div class="row" id="rig_IMO"> <h3>Summary Statistics</h3>
+          <div class="col-md-10" style="">
+            <!--<p> A paragraph?</p>-->
+
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th style="width: 30%; text-align: center">Sequence Type</th style="text-align: center">
+                <th style="width: 10%; text-align: center"># Train Sequences</th style="text-align: center">
+                <th style="width: 10%; text-align: center"># Test Sequences</th style="text-align: center">
+                <th style="width: 10%; text-align: center">Minutes of Train</th style="text-align: center">
+                <th style="width: 10%; text-align: center">Minutes of Test</th style="text-align: center">
+                <th style="width: 15%; text-align: center">GB of DVS<br>(NPZ download)</th style="text-align: center">
+                <th style="width: 15%; text-align: center">GB of RGB<br>(NPZ download)</th style="text-align: center">
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Motion Segmentation</td>
+                <td style="vertical-align: center; text-align: right;">21</td>
+                <td style="vertical-align: center; text-align: right;">8</td>
+                <td style="vertical-align: center; text-align: right;">2.74</td>
+                <td style="vertical-align: center; text-align: right;">0.51</td>
+                <td style="vertical-align: center; text-align: right;">5.8</td>
+                <td style="vertical-align: center; text-align: right;">22.4</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Motion Segmentation<br>(Low Light)</td>
+                <td style="vertical-align: center; text-align: right;">3</td>
+                <td style="vertical-align: center; text-align: right;">2</td>
+                <td style="vertical-align: center; text-align: right;">0.36</td>
+                <td style="vertical-align: center; text-align: right;">0.14</td>
+                <td style="vertical-align: center; text-align: right;">0.6</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Structure from Motion/Object Recognition</td>
+                <td style="vertical-align: center; text-align: right;">52</td>
+                <td style="vertical-align: center; text-align: right;">10</td>
+                <td style="vertical-align: center; text-align: right;">16.17</td>
+                <td style="vertical-align: center; text-align: right;">2.45</td>
+                <td style="vertical-align: center; text-align: right;">52.7</td>
+                <td style="vertical-align: center; text-align: right;">169.0</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Structure from Motion/Object Recognition (Low Light)</td>
+                <td style="vertical-align: center; text-align: right;">5</td>
+                <td style="vertical-align: center; text-align: right;">6</td>
+                <td style="vertical-align: center; text-align: right;">2.56</td>
+                <td style="vertical-align: center; text-align: right;">1.37</td>
+                <td style="vertical-align: center; text-align: right;">4.2</td>
+                <td style="vertical-align: center; text-align: right;">0.6</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Rudimentary Motion in Planar Scenes</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+                <td style="vertical-align: center; text-align: right;">31</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+                <td style="vertical-align: center; text-align: right;">6.96</td>
+                <td style="vertical-align: center; text-align: right;">20.0</td>
+                <td style="vertical-align: center; text-align: right;">64.8</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Rudimentary Motion in Planar Scenes (Low Light)</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+                <td style="vertical-align: center; text-align: right;">35</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+                <td style="vertical-align: center; text-align: right;">7.89</td>
+                <td style="vertical-align: center; text-align: right;">8.8</td>
+                <td style="vertical-align: center; text-align: right;">1.7</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;"><b>Totals</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>81</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>92</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>21.83</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>19.32</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>92.0</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>269.1</b></td>
+              </tr>
+            </table>
+
+            <h4>Full Camera Availability and Data Duration Matrix</h4>
+            <a href="evimo2_v2_per_sequence_info.ods">Download spreadsheet</a>
+
+            <h4>NPZ versus TXT</h4>
+            <p>Decompressed, the npz format requires 525 GB of space of which 271 GB is for the RGB camera and 255 GB is for the three DVS cameras.</p>
+            <p>Decompressed, the txt format requires 842 GB of space of which 212 GB is for the RGB camera and 631 GB is for the three DVS cameras.</p>
+            <p>The npz format supports memory mapping the event arrays from disk, which saves considerable resources.</p>
+            <p>The txt format requires parsing the events.txt file, which takes considerable resources</p>
+            <p>The txt format decompresses to about 471,000 files. The npz format only requires about 4700 files.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <div class="section">
+      <div class="container">
+        <div class="row"> <h3> Motion Segmentation / Object Recognition</h3>
+          <div class="col-md-10" style="">
+            <p> A tabletop scenario (shot with all 4 cameras up-close) with objects moving
+            independently from the camera. Pixelwise masks, depth maps and trajectories are provided.
+            This dataset is also suitable for object recognition tasks.</p>
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th style="width=10%; text-align: center">Camera</th style="text-align: center">
+                <th style="width=65%; text-align: center">Download Links</th style="text-align: center">
+                <th style="text-align: center">Selected Previews (hover for animation) </th style="text-align: center">
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">flea3_7</td>
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(33 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(22 GB)</i>
+                  </td>
+                  <td rowspan="4" style="vertical-align: center; text-align: center;">
+                      <img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">left_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(1.8 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(2.7 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">right_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(1.7 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(2.5 GB)</i>
+                  </td>
+
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">samsung_mono</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(2.4 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(3.1 GB)</i>
+                  </td>
+              </tr>
+            </table>
+
+            <p><a href="">ROS Bags (raw data) <span class="glyphicon glyphicon-download text-primary"> </span></a></p>
+
+            <button type="button" class="collapsible">Click to show videos</button>
+            <div class="collapsiblevideo">
+              <table class="table table-bordered table-hover table-striped">
+                  <tr>
+                      <th colspan="4" style="width: 100%; text-align: center">Training Sequences</th style="text-align: center">
+                  </tr>
+
+                  <tr >
+                      <th style="width: 20%; text-align: center">Sequence</th style="text-align: center">
+                      <th style="width: 60%; text-align: center">Video Preview</th style="text-align: center">
+                      <th style="text-align: center">Video Links</th style="text-align: center">
+                  </tr>
+
+                  <tr>
+                      <td style="vertical-align: center; text-align: center;">scene7_00</td>
+                      <td style="vertical-align: center; text-align: center;">
+                          <button type="button" class="collapsible">Click to show video</button>
+                          <div class="collapsiblevideo">
+                            <table class="table">
+                              <tr>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">flea3_7 rgb+seg</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">flea3_7 depth</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">sam events+seg</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">sam depth</td>
+                              </tr>
+                              <tr>
+                                <td colspan="100%">
+                                  <video width="100%" autoplay muted controls loop>
+                                    <source src="https://obj.umiacs.umd.edu/evimo2videossandbox/output.mp4" type="video/mp4">
+                                  </video>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">left events+seg</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">left depth</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">right events+seg</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">right depth</td>
+                              </tr>
+                            </table>
+                          </div>
+                      </td>
+                      <td style="vertical-align: center; text-align: center;">
+                        <a href="">flea<a>,
+                        <a href="">left<a>,
+                        <a href="">right<a>,
+                        <a href="">samsung<a>
+                      </td>
+                  </tr>
+
+                  <tr>
+                      <th colspan="3" style="width: 100%; text-align: center">Evaluation Sequences</th style="text-align: center">
+                  </tr>
+
+                  <tr >
+                      <th style="text-align: center">Sequence</th style="text-align: center">
+                      <th style="text-align: center">Video Preview</th style="text-align: center">
+                      <th style="text-align: center">Video Links</th style="text-align: center">
+                  </tr>
+
+                  <tr>
+                      <td style="vertical-align: center; text-align: center;">scene7_00</td>
+                      <td style="vertical-align: center; text-align: center;">
+                          <button type="button" class="collapsible">Click to show video</button>
+                          <div class="collapsiblevideo">
+                            <table class="table">
+                              <tr>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">flea3_7 rgb+seg</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">flea3_7 depth</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">sam events+seg</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">sam depth</td>
+                              </tr>
+                              <tr>
+                                <td colspan="100%">
+                                  <video width="100%" autoplay muted controls loop>
+                                    <source src="https://obj.umiacs.umd.edu/evimo2videossandbox/output.mp4" type="video/mp4">
+                                  </video>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">left events+seg</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">left depth</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">right events+seg</td>
+                                <td style="width: 25%; vertical-align: center; text-align: center;">right depth</td>
+                              </tr>
+                            </table>
+                          </div>
+                      </td>
+                      <td style="vertical-align: center; text-align: center;">
+                        <a href="">flea<a>,
+                        <a href="">left<a>,
+                        <a href="">right<a>,
+                        <a href="">samsung<a>
+                      </td>
+                  </tr>
+
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <div class="section">
+      <div class="container">
+        <div class="row"> <h3> Motion Segmentation in Low Light </h3>
+          <div class="col-md-10" style="">
+            <p> These sequences were shot in low light - they feature high amounts of noise 
+                and are meant to be extremely challenging. </p>
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th style="width=10%; text-align: center">Camera</th style="text-align: center">
+                <th style="width=65%; text-align: center">Download Links</th style="text-align: center">
+                <th style="text-align: center">Selected Previews (hover for animation) </th style="text-align: center">
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">flea3_7</td>
+                  <td style="vertical-align: center; text-align: center;">
+                    <p>Not Available</p>
+                  </td>
+                  <td rowspan="4" style="vertical-align: center; text-align: center;">
+                      <img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">left_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.2 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.2 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">right_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.2 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.3 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">samsung_mono</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.2 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.2 GB)</i>
+                  </td>
+              </tr>
+            </table>
+
+            <p><a href="">ROS Bags (raw data) <span class="glyphicon glyphicon-download text-primary"> </span></a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+
+
+
+    <div class="section">
+      <div class="container">
+        <div class="row"> <h3> Structure from Motion / Object Recognition </h3>
+          <div class="col-md-10" style="">
+            <p> The sequences feature a variety of objects scattered on the tabletop, but the scene is
+                rigid (no independent motion). The objects provide depth variation and some degree of
+                diversity from recording to recording, and additionally allow to evaluate object recognition
+                algorithms (pixelwise masks are provided).
+            </p>
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th style="width=10%; text-align: center">Camera</th style="text-align: center">
+                <th style="width=65%; text-align: center">Download Links</th style="text-align: center">
+                <th style="text-align: center">Selected Previews (hover for animation) </th style="text-align: center">
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">flea3_7</td>
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(169.0 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(112.9 GB)</i>
+                  </td>
+                  <td rowspan="4" style="vertical-align: center; text-align: center;">
+                      <img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">left_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(21.0 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(33.7 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">right_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(21.6 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(34.6 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">samsung_mono</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(10.0 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(13.6 GB)</i>
+                  </td>
+              </tr>
+            </table>
+
+            <p><a href="">ROS Bags (raw data) <span class="glyphicon glyphicon-download text-primary"> </span></a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+
+    <div class="section">
+      <div class="container">
+        <div class="row"> <h3> Structure from Motion in Low Light </h3>
+          <div class="col-md-10" style="">
+            <p> These sequences were shot in low light - they feature high amounts of noise 
+                and are meant to be extremely challenging. </p>
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th style="width=10%; text-align: center">Camera</th style="text-align: center">
+                <th style="width=65%; text-align: center">Download Links</th style="text-align: center">
+                <th style="text-align: center">Selected Previews (hover for animation) </th style="text-align: center">
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">flea3_7</td>
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.6 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.7 GB)</i>
+                  </td>
+                  <td rowspan="4" style="vertical-align: center; text-align: center;">
+                      <img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">left_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(1.4 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(1.9 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">right_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(1.5 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(2.0 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">samsung_mono</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(1.4 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(1.7 GB)</i>
+                  </td>
+              </tr>
+            </table>
+
+            <p><a href="">ROS Bags (raw data) <span class="glyphicon glyphicon-download text-primary"> </span></a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+
+
+
+    <div class="section">
+      <div class="container">
+        <div class="row"> <h3> Rudimentary Motion in Planar Scenes </h3>
+          <div class="col-md-10" style="">
+            <p> These sequences use primitive scenarios with rudimentary motions and are provided
+                primarily for sanity testing, benchmarking and debugging of software. 
+            </p>
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th style="width=10%; text-align: center">Camera</th style="text-align: center">
+                <th style="width=65%; text-align: center">Download Links</th style="text-align: center">
+                <th style="text-align: center">Selected Previews (hover for animation) </th style="text-align: center">
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">flea3_7</td>
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(64.8 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(43.0 GB)</i>
+                  </td>
+                  <td rowspan="4" style="vertical-align: center; text-align: center;">
+                      <img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">left_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(7.0 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(11.1 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">right_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(7.2 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(11.3 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">samsung_mono</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(5.8 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(8.2 GB)</i>
+                  </td>
+              </tr>
+            </table>
+
+            <p><a href="">ROS Bags (raw data) <span class="glyphicon glyphicon-download text-primary"> </span></a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+
+    <div class="section">
+      <div class="container">
+        <div class="row"> <h3> Rudimentary Motion in Planar Scenes in Low Light </h3>
+          <div class="col-md-10" style="">
+            <p> These sequences were shot in low light - they feature high amounts of noise 
+                and are meant to be extremely challenging. </p>
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th style="width=10%; text-align: center">Camera</th style="text-align: center">
+                <th style="width=65%; text-align: center">Download Links</th style="text-align: center">
+                <th style="text-align: center">Selected Previews (hover for animation) </th style="text-align: center">
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">flea3_7</td>
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(1.7 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(2.1 GB)</i>
+                  </td>
+                  <td rowspan="4" style="vertical-align: center; text-align: center;">
+                      <img onmouseover="this.src='img/gif/imo_samsung_mono.gif'" onmouseout="this.src='img/gif/imo_samsung_mono.png'" src="img/gif/imo_samsung_mono.png" class="moveonhover" /></td>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">left_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(5.5 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(8.5 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">right_camera</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.6 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(0.9 GB)</i>
+                  </td>
+              </tr>
+
+              <tr>
+                  <td style="vertical-align: center; text-align: center;">samsung_mono</td>
+
+                  <td style="vertical-align: center; text-align: center;">
+                      <a href="">
+                          <i>.npz</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(2.7 GB)</i>
+                      &nbsp;&nbsp;
+                      <a href="">
+                        <i>.txt</i>
+                          <span class="glyphicon glyphicon-download text-primary"> </span>
+                      </a><i>(3.6 GB)</i>
+                  </td>
+              </tr>
+            </table>
+
+            <p><a href="">ROS Bags (raw data) <span class="glyphicon glyphicon-download text-primary"> </span></a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
     
     <div class="container">
       <footer style="font-size:12px">
@@ -1347,73 +885,9 @@
     </div>
   </div>
   <!--/.container-->
-  <!-- Bootstrap core JavaScript==================================================-
-    ->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <!-- Placed at the end of the document so the pages load faster -->
-	<script src="download_evimo_2.js"></script>
+  <!-- Bootstrap core JavaScript==================================================-->
+  <!-- Placed at the end of the document so the pages load faster -->
+  <script src="download_evimo_2.js"></script>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js" style=""></script>
   <script>
