@@ -1,0 +1,42 @@
+<table class="table table-bordered table-hover table-striped">
+  <tr>
+    <th colspan="4" style="width: 100%; text-align: center">{{ purpose }} sequences</th style="text-align: center">
+  </tr>
+
+  <tr >
+    <th style="width: 20%; text-align: center">Sequence</th style="text-align: center">
+    <th style="width: 80%; text-align: center">Video</th style="text-align: center">
+  </tr>
+
+{% for seq_url in seqs_urls %}
+  <tr>
+    <td style="vertical-align: center; text-align: center;">{{ seq_url[0] }}</td>
+    <td style="vertical-align: center; text-align: center;">
+      <button type="button" class="collapsible">Click to show video</button>
+      <div class="collapsiblevideo">
+        <table class="table">
+          <tr>
+            <td style="width: 25%; vertical-align: center; text-align: center;">flea3_7 rgb+seg</td>
+            <td style="width: 25%; vertical-align: center; text-align: center;">flea3_7 depth</td>
+            <td style="width: 25%; vertical-align: center; text-align: center;">sam events+seg</td>
+            <td style="width: 25%; vertical-align: center; text-align: center;">sam depth</td>
+          </tr>
+          <tr>
+            <td colspan="100%">
+              <video width="100%" muted controls loop preload="none">
+                <source src="{{ seq_url[1] }}" type="video/mp4">
+              </video>
+            </td>
+          </tr>
+          <tr>
+            <td style="width: 25%; vertical-align: center; text-align: center;">left events+seg</td>
+            <td style="width: 25%; vertical-align: center; text-align: center;">left depth</td>
+            <td style="width: 25%; vertical-align: center; text-align: center;">right events+seg</td>
+            <td style="width: 25%; vertical-align: center; text-align: center;">right depth</td>
+          </tr>
+        </table>
+      </div>
+    </td>
+  </tr>
+{% endfor %}
+</table>
