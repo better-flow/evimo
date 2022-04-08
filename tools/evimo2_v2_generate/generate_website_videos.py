@@ -77,7 +77,7 @@ if __name__ == '__main__':
     #folders = files_grouped_by_sequence[args.seq][3]
 
     for seq in tqdm.tqdm(files_grouped_by_sequence,  dynamic_ncols=True):
-    #for seq in ['checkerboard_d_flat_rot_z_000000',]:
+    #for seq in ['scene16_d_dyn_test_01_000001',]:
         videos = files_grouped_by_sequence[seq][3]
 
         inputs = 0
@@ -132,7 +132,8 @@ if __name__ == '__main__':
                 else:
                     raise Exception('should not happen')
 
-            filter_complex += '[flea3][{}]hstack=shortest=1[t];[{}][{}]hstack=shortest=1[b];[t][b]vstack=shortest=1[v]'.format(left_camera_id, right_camera_id, samsung_mono_id)
+            filter_complex += ('[flea3][{}]hstack=shortest=1[t];[{}][{}]hstack=shortest=1[b];[t][b]vstack=shortest=1[v]'
+                .format(samsung_mono_id, left_camera_id, right_camera_id))
 
             ffmpeg_cmd += ('-filter_complex', filter_complex)
             ffmpeg_cmd += ('-map', '[v]')
