@@ -110,6 +110,7 @@
             The script saves about 350GB of disk space and an hour of extraction time by simultaneously downloading and extracting. </p>
           <p> Downloading the full dataset requires approximately 350GB of bandwidth and 525GB (npz) or 842GB (txt) of disk space. </p>
           <p> Excluding the flea3_7 RGB camera saves about 250GB of bandwidth and 271GB (npz) or 212GB (txt) of disk space. </p>
+          <p> Trying to decide between the npz and txt format? The information <a href="#npzvstxt">here </a> might help. </p>
         </div>
       </div>
     </div>
@@ -6191,7 +6192,7 @@
             <h4>Full Camera Availability and Data Duration Matrix</h4>
             <a href="evimo2_v2_per_sequence_info.ods">Download spreadsheet</a>
 
-            <h4>NPZ versus TXT</h4>
+            <h4 class="anchor" id="npzvstxt">NPZ versus TXT</h4>
             <p>Decompressed, the npz format requires 525 GB of space of which 271 GB is for the RGB camera and 255 GB is for the three DVS cameras.</p>
             <p>Decompressed, the txt format requires 842 GB of space of which 212 GB is for the RGB camera and 631 GB is for the three DVS cameras.</p>
             <p>The npz format supports memory mapping the event arrays from disk, which saves considerable resources.</p>
