@@ -7,8 +7,16 @@ for (i = 0; i < coll.length; i++) {
     var content = this.nextElementSibling;
     if (content.style.display === "block") {
       content.style.display = "none";
+      var video = content.getElementsByTagName("video")
+      if (video.length == 1) {
+        video[0].pause()
+      }
     } else {
       content.style.display = "block";
+      var video = content.getElementsByTagName("video")
+      if (video.length == 1) {
+        video[0].play()
+      }
     }
   });
 }
