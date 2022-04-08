@@ -79,9 +79,12 @@
   <!-- /.navbar -->
   <div class="section">
     <div class="container">
-      <div class="row">
+      <div class="row"><h1 class="">EVIMO 2 v2</h1>
         <div class="col-md-12">
-          <h1 class="">Download EVIMO 2 v2</h1>
+          <p>New projects should use EVIMO 2 v2 because it features temporal synchronization between sensors, less jitter, and a more efficient npz format.
+
+          EVIMO 2 v1 is still <a href="download_evimo_2_v1.html">available here</a>.</p>
+
           <p>Please refer to our <a href="https://github.com/better-flow/evimo/wiki">Wiki</a> for detailed instructions on how to read and parse
           the ground truth. </p>
 
@@ -94,9 +97,39 @@
             <a href="surfaces.bib"><i>[bibtex]</i></a>
             </li>
           </ol>
+        </div>
+      </div>
+    </div>
+  </div>
 
-          <p> Looking for EVIMO 2 v1? Check <a href="download_evimo_2_v1.html">this page.</a> New projects should use EVIMO 2 v2 because it has much better temporal synchronization between sensors and a much more efficient npz format.
+  <div class="section">
+    <div class="container">
+      <div class="row"><h2 class="">Download Script</h2>
+        <div class="col-md-12">
+          <p> A download script is provided <a href="https://github.com/better-flow/evimo/tree/master/tools/evimo2_v2_downloader">here</a>.
+            The script saves about 350GB of disk space and an hour of extraction time by simultaneously downloading and extracting. </p>
+          <p> Downloading the full dataset requires approximately 350GB of bandwidth and 525GB (npz) or 842GB (txt) of disk space. </p>
+          <p> Excluding the flea3_7 RGB camera saves about 250GB of bandwidth and 271GB (npz) or 212GB (txt) of disk space. </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <hr>
 
+  <div class="section">
+    <div class="container">
+      <div class="row"><h3 class="">Table of Contents</h3>
+        <div class="col-md-12">
+          <ul>
+            <li><a href="#imo">Motion Segmentation / Object Recognition</a></li>
+            <li><a href="#imo_ll">Motion Segmentation in Low Light</a></li>
+            <li><a href="#sfm">Structure from Motion / Object Recognition</a></li>
+            <li><a href="#sfm_ll">Structure from Motion in Low Light</a></li>
+            <li><a href="#sanity">Rudimentary Motion in Planar Scenes</a></li>
+            <li><a href="#sanity_ll">Rudimentary Motion in Planar Scenes in Low Light</a></li>
+            <li><a href="#videos">Videos</a></li>
+            <li><a href="#summary_stat">Summary Statistics</a></li>
+          </ul>
         </div>
       </div>
     </div>
@@ -104,155 +137,56 @@
 
   <hr>
 
+
+<!--
     <div class="section">
       <div class="container">
-        <h2> Recording Setup </h2>
-        <div class="col-md-6">
-          <p>
-            Our sensor rig is shown in the image; 2 Prophesee Gen3 (DVS) (640&times;480) are set up in a stereo configuration
-            (we provide extrinsic and intrinsic calibration with the data). A Samsung DVS Gen3 (640&times;480)
-            is in the lower middle of the rig. All event cameras are covered with IR cut filters to avoid
-            interference with Vicon motion capture system. Additionally, an RGB camera (Flea3 USB3) is used to
-            provide classical image frames. All four cameras are spatially and temporally calibrated and record
-            simultaneously.
-          </p>
-          <div class="row"> <h3> Prophesee Gen3 (DVS) (&times;2) </h3>
-            <ul>
-              <li>Resolution:  640&times;480 </li>
-              <li>FOV: ~70<span>&#176;</span> </li>
-            </ul>
+        <div class="row">
+          <h2> Recording Setup </h2>
+          <div class="col-md-6">
+            <p>
+              Our sensor rig is shown in the image; 2 Prophesee Gen3 (DVS) (640&times;480) are set up in a stereo configuration
+              (we provide extrinsic and intrinsic calibration with the data). A Samsung DVS Gen3 (640&times;480)
+              is in the lower middle of the rig. All event cameras are covered with IR cut filters to avoid
+              interference with Vicon motion capture system. Additionally, an RGB camera (Flea3 USB3) is used to
+              provide classical image frames. All four cameras are spatially and temporally calibrated and record
+              simultaneously.
+            </p>
+            <div class="row"> <h3> Prophesee Gen3 (DVS) (&times;2) </h3>
+              <ul>
+                <li>Resolution:  640&times;480 </li>
+                <li>FOV: ~70<span>&#176;</span> </li>
+              </ul>
+            </div>
+            <div class="row"> <h3> Samsung DVS Gen3 </h3>
+              <ul>
+                <li>Resolution:   640&times;480   </li>
+                <li>FOV: ~75<span>&#176;</span> </li>
+              </ul>
+            </div>
+            <div class="row"> <h3> Flea3 (RGB) </h3>
+              <ul>
+                <li>Resolution:  2080&times;1552  </li>
+                <li>FOV: ~65<span>&#176;</span> </li>
+              </ul>
+            </div>
           </div>
-          <div class="row"> <h3> Samsung DVS Gen3 </h3>
-            <ul>
-              <li>Resolution:   640&times;480   </li>
-              <li>FOV: ~75<span>&#176;</span> </li>
-            </ul>
-          </div>
-          <div class="row"> <h3> Flea3 (RGB) </h3>
-            <ul>
-              <li>Resolution:  2080&times;1552  </li>
-              <li>FOV: ~65<span>&#176;</span> </li>
-            </ul>
-          </div>
-        </div>
-        <div class="col-md-6"> 
-          <figure>
-          <img src="img/rig.jpeg" alt="A picture of the rig with two prophese cameras on the sides, a samsung camera in the middle and a flea on the top" class="img-responsive fit-image"/>
-          <figcaption style="text-align: center"> Fig: Our sensor setup; the calibration is provided with the
-                    data</figcaption>
-          </figure>
-        </div>
-
-      </div>
-    </div>
-    <hr>
-
-    <div class="section">
-      <div class="container">
-        <div class="row" id="rig_IMO"> <h3>Summary Statistics</h3>
-          <div class="col-md-10" style="">
-            <!--<p> A paragraph?</p>-->
-
-            <table class="table table-bordered table-hover table-striped w-auto">
-              <tr>
-                <th style="width: 30%; text-align: center">Sequence Type</th style="text-align: center">
-                <th style="width: 10%; text-align: center"># Train Sequences</th style="text-align: center">
-                <th style="width: 10%; text-align: center"># Test Sequences</th style="text-align: center">
-                <th style="width: 10%; text-align: center">Minutes of Train</th style="text-align: center">
-                <th style="width: 10%; text-align: center">Minutes of Test</th style="text-align: center">
-                <th style="width: 15%; text-align: center">GB of DVS<br>(NPZ download)</th style="text-align: center">
-                <th style="width: 15%; text-align: center">GB of RGB<br>(NPZ download)</th style="text-align: center">
-              </tr>
-
-              <tr>
-                <td style="vertical-align: center; text-align: left;">Motion Segmentation</td>
-                <td style="vertical-align: center; text-align: right;">21</td>
-                <td style="vertical-align: center; text-align: right;">8</td>
-                <td style="vertical-align: center; text-align: right;">2.74</td>
-                <td style="vertical-align: center; text-align: right;">0.51</td>
-                <td style="vertical-align: center; text-align: right;">5.8</td>
-                <td style="vertical-align: center; text-align: right;">22.4</td>
-              </tr>
-
-              <tr>
-                <td style="vertical-align: center; text-align: left;">Motion Segmentation<br>(Low Light)</td>
-                <td style="vertical-align: center; text-align: right;">3</td>
-                <td style="vertical-align: center; text-align: right;">2</td>
-                <td style="vertical-align: center; text-align: right;">0.36</td>
-                <td style="vertical-align: center; text-align: right;">0.14</td>
-                <td style="vertical-align: center; text-align: right;">0.6</td>
-                <td style="vertical-align: center; text-align: right;">N/A</td>
-              </tr>
-
-              <tr>
-                <td style="vertical-align: center; text-align: left;">Structure from Motion/Object Recognition</td>
-                <td style="vertical-align: center; text-align: right;">52</td>
-                <td style="vertical-align: center; text-align: right;">10</td>
-                <td style="vertical-align: center; text-align: right;">16.17</td>
-                <td style="vertical-align: center; text-align: right;">2.45</td>
-                <td style="vertical-align: center; text-align: right;">52.7</td>
-                <td style="vertical-align: center; text-align: right;">169.0</td>
-              </tr>
-
-              <tr>
-                <td style="vertical-align: center; text-align: left;">Structure from Motion/Object Recognition (Low Light)</td>
-                <td style="vertical-align: center; text-align: right;">5</td>
-                <td style="vertical-align: center; text-align: right;">6</td>
-                <td style="vertical-align: center; text-align: right;">2.56</td>
-                <td style="vertical-align: center; text-align: right;">1.37</td>
-                <td style="vertical-align: center; text-align: right;">4.2</td>
-                <td style="vertical-align: center; text-align: right;">0.6</td>
-              </tr>
-
-              <tr>
-                <td style="vertical-align: center; text-align: left;">Rudimentary Motion in Planar Scenes</td>
-                <td style="vertical-align: center; text-align: right;">N/A</td>
-                <td style="vertical-align: center; text-align: right;">31</td>
-                <td style="vertical-align: center; text-align: right;">N/A</td>
-                <td style="vertical-align: center; text-align: right;">6.96</td>
-                <td style="vertical-align: center; text-align: right;">20.0</td>
-                <td style="vertical-align: center; text-align: right;">64.8</td>
-              </tr>
-
-              <tr>
-                <td style="vertical-align: center; text-align: left;">Rudimentary Motion in Planar Scenes (Low Light)</td>
-                <td style="vertical-align: center; text-align: right;">N/A</td>
-                <td style="vertical-align: center; text-align: right;">35</td>
-                <td style="vertical-align: center; text-align: right;">N/A</td>
-                <td style="vertical-align: center; text-align: right;">7.89</td>
-                <td style="vertical-align: center; text-align: right;">8.8</td>
-                <td style="vertical-align: center; text-align: right;">1.7</td>
-              </tr>
-
-              <tr>
-                <td style="vertical-align: center; text-align: left;"><b>Totals</b></td>
-                <td style="vertical-align: center; text-align: right;"><b>81</b></td>
-                <td style="vertical-align: center; text-align: right;"><b>92</b></td>
-                <td style="vertical-align: center; text-align: right;"><b>21.83</b></td>
-                <td style="vertical-align: center; text-align: right;"><b>19.32</b></td>
-                <td style="vertical-align: center; text-align: right;"><b>92.0</b></td>
-                <td style="vertical-align: center; text-align: right;"><b>269.1</b></td>
-              </tr>
-            </table>
-
-            <h4>Full Camera Availability and Data Duration Matrix</h4>
-            <a href="evimo2_v2_per_sequence_info.ods">Download spreadsheet</a>
-
-            <h4>NPZ versus TXT</h4>
-            <p>Decompressed, the npz format requires 525 GB of space of which 271 GB is for the RGB camera and 255 GB is for the three DVS cameras.</p>
-            <p>Decompressed, the txt format requires 842 GB of space of which 212 GB is for the RGB camera and 631 GB is for the three DVS cameras.</p>
-            <p>The npz format supports memory mapping the event arrays from disk, which saves considerable resources.</p>
-            <p>The txt format requires parsing the events.txt file, which takes considerable resources</p>
-            <p>The txt format decompresses to about 471,000 files. The npz format only requires about 4700 files.</p>
+          <div class="col-md-6"> 
+            <figure>
+            <img src="img/rig.jpeg" alt="A picture of the rig with two prophese cameras on the sides, a samsung camera in the middle and a flea on the top" class="img-responsive fit-image"/>
+            <figcaption style="text-align: center"> Fig: Our sensor setup; the calibration is provided with the
+                      data</figcaption>
+            </figure>
           </div>
         </div>
       </div>
     </div>
     <hr>
+-->
 
     <div class="section">
       <div class="container">
-        <div class="row"> <h3> Motion Segmentation / Object Recognition</h3>
+        <div class="row"> <h3 class="anchor" id="imo"> Motion Segmentation / Object Recognition</h3>
           <div class="col-md-10" style="">
             <p> A tabletop scenario (shot with all 4 cameras up-close) with objects moving
             independently from the camera. Pixelwise masks, depth maps and trajectories are provided.
@@ -1239,7 +1173,7 @@
 
     <div class="section">
       <div class="container">
-        <div class="row"> <h3> Motion Segmentation in Low Light </h3>
+        <div class="row"> <h3 class="anchor" id="imo_ll"> Motion Segmentation in Low Light </h3>
           <div class="col-md-10" style="">
             <p> These sequences were shot in low light - they feature high amounts of noise 
                 and are meant to be extremely challenging. </p>
@@ -1498,7 +1432,7 @@
 
     <div class="section">
       <div class="container">
-        <div class="row"> <h3> Structure from Motion / Object Recognition </h3>
+        <div class="row"> <h3 class="anchor" id="sfm"> Structure from Motion / Object Recognition </h3>
           <div class="col-md-10" style="">
             <p> The sequences feature a variety of objects scattered on the tabletop, but the scene is
                 rigid (no independent motion). The objects provide depth variation and some degree of
@@ -3476,7 +3410,7 @@
 
     <div class="section">
       <div class="container">
-        <div class="row"> <h3> Structure from Motion in Low Light </h3>
+        <div class="row"> <h3 class="anchor" id="sfm_ll"> Structure from Motion in Low Light </h3>
           <div class="col-md-10" style="">
             <p> These sequences were shot in low light - they feature high amounts of noise 
                 and are meant to be extremely challenging. </p>
@@ -3923,7 +3857,7 @@
 
     <div class="section">
       <div class="container">
-        <div class="row"> <h3> Rudimentary Motion in Planar Scenes </h3>
+        <div class="row"> <h3 class="anchor" id="sanity"> Rudimentary Motion in Planar Scenes </h3>
           <div class="col-md-10" style="">
             <p> These sequences use primitive scenarios with rudimentary motions and are provided
                 primarily for sanity testing, benchmarking and debugging of software. 
@@ -4959,7 +4893,7 @@
 
     <div class="section">
       <div class="container">
-        <div class="row"> <h3> Rudimentary Motion in Planar Scenes in Low Light </h3>
+        <div class="row"> <h3 class="anchor" id="sanity_ll"> Rudimentary Motion in Planar Scenes in Low Light </h3>
           <div class="col-md-10" style="">
             <p> These sequences were shot in low light - they feature high amounts of noise 
                 and are meant to be extremely challenging. </p>
@@ -6112,7 +6046,7 @@
 
     <div class="section">
       <div class="container">
-        <div class="row" id="rig_IMO"> <h3>Videos</h3>
+        <div class="row" id="rig_IMO"> <h3 class="anchor" id="videos">Videos</h3>
           <div class="col-md-10" style="">
             <p> Complete archive of the videos for each camera. The videos contain the data for the camera with a segmentation overlay and the depth.</p>
             <p> These videos can be previewed using the "Click to show videos" buttons in each section above.</p>
@@ -6165,6 +6099,110 @@
       </div>
     </div>
     <hr>
+
+    <div class="section">
+      <div class="container">
+        <div class="row" id="rig_IMO"> <h3 class="anchor" id="summary_stat">Summary Statistics</h3>
+          <div class="col-md-10" style="">
+            <!--<p> A paragraph?</p>-->
+
+            <table class="table table-bordered table-hover table-striped w-auto">
+              <tr>
+                <th style="width: 30%; text-align: center">Sequence Type</th style="text-align: center">
+                <th style="width: 10%; text-align: center"># Train Sequences</th style="text-align: center">
+                <th style="width: 10%; text-align: center"># Test Sequences</th style="text-align: center">
+                <th style="width: 10%; text-align: center">Minutes of Train</th style="text-align: center">
+                <th style="width: 10%; text-align: center">Minutes of Test</th style="text-align: center">
+                <th style="width: 15%; text-align: center">GB of DVS<br>(NPZ download)</th style="text-align: center">
+                <th style="width: 15%; text-align: center">GB of RGB<br>(NPZ download)</th style="text-align: center">
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Motion Segmentation</td>
+                <td style="vertical-align: center; text-align: right;">21</td>
+                <td style="vertical-align: center; text-align: right;">8</td>
+                <td style="vertical-align: center; text-align: right;">2.74</td>
+                <td style="vertical-align: center; text-align: right;">0.51</td>
+                <td style="vertical-align: center; text-align: right;">5.8</td>
+                <td style="vertical-align: center; text-align: right;">22.4</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Motion Segmentation<br>(Low Light)</td>
+                <td style="vertical-align: center; text-align: right;">3</td>
+                <td style="vertical-align: center; text-align: right;">2</td>
+                <td style="vertical-align: center; text-align: right;">0.36</td>
+                <td style="vertical-align: center; text-align: right;">0.14</td>
+                <td style="vertical-align: center; text-align: right;">0.6</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Structure from Motion/Object Recognition</td>
+                <td style="vertical-align: center; text-align: right;">52</td>
+                <td style="vertical-align: center; text-align: right;">10</td>
+                <td style="vertical-align: center; text-align: right;">16.17</td>
+                <td style="vertical-align: center; text-align: right;">2.45</td>
+                <td style="vertical-align: center; text-align: right;">52.7</td>
+                <td style="vertical-align: center; text-align: right;">169.0</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Structure from Motion/Object Recognition (Low Light)</td>
+                <td style="vertical-align: center; text-align: right;">5</td>
+                <td style="vertical-align: center; text-align: right;">6</td>
+                <td style="vertical-align: center; text-align: right;">2.56</td>
+                <td style="vertical-align: center; text-align: right;">1.37</td>
+                <td style="vertical-align: center; text-align: right;">4.2</td>
+                <td style="vertical-align: center; text-align: right;">0.6</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Rudimentary Motion in Planar Scenes</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+                <td style="vertical-align: center; text-align: right;">31</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+                <td style="vertical-align: center; text-align: right;">6.96</td>
+                <td style="vertical-align: center; text-align: right;">20.0</td>
+                <td style="vertical-align: center; text-align: right;">64.8</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;">Rudimentary Motion in Planar Scenes (Low Light)</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+                <td style="vertical-align: center; text-align: right;">35</td>
+                <td style="vertical-align: center; text-align: right;">N/A</td>
+                <td style="vertical-align: center; text-align: right;">7.89</td>
+                <td style="vertical-align: center; text-align: right;">8.8</td>
+                <td style="vertical-align: center; text-align: right;">1.7</td>
+              </tr>
+
+              <tr>
+                <td style="vertical-align: center; text-align: left;"><b>Totals</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>81</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>92</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>21.83</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>19.32</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>92.0</b></td>
+                <td style="vertical-align: center; text-align: right;"><b>269.1</b></td>
+              </tr>
+            </table>
+
+            <h4>Full Camera Availability and Data Duration Matrix</h4>
+            <a href="evimo2_v2_per_sequence_info.ods">Download spreadsheet</a>
+
+            <h4>NPZ versus TXT</h4>
+            <p>Decompressed, the npz format requires 525 GB of space of which 271 GB is for the RGB camera and 255 GB is for the three DVS cameras.</p>
+            <p>Decompressed, the txt format requires 842 GB of space of which 212 GB is for the RGB camera and 631 GB is for the three DVS cameras.</p>
+            <p>The npz format supports memory mapping the event arrays from disk, which saves considerable resources.</p>
+            <p>The txt format requires parsing the events.txt file, which takes considerable resources</p>
+            <p>The txt format decompresses to about 471,000 files. The npz format only requires about 4700 files.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
     <div class="container">
       <footer style="font-size:12px">
         <i class="fa fa-github"></i>
