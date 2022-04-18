@@ -3,7 +3,6 @@
 
 CMakeCache.txt
 CMakeFiles
-Makefile
 *.cmake
 .ninja_deps
 .ninja_log
@@ -11,3 +10,4 @@ build.ninja
 rules.ninja
 nvvp.cfg
 *.log
+docs_sphinx/build
