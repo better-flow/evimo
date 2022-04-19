@@ -6,15 +6,27 @@
 Welcome to EVIMO's documentation!
 =================================
 
+**evimo** is a toolkit for fusing data streams from multiple cameras (event-based, rgb or potentially any other kind of visual sensor) with a motion capture system in a AR-like fashion to automatically generate ground truth annotations for motion, depth and scene segmentation (both motion or semantic). The toolkit uses static 3D scans of the objects on the scene to achieve this goal - the objects and cameras are fitted with motion capture markers and the simulated ground truth is overlaid on the real data from sensors.
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Data
 
+   ground-truth-format.md
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Generation
 
-Indices and tables
-==================
+   ground-truth-generation.md
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+   :maxdepth: 2
+   :caption: Recording
+
+   evimo-pipeline-setup.md
+   structure.md
+   calibration-tools.md
+   adding-a-new-object.md
+   dataset-configuration-folder.md
+   inspecting-a-sequence.md

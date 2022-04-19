@@ -2,7 +2,7 @@
 
 To build
 ```
-pip3 install sphinx sphinx-rtd-theme
+pip3 install sphinx sphinx-rtd-theme myst-parser
 make html
 ```
 
