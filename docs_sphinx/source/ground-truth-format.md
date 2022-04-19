@@ -1,51 +1,124 @@
 # Ground Truth Format
 
-The ground truth is available in 2 formats:
- 1. `.npz` format: ground truth is saved as a single `.npz`, which is convenient to use in Python.
- 2. Text file format: ground truth and recording is saved in the form of `.png` images and `.txt` files.
+The ground truth is available in the following formats:
 
-We strongly suggest using the [pydvs sample](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py) as a prototype for manipulating the data (in both formats). This is the script which converts the raw text format (the output of the [C++ pipeline](https://github.com/better-flow/evimo/wiki/Ground-Truth-Generation)) to `.npz`. The script also performs typical manipulations with the data, such as plotting the trajectories, generating event slices and overlaying mask on the top of camera frames or event slices.
+* `NPZ`
+    * EVIMO2v2 - Each sequence is a collection of `.npz` and `.npy` files
+    * EVIMO, EVIMO2v1 - Each sequence is compressed into a single `.npz` file
+* `TXT` - Ground truth and recordings in the form of `.png` and `.txt` files
+
+The high level differences between the formats are described [here](#format-comparison).
 
 ## NPZ (EVIMO2v2)
+There is one folder per sequence. A sequences folder can be found in the following path:<br>
+`<camera>/<category>/<subcategory>/<sequence name>`
 
-## NPZ (EVIMO1 and EVIMO2v1)
-This format consists of a single `.npz` file:
+Inside a sequences folder are the following files:
 
-<img src="https://github.com/better-flow/evimo/blob/master/docs/wiki_img/npz_format.png" width="500"/>
+|File |Description |
+--- | --- |
+|`dataset_classical.npz`| Dictionary of *(RES_Y, RES_X)* arrays with keys `classical_<frame id>`|
+|`dataset_depth.npz`| Dictionary of *(RES_Y, RES_X)* arrays with keys `depth_<frame id>`|
+|`dataset_mask.npz`| Dictionary of *(RES_Y, RES_X)* arrays with keys `mask_<frame id>`|
+|`dataset_events_p.npy`| Array of *(NUM_EVENTS, 1) containing events polarity <br> **Can be memory mapped**|
+|`dataset_events_t.npy`| Array of *(NUM_EVENTS, 1) containing events time<br> **Can be memory mapped**|
+|`dataset_events_xy.npy`| Array of *(NUM_EVENTS, 2) containg events pixel location<br> **Can be memory mapped**|
+|`dataset_info.npz`| Dictionary of arrays `D`, `discretization`, `index`, `K`, `meta`<br> Contents are identical to the EVIMO, EVIMO2v1 NPZ format|
 
-- `depth.npy` / `mask.npy` - an array of shape *(NUM_FRAMES, RES_Y, RES_X)* with ground truth; depth is in *mm.*, mask has object ids multiplied by `1000`.
-- `classical.npy` : an array of shape *(NUM_FRAMES, RES_Y, RES_X)* **OR** `None`. Contains classical camera when available.
-- `K` / `D` - intrinsic and distortion parameters. The camera model type needs to be read from `meta`, and we suggest reading intrinsic parameters from `meta` as well.
-- `meta` - a python dict saved as `.npy`. The contents are described [here](https://github.com/better-flow/evimo/wiki/Ground-Truth-Generation); See [example](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py#L217) on how to access and plot the data.
-- `events` - an array of shape *(NUM_EVENTS, 4)*; contains timestamps, x/y pixel coordinates and polarity per event. Getting a slice using `pydvs` functionality ([link](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py#L282)) and implementation in `pydvs` ([link](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/lib/pydvs.py#L275)). **Note**: `pydvs` implementation of the slice is approximate; the timestamp boundaries of events may not be the closest to the ones specified.
-- `index` - a helper lookup table for fast timestamp-to-event index computation. Contains indices of events every `discretization` seconds. See how it is generated [here](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/lib/pydvs.py#L123) and a simple way to extract an (approximate) event slice [here](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/error_demo.py#L200) - here the width of event slice is 1 x `discretization`.
+## NPZ (EVIMO and EVIMO2v1)
+There is one compressed `.npz` file per sequence. A sequences file can be found in the following path: `<camera>/<category>/<subcategory>/<sequence name>.npz`
+
+A sequences `.npz` file contains the following `.npy` files:
+
+|File |Description |
+--- | --- |
+|`classical.npy`| Array with shape *(NUM_FRAMES, RES_Y, RES_X)*<br> Contains classical frames if available|
+|`depth.npy`| Array of shape *(NUM_FRAMES, RES_Y, RES_X)*<br>depth is in *mm*|
+|`mask.npy` | Array of shape *(NUM_FRAMES, RES_Y, RES_X)*<br>masks contains object ids multiplied by `1000`|
+|`events.npy`| Array of shape *(NUM_EVENTS, 4)*<br>Each row contains an events timestamp, x/y pixel coordinate and polarity
+|`meta.npy`| Python dictionary containing intrinsics, timestamps, poses, and IMU data<br>The full description is [here](ground-truth-format.md#metas-details)
+|`K.npy/D.npy`| Intrinsic and distortion parameters, also available in `meta.npy`|
+|`index.npy`| A helper lookup table for fast timestamp-to-event index computation<br>Contains indices of events every `discretization.npy` seconds.
+|`discretization.npy`| The time between events corresponding to the indices in `index.npy`|
 
 ## TXT
-This is the direct result of the data generation in the C++ pipeline (with the exception of the trajectory plot) and is used to generate `.npz` later on. The contents and format of individual files is described [here](https://github.com/better-flow/evimo/wiki/Ground-Truth-Generation), and camera calibration files are covered [here](https://github.com/better-flow/evimo/wiki/Dataset-Configuration-Folder).
+There is one folder per sequence. A sequences folder can be found in the following path:<br>
+`<camera>/<category>/<subcategory>/<sequence name>`
 
-The packaged dataset will look similar to:
+We strongly suggest using the [pydvs sample](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py) as a prototype for manipulating the TXT data. This is the script which converts the TXT format (the output of the [C++ pipeline](offline-generation-tool.md) to NPZ. It also generates the trajectory plot distributed with the TXT format, event slices, and frames for visualization videos.
 
-<img src="https://github.com/better-flow/evimo/blob/master/docs/wiki_img/text_format.png" width="800"/>
+|Item |Description |
+--- | --- |
+|`img/img_<frame id>.png`| Conventional frames from a classical camera, when available|
+|`img/depth_mask_<frame id>.png`| 16-bit png's with depth and masks in different channels <br>Depth is in *mm*.<br> Masks contain per-pixel object ids multiplied by `1000`.<br>A Python example on how to read the image can be found here](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py#L229) and [here](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py#L11).<br>The relevant C++ code is [here](https://github.com/better-flow/evimo/blob/3b20a8a3ee729b9b9eb69bda05ac4cbf8b9773cb/evimo/dataset_frame.h#L300).|
+|`events.txt`| File with events (if available)<br>One event per line in a format `<timestamp px py polarity>`|
+|`calib.txt`<br>`extrinsics.txt`<br> `params.txt` or `config.txt`| Camera parameters see [here](dataset-configuration-folder.md#camera-configuration-folder-example) for details|
+|`meta.txt`| String containing intrinsics, timestamps, poses, and IMU data<br>The full description is [here](ground-truth-format.md#metas-details)|
+|`position_plots.pdf`| A plot of camera/object trajectories for visualization only|
 
-- `img`: a folder with depth images, masks (within the same image in separate channels) and optionally classical camera frames.
-- `calib.txt`, `extrinsics.txt` and `params.txt` (or `config.txt`) are camera parameters.
-- `events.txt`: file with events (if available for a given camera).
-- `meta.txt`: file with Vicon tracks (it also contains camera calibration).
-- `position_plots.pdf`: for visualization only, a plot of camera/object trajectories.
 
+## Meta's Contents
 
-## Format comparisons
-### TXT vs NPZ (EVIMO2 v2)
+An example of the contents of `meta.npy` or `meta.txt` is given below. In either case, the structure is a Python dictionary.
+```
+{'frames': [{'22': {'pos': {'q': {'w': 0.854428, 'x': 0.517475, 'y': 0.046191, 'z': -0.006281},
+                            'rpy': {'p': 0.085538, 'r': 1.090704, 'y': 0.037217},
+                            't': {'x': -0.389233, 'y': -0.082026, 'z': 0.763271}},
+                    'ts': 5.446962},
+             '9': {'pos': {'q': {'w': 0.88787, 'x': -0.109701, 'y': -0.251739, 'z': -0.36916},
+                           'rpy': {'p': -0.556265, 'r': -0.010523, 'y': -0.785069},
+                           't': {'x': -0.493914, 'y': 0.004656, 'z': 0.491391}},
+                   'ts': 5.446962},
+             'cam': {'pos': {'q': {'w': 0.991128, 'x': -0.045218, 'y': 0.070844, 'z': 0.102964},
+                             'rpy': {'p': 0.150307, 'r': -0.075974, 'y': 0.201305},
+                             't': {'x': 0.463163, 'y': -0.075241, 'z': 0.107412}},
+                     'ts': 5.446962,
+                     'vel': {'q': {'w': 0.925566, 'x': -0.068081, 'y': -0.34568, 'z': -0.138557},
+                             'rpy': {'p': -0.719177, 'r': -0.040196, 'y': -0.282081},
+                             't': {'x': -0.550138, 'y': 0.452351, 'z': 0.056179}}},
+             'gt_frame': 'depth_mask_18446744073709551615.png',
+             'id': 18446744073709551615,
+             'ts': 5.446962}],
+ 'meta': {'cx': 328.38266,
+          'cy': 245.452011,
+          'dist_model': 'radtan',
+          'fx': 519.299927,
+          'fy': 515.430115,
+          'k1': 0.091035,
+          'k2': -0.118269,
+          'k3': 0.0,
+          'k4': 0.0,
+          'p1': 0.004237,
+          'p2': 0.004445,
+          'res_x': 640,
+          'res_y': 480}}
+```
 
-Decompressed, the NPZ format requires 525 GB of space of which 271 GB is for the RGB camera and 255 GB is for the three DVS cameras.
+### Meta's Details
+**TODO** Describe every key and make this a table
+
+- A special object id `'cam'` is used for camera
+- The `'gt_frame'` key contains the `depth_mask_<frame id>.png` file in the TXT format
+- The `'classical_frame'` key contains the `img_<frame id>.png` file in the TXT format
+- The `'id'` key can be used to find the `img_<frame id>.png` file in the TXT format
+- The `'id'` key can be used to generate the `classical_<frame id>`, `depth_<frame id>`, `mask_<frame id>` keys used in the EVIMO2v2 NPZ format
+- **Note:** the `meta.txt` contains two duplicates of the Vicon trajectory: one with ground truth (the key is `'frames'`) - generated at the frame rate of ground truth. Another - `'full_trajectory'` has Vicon messages at full rate (200Hz), but keys `'id'` and `'gt_frame'` cannot be used.
+- The `'vel'` key is deprecated and should be ignored
+- IMU data is available under **TODO**
+- `meta.txt` is a Python dictionary that can be parsed with the Python `eval()` method. See [here](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py#L182).
+
+## Format Comparison
+### EVIMO2v2 TXT vs EVIMO2v2 NPZ
+
+Decompressed, the EVIMO2v2 NPZ format requires 525 GB of space of which 271 GB is for the RGB camera and 255 GB is for the three DVS cameras.
 
 Decompressed, the TXT format requires 842 GB of space of which 212 GB is for the RGB camera and 631 GB is for the three DVS cameras.
 
-The NPZ format supports memory mapping the event arrays from disk. 
+The EVIMO2v2 NPZ format supports memory mapping the event arrays from disk. 
 
 The TXT format requires parsing the `events.txt` file, which can tens of seconds per sequence.
 
-The TXT format decompresses to about 471,000 files. The npz format decompresses to 4700 files.
+The TXT format decompresses to about 471,000 files. The npz format decompresses to 4,700 files.
 
 ### EVIMO, EVIMO2v1 NPZ vs EVIMO2v2 NPZ
 

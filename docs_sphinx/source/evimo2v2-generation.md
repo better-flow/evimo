@@ -1,9 +1,12 @@
-# Download and extract raw recordings
-# Basics
-Download `evimo_data_config` and extract the raw recordings as described HERE.
-The drive should have at least 4TB of free space if the entire dataset is to be generated with default settings
+# Generating EVIMO2 v2
+## Preparation
+### Setup Docker container
+Use the instructions [here](docker-environment.md).
 
-Decompressing more than one file at a time is much faster.
+### Download
+Download and extract the raw recordings from the [downloads page](https://better-flow.github.io/evimo/download_evimo_2.html)
+
+The drive should have at least 4TB of free space if the entire dataset is to be generated with default settings.
 
 The result should look like this:
 ```
@@ -22,16 +25,15 @@ sfm/
 sfm_ll/
 ```
 
-# Generate the dataset
-## Swapfile (if necessary)
-Generation currently requires about 80GB of memory (RAM). A large swapfile on an SSD will work fine.
+### Swapfile (if necessary)
+Generation currently requires about 80GB of memory (RAM). A large swapfile on an SSD will work.
 
-These instructions may help with creating swapfile: https://askubuntu.com/a/1075516
+[These instructions](https://askubuntu.com/a/1075516) may help with creating swapfile.
 
 ## Generate a particular sequence
 Generating a single sequence can take a few minutes to an hour depending on the seqeuence. More cores will make it faster.
 
-```
+```bash
 cd evimo/tools/evimo2_docker
 ./docker_build.sh
 ./docker_run.sh /media/$USER/EVIMO
@@ -41,23 +43,24 @@ cd ~/tools/evimo2_generate; ./generate.sh ~/EVIMO/raw/imo/eval/scene13_dyn_test_
 ```
 
 ## Generate everything
-Generating the entire dataset can take days.
+Generating the entire dataset can take over 24 hours.
 
-```
+```bash
 cd evimo/tools/evimo2_docker
 ./docker_build.sh
 ./docker_run.sh /media/$USER/EVIMO
-cd ~/catkin_ws; catkin_make; pip3 install -e ~/pydvs/lib; cd
-source ~/catkin_ws/devel/setup.bash
-cd ~/tools/evimo2_generate; ./generate_all.sh ~/EVIMO/raw
+cd ~/tools/evimo2_generate
+./generate_all.sh ~/EVIMO/raw
+./package_all.py ~/EVIMO/raw ~/EVIMO/packaged move
+./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed compress
 ```
 
 See the detailed tools descriptions below for more information.
 
-# Generation Tools
+## Generation Tools
 All generation tools are located in `evimo/tools/evimo2_generation`.
 
-## Clear
+### Clear
 Deletes all generated files but leaves the raw recordings
 
 Clear all:
@@ -70,7 +73,7 @@ Clear a specific recording:
 ./clear.sh ~/EVIMO/raw/imo/eva/scene13_dyn_test_00
 ```
 
-## Generate
+### Generate
 Runs for each camera in a sequence folder
 * the offline tool to generate txt format
 * the evimo-gen python tool to generat npz format and visualization frames
@@ -88,7 +91,7 @@ Generate a specific recording:
 ./generate.sh ~/EVIMO/raw/imo/eva/scene13_dyn_test_00
 ```
 
-## Package
+### Package
 
 Checks that files that should have been made by `generate.sh` are present and copies or moves files into the released file/folder structure.
 
@@ -106,7 +109,7 @@ Moving instead of copying saves over a 1 TB of drive space and makes the process
 ./package_all.py ~/EVIMO/raw ~/EVIMO/packaged move
 ```
 
-## Compress
+### Compress
 Checks that files that should have been made by `generate.sh` are present and copies or moves files into the released file/folder structure.
 
 To do a dry run:

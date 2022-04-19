@@ -18,7 +18,9 @@ Welcome to EVIMO's documentation!
    :maxdepth: 2
    :caption: Generation
 
-   ground-truth-generation.md
+   docker-environment.md
+   evimo2v2-generation.md
+   offline-generation-tool.md
 
 .. toctree::
    :maxdepth: 2

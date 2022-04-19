@@ -1,4 +1,6 @@
-# EVIMO Pipeline Setup
+# EVIMO Pipeline Setup on Host OS
+
+A [Docker container](docker-environment.md) is provided which can be used for most tasks with the dataset. However, instructions for setting up a ROS workspace on the host OS are provided below.
 
 1. The code was tested on Ubuntu 18.04 and 20.04 and consists of multiple tools for visualization, calibration and ground truth generation.
 
@@ -7,7 +9,7 @@
   - [ROS Tutorials](http://wiki.ros.org/ROS/Tutorials "This is a set of brief ROS tutorials")
   - Overall setup is similar to our [better-flow](https://github.com/better-flow/better-flow) project; you might be able to follow the instructions from the project page.
 
-## First time setup:
+## Setup
 1. Make sure ROS is [installed](http://wiki.ros.org/noetic/Installation/Ubuntu); This project also relies on [OpenCV](https://opencv.org/) and (to a lesser degree) [PCL](https://pointclouds.org/).
 2. If you do not have a catkin workspace set up:
   1. Download the *cognifli* code (see [project page](https://github.com/ncos/cognifli) for more details):
