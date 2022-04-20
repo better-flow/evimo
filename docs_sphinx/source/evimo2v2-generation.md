@@ -57,6 +57,82 @@ cd ~/tools/evimo2_generate
 
 See the detailed tools descriptions below for more information.
 
+
+## Remove bad sequences from packaged output
+
+After manual evaluation, the following sequences were found to contain no usable data and so were removed from the packaged output before compressing.
+
+```txt
+txt/flea3_7/imo/train/scene6_dyn_train_00_000000
+txt/left_camera/imo/train/scene6_dyn_train_00_000000
+txt/right_camera/imo/train/scene6_dyn_train_00_000000
+txt/samsung_mono/imo/train/scene6_dyn_train_00_000000
+
+txt/left_camera/imo_ll/eval/scene16_d_dyn_test_01_000000
+txt/right_camera/imo_ll/eval/scene16_d_dyn_test_01_000000
+txt/samsung_mono/imo_ll/eval/scene16_d_dyn_test_01_000000
+
+txt/flea3_7/sanity/depth_var/depth_var_1_ud_000000
+txt/left_camera/sanity/depth_var/depth_var_1_ud_000000
+txt/right_camera/sanity/depth_var/depth_var_1_ud_000000
+txt/samsung_mono/sanity/depth_var/depth_var_1_ud_000000
+
+txt/flea3_7/sfm/train/scene7_03_000002
+txt/left_camera/sfm/train/scene7_03_000002
+txt/right_camera/sfm/train/scene7_03_000002
+txt/samsung_mono/sfm/train/scene7_03_000002
+
+txt/flea3_7/sfm/train/seq_1_5_000001
+txt/left_camera/sfm/train/seq_1_5_000001
+txt/right_camera/sfm/train/seq_1_5_000001
+
+npz/flea3_7/imo/train/scene6_dyn_train_00_000000
+npz/left_camera/imo/train/scene6_dyn_train_00_000000
+npz/right_camera/imo/train/scene6_dyn_train_00_000000
+npz/samsung_mono/imo/train/scene6_dyn_train_00_000000
+
+npz/left_camera/imo_ll/eval/scene16_d_dyn_test_01_000000
+npz/right_camera/imo_ll/eval/scene16_d_dyn_test_01_000000
+npz/samsung_mono/imo_ll/eval/scene16_d_dyn_test_01_000000
+
+npz/flea3_7/sanity/depth_var/depth_var_1_ud_000000
+npz/left_camera/sanity/depth_var/depth_var_1_ud_000000
+npz/right_camera/sanity/depth_var/depth_var_1_ud_000000
+npz/samsung_mono/sanity/depth_var/depth_var_1_ud_000000
+
+npz/flea3_7/sfm/train/scene7_03_000002
+npz/left_camera/sfm/train/scene7_03_000002
+npz/right_camera/sfm/train/scene7_03_000002
+npz/samsung_mono/sfm/train/scene7_03_000002
+
+npz/flea3_7/sfm/train/seq_1_5_000001
+npz/left_camera/sfm/train/seq_1_5_000001
+npz/right_camera/sfm/train/seq_1_5_000001
+
+video/flea3_7/imo/train/scene6_dyn_train_00_flea3_7_ground_truth_000000.mp4
+video/left_camera/imo/train/scene6_dyn_train_00_flea3_7_ground_truth_000000.mp4
+video/right_camera/imo/train/scene6_dyn_train_00_flea3_7_ground_truth_000000.mp4
+video/samsung_mono/imo/train/scene6_dyn_train_00_flea3_7_ground_truth_000000.mp4
+
+video/left_camera/imo_ll/eval/scene16_d_dyn_test_01_left_camera_ground_truth_000000.mp4
+video/right_camera/imo_ll/eval/scene16_d_dyn_test_01_left_camera_ground_truth_000000.mp4
+video/samsung_mono/imo_ll/eval/scene16_d_dyn_test_01_left_camera_ground_truth_000000.mp4
+
+video/flea3_7/sanity/depth_var/depth_var_1_ud_flea3_7_ground_truth_000000.mp4
+video/left_camera/sanity/depth_var/depth_var_1_ud_flea3_7_ground_truth_000000.mp4
+video/right_camera/sanity/depth_var/depth_var_1_ud_flea3_7_ground_truth_000000.mp4
+video/samsung_mono/sanity/depth_var/depth_var_1_ud_flea3_7_ground_truth_000000.mp4
+
+video/flea3_7/sfm/train/scene7_03_flea3_7_ground_truth_000002.mp4
+video/left_camera/sfm/train/scene7_03_flea3_7_ground_truth_000002.mp4
+video/right_camera/sfm/train/scene7_03_flea3_7_ground_truth_000002.mp4
+video/samsung_mono/sfm/train/scene7_03_flea3_7_ground_truth_000002.mp4
+
+video/flea3_7/sfm/train/seq_1_5_flea3_7_ground_truth_000001.mp4
+video/left_camera/sfm/train/seq_1_5_flea3_7_ground_truth_000001.mp4
+video/right_camera/sfm/train/seq_1_5_flea3_7_ground_truth_000001.mp4
+```
+
 ## Generation Tools
 All generation tools are located in `evimo/tools/evimo2_generation`.
 
@@ -64,12 +140,12 @@ All generation tools are located in `evimo/tools/evimo2_generation`.
 Deletes all generated files but leaves the raw recordings
 
 Clear all:
-```
+```bash
 ./clear_all.sh ~/EVIMO/raw
 ```
 
 Clear a specific recording:
-```
+```bash
 ./clear.sh ~/EVIMO/raw/imo/eva/scene13_dyn_test_00
 ```
 
@@ -82,7 +158,7 @@ Runs for each camera in a sequence folder
 * all final artifacts are left in each sequences folder, they will be moved into the final dataset file/folder structure later
 
 Generate all:
-```
+```bash
 ./generate_all.sh ~/raw
 ```
 
@@ -97,7 +173,7 @@ Checks that files that should have been made by `generate.sh` are present and co
 
 To do a dry run (check for missing generated files)
 
-```
+```bash
 ./package_all.py ~/EVIMO/raw ~/EVIMO/packaged dry
 ```
 
@@ -105,7 +181,7 @@ To do a real run (moves files and copies those that can't be moved):
 
 Moving instead of copying saves over a 1 TB of drive space and makes the process fit on a 4TB drive.
 
-```
+```bash
 ./package_all.py ~/EVIMO/raw ~/EVIMO/packaged move
 ```
 
@@ -114,12 +190,12 @@ Checks that files that should have been made by `generate.sh` are present and co
 
 To do a dry run:
 
-```
+```bash
 ./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed dry
 ```
 
 To do a real run (moves files and copies those that can't be moved):
 
-```
+```bash
 ./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed compress
 ```

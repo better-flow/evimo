@@ -1,4 +1,4 @@
-# Docker Environment
+# EVIMO Docker Environment
 A docker environment is provided to simplify generating the dataset from raw recordings. The source is [here](https://github.com/better-flow/evimo/tree/master/tools/evimo2_docker).
 
 It is assumed below that the raw recordings are available in a directory `/media/$(USER)/EVIMO`. A full generation requires 4TB of disk space.

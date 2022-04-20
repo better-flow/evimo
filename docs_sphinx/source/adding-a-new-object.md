@@ -1,4 +1,4 @@
-# Adding a new object to the tool
+# Adding a New Object
 
 ## Scanning guidelines
 1) Make sure the motion capture markers are attached to the object before the scan! At least 3 **spherical** markers have to be attached to the physical object before the scan.
@@ -7,12 +7,11 @@
 
 The meshed scan with markers clearly visible:
 
-<img src="https://github.com/better-flow/evimo/blob/master/docs/wiki_img/scan.png" width="500"/>
-
+![adding_object_scan](img/adding_object_scan.png)
 
 Markers cut out of the scan (all 3 separate scans are visualized together):
 
-<img src="https://github.com/better-flow/evimo/blob/master/docs/wiki_img/markers.png" width="500"/>
+![adding_object_markers](img/adding_object_markers.png)
 
 
 ## Create configuration files
@@ -36,7 +35,7 @@ Should have 5 lines of format `key: value`:
 - `unit`: `mm` or `m` - specify which units should be used.
 - `ros_pos_topic`: the ros topic with [Vicon messages](https://github.com/KumarRobotics/vicon/tree/a6143808872ab02e8ebdc9384d4ea4d475e815b8/vicon/msg) to listen to.
 
-## The code responsible for parsing and handling this configuration can be found [here](https://github.com/better-flow/evimo/blob/02db52855d11907ccd8494b84ef8b753209f98ef/evimo/object.h#L164)
+**Note:** The code responsible for parsing and handling this configuration can be found [here](https://github.com/better-flow/evimo/blob/02db52855d11907ccd8494b84ef8b753209f98ef/evimo/object.h#L164)
 
 
 

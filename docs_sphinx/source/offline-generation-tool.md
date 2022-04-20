@@ -13,17 +13,19 @@ The tool is only capable of running per-camera; a typical `roslaunch` command ma
                                              t_len:=-1
 ```
 
-The parameters of the `.launch` file are:
- - `folder:=<string>` - path to the [dataset configuration folder](https://github.com/better-flow/evimo/wiki/Dataset-Configuration-Folder)
- - `camera_name:=<string>` - name of the folder within the dataset configuration folder which contains camera configuration
- - `show:=<integer>` - `-1` disables the visualization; '-2' allows to inspect the sequence frame-by-frame'; positive numbers simultaneously open multiple windows at different time instances and a trajectory plot (`show:=10` will render data at 10 separate timestamps).
- - `generate:=<bool>` - if `true`, the ground truth will be saved in the camera folder (in `ground_truth` subfolder) within the dataset configuration folder.
- - `save_3d:=<bool>` - experimental feature; will save events as a `.ply` file (after filtering).
- - `fps:=<float>` - the tool will attempt to generate ground truth every 1/fps seconds; the actual frame rate or timestamps are not guaranteed - ground truth is only generated when both events (or camera frame) and Vicon pose is available; the actual timestamp will 'stick' to the lowest rate sensor (either camera or Vicon).
- - `t_offset:=<float>` - skip that many seconds from the beginning of the recording before any processing
- - `t_len:=<float>` - process at most that many seconds (negative value will process all the recording)
-
-After the generation, the ground truth can be found in: <br>
+After the generation, the TXT version of the ground truth can be found in: <br>
 `<dataset configuration folder>/<camera_name>/ground_truth`
 
-The folder contains the TXT version of the sequence.
+## Parameters
+The parameters of the `.launch` file are:
+
+|Key |Description |
+------------ | --- |
+|`folder:=<string>`| Path to the [dataset configuration folder](raw-sequence-structure.md)|
+|`camera_name:=<string>`| Name of the folder within the dataset configuration folder<br> that contains the camera configuration|
+|`show:=<integer>`| `-1` disables the visualization <br>`-2` allows to inspect the sequence frame-by-frame'<br>Positive numbers show the trajectory and a collection of evenly <br> spaced frames (e.g. `show:=10` will render data at 10 timestamps). <br> A full description of the visualization modes is available [here](raw-sequence-inspection.md)|
+|`generate:=<bool>`| If `true`, the ground truth will be saved in the camera folder <br> (in `ground_truth` subfolder) within the dataset configuration folder.|
+|`save_3d:=<bool>`| Experimental feature that will save filtered events as a `.ply` file|
+|`fps:=<float>`| The tool will attempt to generate ground truth every 1/fps seconds <br><br> In EVIMO2v2 the frame rate and timestamps are gaurunteed for<br> event cameras. For classical cameras, the frametimes determine<br> the ground truth times. <br><br> In EVIMO and EVIMO2v1 the actual frame rate or timestamps<br> are not guaranteed. Ground truth is only generated when both<br> events (or camera frame) and Vicon pose are available. E.g. the<br> actual timestamp will 'stick' to the lowest rate data source.|
+|`t_offset:=<float>`|Skip `t_offset` seconds from the beginning of the recording|
+|`t_len:=<float>`| Process at most `t_len` seconds<br>Negative values cause the entire recording to be processed|

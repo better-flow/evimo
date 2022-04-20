@@ -13,6 +13,7 @@ Welcome to EVIMO's documentation!
    :caption: Data
 
    ground-truth-format.md
+   evimo2v2-inspect-sequence.md
 
 .. toctree::
    :maxdepth: 2
@@ -27,8 +28,7 @@ Welcome to EVIMO's documentation!
    :caption: Recording
 
    evimo-pipeline-setup.md
-   structure.md
+   raw-sequence-structure.md
+   raw-sequence-inspection.md
    calibration-tools.md
    adding-a-new-object.md
-   dataset-configuration-folder.md
-   inspecting-a-sequence.md

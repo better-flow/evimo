@@ -16,11 +16,13 @@
 
 master_doc = 'index'
 
+html_favicon = 'img/ico.png'
+
 # -- Project information -----------------------------------------------------
 
 project = 'EVIMO'
 copyright = '2022, Anton Mitrokhin, Levi Burner'
-author = 'Anton Mitrokhin'
+author = 'Anton Mitrokhin, Levi Burner'
 
 # The full version, including alpha/beta/rc tags
 release = '2022'
