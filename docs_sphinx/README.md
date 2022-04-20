@@ -12,4 +12,7 @@ pip3 install sphinx-autobuild
 sphinx-autobuild docs_sphinx/source docs_sphinx/build/html
 ```
 
+Copy build to the website directory
+cp -r docs_sphinx/build/html docs/docs
+
 The output directory is symlinked into the better-flow website as `evimo/docs/docs/`.

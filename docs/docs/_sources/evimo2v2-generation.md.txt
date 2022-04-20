@@ -62,7 +62,7 @@ See the detailed tools descriptions below for more information.
 
 After manual evaluation, the following sequences were found to contain no usable data and so were removed from the packaged output before compressing.
 
-```txt
+```
 txt/flea3_7/imo/train/scene6_dyn_train_00_000000
 txt/left_camera/imo/train/scene6_dyn_train_00_000000
 txt/right_camera/imo/train/scene6_dyn_train_00_000000

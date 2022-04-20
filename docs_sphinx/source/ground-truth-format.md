@@ -60,7 +60,7 @@ We strongly suggest using the [pydvs sample](https://github.com/better-flow/pydv
 |`img/img_<frame id>.png`| Conventional frames from a classical camera, when available|
 |`img/depth_mask_<frame id>.png`| 16-bit png's with depth and masks in different channels <br>Depth is in *mm*<br> Masks contain per-pixel object ids multiplied by `1000`<br>An example of reading the image is available [here](https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py#L229)<br>The relevant C++ code is [here](https://github.com/better-flow/evimo/blob/3b20a8a3ee729b9b9eb69bda05ac4cbf8b9773cb/evimo/dataset_frame.h#L300)|
 |`events.txt`| File with events (if available)<br>One event per line in a format `<timestamp px py polarity>`|
-|`calib.txt`<br>`extrinsics.txt`<br> `params.txt` or `config.txt`| Camera parameters see [here](dataset-configuration-folder.md#camera-configuration-folder-example) for details|
+|`calib.txt`<br>`extrinsics.txt`<br> `params.txt` or `config.txt`| Camera parameters see [here](raw-sequence-structure.md) for details|
 |`meta.txt`| String containing intrinsics, timestamps, poses, and IMU data<br>The full description is [here](ground-truth-format.md#metas-contents)|
 |`position_plots.pdf`| A plot of camera/object trajectories for visualization only|
 
@@ -78,7 +78,7 @@ In EVIMO2v2 the classical camera will have a different number of depth/mask fram
 |`'frames'`| Array of dictionaries with one entry per ground truth sampling period <br>Each dictionary contains the pose of each object and the camera<br> See [here](ground-truth-format.md#transform-convention) for the transform conventions <br> A special object id `'cam'` is used for the camera <br> `'gt_frame'`/`'classical_frame'` denote the pose's ground truth/classical .png files<br>`'id'` denotes indies to the ground truth/classical frame in the NPZ format |
 |`'full_trajectory'`| Array of dictionaries with one entry per Vicon pose measurement (200Hz) |
 |`imu`| Dictionary of arrays of IMU samples<br> One array per IMU on the EVIMO2 camera rig <br> No IMU data is available for EVIMO|
-|`'meta'` | Camera intrinsics and time offset from the corresponding ROS bag file.<br>See [here](dataset-configuration-folder.md#camera-configuration-folder-example) for details. |
+|`'meta'` | Camera intrinsics and time offset from the corresponding ROS bag file.<br>See [here](raw-sequence-structure.md) for details. |
 
 **Note:** The `'vel'` key is available in older versions of the dataset, it should be ignored.
 
