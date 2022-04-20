@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ground Truth Format &mdash; EVIMO 2022 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/ico.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Inspecting an EVIMO2 v2 Sequence" href="evimo2v2-inspect-sequence.html" />
+    <link rel="prev" title="Welcome to EVIMO’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> EVIMO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Data</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Ground Truth Format</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#npz-evimo2v2">NPZ (EVIMO2v2)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#npz-evimo-and-evimo2v1">NPZ (EVIMO and EVIMO2v1)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#txt">TXT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#meta-s-contents">Meta’s Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transform-convention">Transform Convention</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#format-comparison">Format Comparison</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#evimo2v1-vs-evimo2v2">EVIMO2v1 vs EVIMO2v2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#evimo2v2-txt-vs-evimo2v2-npz">EVIMO2v2 TXT vs EVIMO2v2 NPZ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#evimo-evimo2v1-npz-vs-evimo2v2-npz">EVIMO, EVIMO2v1 NPZ vs EVIMO2v2 NPZ</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-inspect-sequence.html">Inspecting an EVIMO2 v2 Sequence</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docker-environment.html">EVIMO Docker Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-generation.html">Generating EVIMO2 v2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="offline-generation-tool.html">Offline Generation Tool</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Recording</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="evimo-pipeline-setup.html">EVIMO Pipeline Setup on Host OS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-structure.html">Raw Sequence Folder Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-inspection.html">Raw Sequence Inspection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calibration-tools.html">Calibration Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding-a-new-object.html">Adding a new object to the tool</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EVIMO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Ground Truth Format</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/ground-truth-format.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="ground-truth-format">
+<h1>Ground Truth Format<a class="headerlink" href="#ground-truth-format" title="Permalink to this headline"></a></h1>
+<p>The ground truth is available in the following formats:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">NPZ</span></code> - A collection of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.save.html"><code class="docutils literal notranslate"><span class="pre">.npy</span></code> files</a>, supported by <a class="reference external" href="https://numpy.org/doc/stable/index.html">NumPy</a></p>
+<ul>
+<li><p>EVIMO2v2 - Each sequence is a collection of <code class="docutils literal notranslate"><span class="pre">.npz</span></code> and <code class="docutils literal notranslate"><span class="pre">.npy</span></code> files</p></li>
+<li><p>EVIMO, EVIMO2v1 - Each sequence is compressed into a single <code class="docutils literal notranslate"><span class="pre">.npz</span></code> file</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TXT</span></code> - Ground truth and recordings in the form of <code class="docutils literal notranslate"><span class="pre">.png</span></code> and <code class="docutils literal notranslate"><span class="pre">.txt</span></code> files</p></li>
+</ul>
+<p>The high level differences between the formats are described <a class="reference internal" href="#format-comparison"><span class="std std-doc">here</span></a>.</p>
+<div class="section" id="npz-evimo2v2">
+<h2>NPZ (EVIMO2v2)<a class="headerlink" href="#npz-evimo2v2" title="Permalink to this headline"></a></h2>
+<p>There is one folder per sequence. A sequences folder can be found in the following path:<br>
+<code class="docutils literal notranslate"><span class="pre">&lt;camera&gt;/&lt;category&gt;/&lt;subcategory&gt;/&lt;sequence</span> <span class="pre">name&gt;</span></code></p>
+<p>Inside a sequences folder are the following files:</p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_classical.npz</span></code></p></td>
+<td><p>Dictionary of <em>(RES_Y, RES_X)</em> arrays with keys <code class="docutils literal notranslate"><span class="pre">classical_&lt;frame</span> <span class="pre">id&gt;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_depth.npz</span></code></p></td>
+<td><p>Dictionary of <em>(RES_Y, RES_X)</em> arrays with keys <code class="docutils literal notranslate"><span class="pre">depth_&lt;frame</span> <span class="pre">id&gt;</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_mask.npz</span></code></p></td>
+<td><p>Dictionary of <em>(RES_Y, RES_X)</em> arrays with keys <code class="docutils literal notranslate"><span class="pre">mask_&lt;frame</span> <span class="pre">id&gt;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_events_p.npy</span></code></p></td>
+<td><p>Array of *(NUM_EVENTS, 1) containing events polarity <br> <strong>Can be memory mapped</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_events_t.npy</span></code></p></td>
+<td><p>Array of *(NUM_EVENTS, 1) containing events time<br> <strong>Can be memory mapped</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_events_xy.npy</span></code></p></td>
+<td><p>Array of *(NUM_EVENTS, 2) containg events pixel location<br> <strong>Can be memory mapped</strong></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_info.npz</span></code></p></td>
+<td><p>Dictionary of arrays <code class="docutils literal notranslate"><span class="pre">D</span></code>, <code class="docutils literal notranslate"><span class="pre">discretization</span></code>, <code class="docutils literal notranslate"><span class="pre">index</span></code>, <code class="docutils literal notranslate"><span class="pre">K</span></code>, <code class="docutils literal notranslate"><span class="pre">meta</span></code><br> Contents are identical to the EVIMO, EVIMO2v1 NPZ format</p></td>
+</tr>
+</tbody>
+</table>
+<p>Ground truth depth and masks are not evenly spaced in time because the Vicon system sometimes loses track due to occlusion. The <code class="docutils literal notranslate"><span class="pre">meta</span></code> field requires all the required timestamping information to handle the irregular sampling.</p>
+<p>In EVIMO2v2 the classical camera will have a different number of depth/mask frames and classical frames because classical frames are kept even if the depth and mask are unavailable.</p>
+</div>
+<div class="section" id="npz-evimo-and-evimo2v1">
+<h2>NPZ (EVIMO and EVIMO2v1)<a class="headerlink" href="#npz-evimo-and-evimo2v1" title="Permalink to this headline"></a></h2>
+<p>There is one compressed <code class="docutils literal notranslate"><span class="pre">.npz</span></code> file per sequence. A sequences file can be found in the following path: <code class="docutils literal notranslate"><span class="pre">&lt;camera&gt;/&lt;category&gt;/&lt;subcategory&gt;/&lt;sequence</span> <span class="pre">name&gt;.npz</span></code></p>
+<p>A sequences <code class="docutils literal notranslate"><span class="pre">.npz</span></code> file contains the following <code class="docutils literal notranslate"><span class="pre">.npy</span></code> files:</p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">classical.npy</span></code></p></td>
+<td><p>Array with shape <em>(NUM_FRAMES, RES_Y, RES_X)</em><br> Contains classical frames if available</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">depth.npy</span></code></p></td>
+<td><p>Array of shape <em>(NUM_FRAMES, RES_Y, RES_X)</em><br>depth is in <em>mm</em></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mask.npy</span></code></p></td>
+<td><p>Array of shape <em>(NUM_FRAMES, RES_Y, RES_X)</em><br>masks contains object ids multiplied by <code class="docutils literal notranslate"><span class="pre">1000</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">events.npy</span></code></p></td>
+<td><p>Array of shape <em>(NUM_EVENTS, 4)</em><br>Each row contains an events timestamp, x/y pixel coordinate and polarity</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">meta.npy</span></code></p></td>
+<td><p>Python dictionary containing intrinsics, timestamps, poses, and IMU data<br>The full description is <a class="reference internal" href="#meta-s-contents"><span class="std std-doc">here</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">K.npy/D.npy</span></code></p></td>
+<td><p>Intrinsic and distortion parameters, also available in <code class="docutils literal notranslate"><span class="pre">meta.npy</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">index.npy</span></code></p></td>
+<td><p>A helper lookup table for fast timestamp-to-event index computation<br>Contains indices of events every <code class="docutils literal notranslate"><span class="pre">discretization.npy</span></code> seconds</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">discretization.npy</span></code></p></td>
+<td><p>The time between events corresponding to the indices in <code class="docutils literal notranslate"><span class="pre">index.npy</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Ground truth depth and masks are not evenly spaced in time because the Vicon system sometimes loses track due to occlusion. The <code class="docutils literal notranslate"><span class="pre">meta</span></code> field requires all the required timestamping information to handle the irregular sampling.</p>
+<p>In EVIMO and EVIMO2v1 the classical camera frames are only available when depth and mask frames are available.</p>
+</div>
+<div class="section" id="txt">
+<h2>TXT<a class="headerlink" href="#txt" title="Permalink to this headline"></a></h2>
+<p>There is one folder per sequence. A sequences folder can be found in the following path:<br>
+<code class="docutils literal notranslate"><span class="pre">&lt;camera&gt;/&lt;category&gt;/&lt;subcategory&gt;/&lt;sequence</span> <span class="pre">name&gt;</span></code></p>
+<p>We strongly suggest using the <a class="reference external" href="https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py">pydvs sample</a> as a prototype for manipulating the TXT data. This is the script which converts the TXT format (the output of the <a class="reference internal" href="offline-generation-tool.html"><span class="doc std std-doc">C++ pipeline</span></a> to NPZ. It also generates the trajectory plot distributed with the TXT format, event slices, and frames for visualization videos.</p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Item</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">img/img_&lt;frame</span> <span class="pre">id&gt;.png</span></code></p></td>
+<td><p>Conventional frames from a classical camera, when available</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">img/depth_mask_&lt;frame</span> <span class="pre">id&gt;.png</span></code></p></td>
+<td><p>16-bit png’s with depth and masks in different channels <br>Depth is in <em>mm</em><br> Masks contain per-pixel object ids multiplied by <code class="docutils literal notranslate"><span class="pre">1000</span></code><br>An example of reading the image is available <a class="reference external" href="https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py#L229">here</a><br>The relevant C++ code is <a class="reference external" href="https://github.com/better-flow/evimo/blob/3b20a8a3ee729b9b9eb69bda05ac4cbf8b9773cb/evimo/dataset_frame.h#L300">here</a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">events.txt</span></code></p></td>
+<td><p>File with events (if available)<br>One event per line in a format <code class="docutils literal notranslate"><span class="pre">&lt;timestamp</span> <span class="pre">px</span> <span class="pre">py</span> <span class="pre">polarity&gt;</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">calib.txt</span></code><br><code class="docutils literal notranslate"><span class="pre">extrinsics.txt</span></code><br> <code class="docutils literal notranslate"><span class="pre">params.txt</span></code> or <code class="docutils literal notranslate"><span class="pre">config.txt</span></code></p></td>
+<td><p>Camera parameters see <span class="xref myst">here</span> for details</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">meta.txt</span></code></p></td>
+<td><p>String containing intrinsics, timestamps, poses, and IMU data<br>The full description is <a class="reference internal" href="#meta-s-contents"><span class="std std-doc">here</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">position_plots.pdf</span></code></p></td>
+<td><p>A plot of camera/object trajectories for visualization only</p></td>
+</tr>
+</tbody>
+</table>
+<p>Ground truth depth and masks are not evenly spaced in time because the Vicon system sometimes loses track due to occlusion. The <code class="docutils literal notranslate"><span class="pre">meta</span></code> field requires all the required timestamping information to handle the irregular sampling.</p>
+<p>In EVIMO and EVIMO2v1 the classical camera frames are only available when depth and mask frames are available.</p>
+<p>In EVIMO2v2 the classical camera will have a different number of depth/mask frames and classical frames because classical frames are kept even if the depth and mask are unavailable.</p>
+</div>
+<div class="section" id="meta-s-contents">
+<h2>Meta’s Contents<a class="headerlink" href="#meta-s-contents" title="Permalink to this headline"></a></h2>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'frames'</span></code></p></td>
+<td><p>Array of dictionaries with one entry per ground truth sampling period <br>Each dictionary contains the pose of each object and the camera<br> See <a class="reference internal" href="#transform-convention"><span class="std std-doc">here</span></a> for the transform conventions <br> A special object id <code class="docutils literal notranslate"><span class="pre">'cam'</span></code> is used for the camera <br> <code class="docutils literal notranslate"><span class="pre">'gt_frame'</span></code>/<code class="docutils literal notranslate"><span class="pre">'classical_frame'</span></code> denote the pose’s ground truth/classical .png files<br><code class="docutils literal notranslate"><span class="pre">'id'</span></code> denotes indies to the ground truth/classical frame in the NPZ format</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'full_trajectory'</span></code></p></td>
+<td><p>Array of dictionaries with one entry per Vicon pose measurement (200Hz)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">imu</span></code></p></td>
+<td><p>Dictionary of arrays of IMU samples<br> One array per IMU on the EVIMO2 camera rig <br> No IMU data is available for EVIMO</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'meta'</span></code></p></td>
+<td><p>Camera intrinsics and time offset from the corresponding ROS bag file.<br>See <span class="xref myst">here</span> for details.</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> The <code class="docutils literal notranslate"><span class="pre">'vel'</span></code> key is available in older versions of the dataset, it should be ignored.</p>
+<p>An example of the contents of <code class="docutils literal notranslate"><span class="pre">meta.npy</span></code> or <code class="docutils literal notranslate"><span class="pre">meta.txt</span></code> is given below. In either case, the structure is a Python dictionary and the text version can be read with Python’s <code class="docutils literal notranslate"><span class="pre">eval()</span></code> method as shown <a class="reference external" href="https://github.com/better-flow/pydvs/blob/bdff8de0c3c7df24d3143154b415091d88a1e4c2/samples/evimo-gen.py#L182">here</a>.</p>
+<p>For brevity, only a single element of the <code class="docutils literal notranslate"><span class="pre">'frames'</span></code>, <code class="docutils literal notranslate"><span class="pre">'full_trajectory'</span></code>, and IMU arrays are shown.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;frames&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;11&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.27729</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.145438</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.40157</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.860639</span><span class="p">},</span>
+                            <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.49274</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.765635</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">2.720059</span><span class="p">},</span>
+                            <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.005627</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.338652</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.391626</span><span class="p">}},</span>
+                    <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;14&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.507373</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.528164</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.658874</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.171756</span><span class="p">},</span>
+                            <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.508834</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">2.080551</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">1.487373</span><span class="p">},</span>
+                            <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.204377</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.395282</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.558496</span><span class="p">}},</span>
+                    <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;15&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.094314</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.133898</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.853899</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.493997</span><span class="p">},</span>
+                            <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.29774</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">2.114005</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">2.999389</span><span class="p">},</span>
+                            <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.016263</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.39068</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.34646</span><span class="p">}},</span>
+                    <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;22&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.390027</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.751193</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.092049</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.524514</span><span class="p">},</span>
+                            <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.79837</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">1.780868</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.901796</span><span class="p">},</span>
+                            <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.039562</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.17172</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.283998</span><span class="p">}},</span>
+                    <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;23&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.315782</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.541274</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.711081</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.318855</span><span class="p">},</span>
+                            <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.917802</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">2.956836</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">1.931814</span><span class="p">},</span>
+                            <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.128985</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.108972</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.90992</span><span class="p">}},</span>
+                    <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;24&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.302069</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.559534</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.146147</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.757837</span><span class="p">},</span>
+                            <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.862972</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">1.036446</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.869526</span><span class="p">},</span>
+                            <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.232299</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.171992</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.765111</span><span class="p">}},</span>
+                    <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;5&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.897532</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.232753</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.370827</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.052436</span><span class="p">},</span>
+                           <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.761582</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.551012</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.108671</span><span class="p">},</span>
+                           <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.24287</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.042829</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.686142</span><span class="p">}},</span>
+                   <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;6&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.629238</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.435374</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.09361</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.636982</span><span class="p">},</span>
+                           <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.737523</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.61769</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.337676</span><span class="p">},</span>
+                           <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.091899</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.008143</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.013714</span><span class="p">}},</span>
+                   <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;cam&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">3.6e-05</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.000342</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.000158</span><span class="p">},</span>
+                             <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.000683</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">7.2e-05</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.000316</span><span class="p">},</span>
+                             <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.000103</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.000202</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">2.9e-05</span><span class="p">}},</span>
+                     <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">},</span>
+             <span class="s1">&#39;classical_frame&#39;</span><span class="p">:</span> <span class="s1">&#39;img_0.png&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;gt_frame&#39;</span><span class="p">:</span> <span class="s1">&#39;depth_mask_0.png&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+             <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.031794</span><span class="p">}],</span>
+ <span class="s1">&#39;full_trajectory&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;11&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.27728</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.145302</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.401452</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.86072</span><span class="p">},</span>
+                                     <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.492419</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.765375</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">2.719923</span><span class="p">},</span>
+                                     <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.005162</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.338606</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.391609</span><span class="p">}},</span>
+                             <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;14&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.507253</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.527763</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.659383</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.17139</span><span class="p">},</span>
+                                     <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.509845</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">2.081517</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">1.488579</span><span class="p">},</span>
+                                     <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.203892</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.395231</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.558574</span><span class="p">}},</span>
+                             <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;15&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.093911</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.133816</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.853955</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.493998</span><span class="p">},</span>
+                                     <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.296946</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">2.11404</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">2.999136</span><span class="p">},</span>
+                                     <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.015858</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.390641</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.346457</span><span class="p">}},</span>
+                             <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;22&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.390079</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.751092</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.092001</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.524628</span><span class="p">},</span>
+                                     <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.798503</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">1.780428</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.90209</span><span class="p">},</span>
+                                     <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.039156</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.171642</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.284023</span><span class="p">}},</span>
+                             <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;23&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.31792</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.540927</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.710404</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.318828</span><span class="p">},</span>
+                                     <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.921696</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">2.960192</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">1.930286</span><span class="p">},</span>
+                                     <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.128655</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.10911</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.90998</span><span class="p">}},</span>
+                             <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;24&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.302236</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.559342</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.146205</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.757901</span><span class="p">},</span>
+                                     <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.862507</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">1.036064</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.869722</span><span class="p">},</span>
+                                     <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.232548</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.172056</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.765072</span><span class="p">}},</span>
+                             <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;5&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.897617</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.232821</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.370598</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.052295</span><span class="p">},</span>
+                                    <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.761021</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.551155</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.108874</span><span class="p">},</span>
+                                    <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.243082</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.04289</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.68607</span><span class="p">}},</span>
+                            <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;6&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.62919</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.435517</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.093582</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.636936</span><span class="p">},</span>
+                                    <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.737654</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.618076</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.33747</span><span class="p">},</span>
+                                    <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">0.092225</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.008196</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">1.013705</span><span class="p">}},</span>
+                            <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;cam&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;q&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">6.1e-05</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.000162</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.000107</span><span class="p">},</span>
+                                      <span class="s1">&#39;rpy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="mf">0.000324</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">0.000122</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.000214</span><span class="p">},</span>
+                                      <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">6.6e-05</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">9e-05</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">8e-06</span><span class="p">}},</span>
+                              <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">},</span>
+                      <span class="s1">&#39;gt_frame&#39;</span><span class="p">:</span> <span class="s1">&#39;depth_mask_18446744073709551615.png&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="mi">18446744073709551615</span><span class="p">,</span>
+                      <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017647</span><span class="p">}],</span>
+ <span class="s1">&#39;imu&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;/prophesee/left/imu&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;angular_velocity&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.001065</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.011984</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.020639</span><span class="p">},</span>
+                                  <span class="s1">&#39;linear_acceleration&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="mf">8.293953</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.349074</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">5.420528</span><span class="p">},</span>
+                                  <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017303</span><span class="p">}],</span>
+         <span class="s1">&#39;/prophesee/right/imu&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;angular_velocity&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.036885</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.021438</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.006924</span><span class="p">},</span>
+                                   <span class="s1">&#39;linear_acceleration&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">8.361612</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="mf">0.078437</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">4.883445</span><span class="p">},</span>
+                                   <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">0.017319</span><span class="p">}]},</span>
+ <span class="s1">&#39;meta&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;cx&#39;</span><span class="p">:</span> <span class="mf">1053.709961</span><span class="p">,</span>
+          <span class="s1">&#39;cy&#39;</span><span class="p">:</span> <span class="mf">788.531982</span><span class="p">,</span>
+          <span class="s1">&#39;dist_model&#39;</span><span class="p">:</span> <span class="s1">&#39;radtan&#39;</span><span class="p">,</span>
+          <span class="s1">&#39;fx&#39;</span><span class="p">:</span> <span class="mf">2066.48999</span><span class="p">,</span>
+          <span class="s1">&#39;fy&#39;</span><span class="p">:</span> <span class="mf">2066.469971</span><span class="p">,</span>
+          <span class="s1">&#39;k1&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.117189</span><span class="p">,</span>
+          <span class="s1">&#39;k2&#39;</span><span class="p">:</span> <span class="mf">0.069793</span><span class="p">,</span>
+          <span class="s1">&#39;k3&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+          <span class="s1">&#39;k4&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+          <span class="s1">&#39;p1&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.000327</span><span class="p">,</span>
+          <span class="s1">&#39;p2&#39;</span><span class="p">:</span> <span class="mf">0.005909</span><span class="p">,</span>
+          <span class="s1">&#39;res_x&#39;</span><span class="p">:</span> <span class="mi">2080</span><span class="p">,</span>
+          <span class="s1">&#39;res_y&#39;</span><span class="p">:</span> <span class="mi">1552</span><span class="p">,</span>
+          <span class="s1">&#39;ros_time_offset&#39;</span><span class="p">:</span> <span class="mf">1606265321.445115</span><span class="p">}}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="transform-convention">
+<h2>Transform Convention<a class="headerlink" href="#transform-convention" title="Permalink to this headline"></a></h2>
+<ul class="simple">
+<li><p>Object poses represent transforms from the object frame to the camera frame.</p></li>
+<li><p>Camera poses represent transforms from the camera frame to the world frame.</p></li>
+</ul>
+</div>
+<div class="section" id="format-comparison">
+<h2>Format Comparison<a class="headerlink" href="#format-comparison" title="Permalink to this headline"></a></h2>
+<div class="section" id="evimo2v1-vs-evimo2v2">
+<h3>EVIMO2v1 vs EVIMO2v2<a class="headerlink" href="#evimo2v1-vs-evimo2v2" title="Permalink to this headline"></a></h3>
+<p>Many important improvements to the data generation pipeline that transforms raw recordings to released data were made in order to release EVIMO2v2. These changes include:</p>
+<ul class="simple">
+<li><p>All camera’s data’s timestamps are synchronized to a common source (Vicon)</p></li>
+<li><p>Event camera ground truths are synchronized and jitter is eliminated up to numercial precision</p></li>
+<li><p>Classical camera’s ground truth jitter is eliminated up to numerical precision</p></li>
+<li><p>Classical camera’s image data is kept when there is no ground truth due to Vicon occlusion</p></li>
+<li><p>A redesigned NPZ format greatly reduces loading time without requiring excessive disk usage</p></li>
+<li><p>Events are not filtered when copied out of the <code class="docutils literal notranslate"><span class="pre">raw</span></code> recordings</p></li>
+<li><p>Several sequences with no usable data were deleted</p></li>
+<li><p>Sequences were split into several sub-sequences satisfying:</p>
+<ul>
+<li><p>Gaps in ground truth depth/mask have a duration of at most 1 second</p></li>
+<li><p>All sub-sequences are at least 0.4 seconds long</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="evimo2v2-txt-vs-evimo2v2-npz">
+<h3>EVIMO2v2 TXT vs EVIMO2v2 NPZ<a class="headerlink" href="#evimo2v2-txt-vs-evimo2v2-npz" title="Permalink to this headline"></a></h3>
+<p>Decompressed, the EVIMO2v2 NPZ format requires 525 GB of space of which 271 GB is for the RGB camera and 255 GB is for the three DVS cameras.</p>
+<p>Decompressed, the TXT format requires 842 GB of space of which 212 GB is for the RGB camera and 631 GB is for the three DVS cameras.</p>
+<p>The EVIMO2v2 NPZ format supports memory mapping the event arrays from disk.</p>
+<p>The TXT format requires parsing the <code class="docutils literal notranslate"><span class="pre">events.txt</span></code> file, which can tens of seconds per sequence.</p>
+<p>The TXT format decompresses to about 471,000 files. The npz format decompresses to 4,700 files.</p>
+</div>
+<div class="section" id="evimo-evimo2v1-npz-vs-evimo2v2-npz">
+<h3>EVIMO, EVIMO2v1 NPZ vs EVIMO2v2 NPZ<a class="headerlink" href="#evimo-evimo2v1-npz-vs-evimo2v2-npz" title="Permalink to this headline"></a></h3>
+<p>EVIMO and EVIMO2v1 compressed the entire dataset into a single <code class="docutils literal notranslate"><span class="pre">.npz</span></code> file. Inside this <code class="docutils literal notranslate"><span class="pre">.npz</span></code> there are archives for the depth, masks, events, and conventional images. To access any of this data the entire depth, mask, events, or conventional archives must be decompressed into RAM (by numpy) or onto disk (manually by the user). This can take several minutes for each sequence and requires the user to either have upwards of 64GB of RAM (to hold a decompressed sequence) or multiple TB of disk space (to store all sequences decompressed at once).</p>
+<p>EVIMO2v2 introduces a new NPZ format with two major changes. These changes eliminate long sequence load times and while preventing excessive disk usage. First, depth, masks, and conventional images are compressed frame by frame so that only the frame being currently used needs to be decompressed and stored in RAM. Second, events are stored uncompressed with the minimum width data type. Because the events are stored in a decompressed format, the arrays can be memory mapped so that only the portions of the events currently in use need to be stored in RAM.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to EVIMO’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="evimo2v2-inspect-sequence.html" class="btn btn-neutral float-right" title="Inspecting an EVIMO2 v2 Sequence" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Anton Mitrokhin, Levi Burner.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

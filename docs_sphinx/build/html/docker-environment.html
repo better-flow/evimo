@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EVIMO Docker Environment &mdash; EVIMO 2022 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/ico.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Generating EVIMO2 v2" href="evimo2v2-generation.html" />
+    <link rel="prev" title="Inspecting an EVIMO2 v2 Sequence" href="evimo2v2-inspect-sequence.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> EVIMO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Data</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ground-truth-format.html">Ground Truth Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-inspect-sequence.html">Inspecting an EVIMO2 v2 Sequence</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Generation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">EVIMO Docker Environment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#notes">Notes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#docker-build-sh-does-the-following-things">docker_build.sh does the following things:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#docker-run-sh-does-the-following-things">docker_run.sh does the following things:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#catkin-make"><code class="docutils literal notranslate"><span class="pre">catkin_make</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pydvs"><code class="docutils literal notranslate"><span class="pre">pydvs</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-generation.html">Generating EVIMO2 v2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="offline-generation-tool.html">Offline Generation Tool</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Recording</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="evimo-pipeline-setup.html">EVIMO Pipeline Setup on Host OS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-structure.html">Raw Sequence Folder Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-inspection.html">Raw Sequence Inspection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calibration-tools.html">Calibration Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding-a-new-object.html">Adding a new object to the tool</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EVIMO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>EVIMO Docker Environment</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/docker-environment.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="evimo-docker-environment">
+<h1>EVIMO Docker Environment<a class="headerlink" href="#evimo-docker-environment" title="Permalink to this headline"></a></h1>
+<p>A docker environment is provided to simplify generating the dataset from raw recordings. The source is <a class="reference external" href="https://github.com/better-flow/evimo/tree/master/tools/evimo2_docker">here</a>.</p>
+<p>It is assumed below that the raw recordings are available in a directory <code class="docutils literal notranslate"><span class="pre">/media/$(USER)/EVIMO</span></code>. A full generation requires 4TB of disk space.</p>
+<p>Refer to <a class="reference internal" href="evimo2v2-generation.html"><span class="doc std std-doc">this page</span></a> for instructions on using this container to generate EVIMO2v2 from the raw recordings.</p>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline"></a></h2>
+<p>Download the repository, enter the docker directory, build the container, run the container, compile and install tools mounted from the host filesystem.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/better-flow/evimo.git
+<span class="nb">cd</span> evimo/tools/evimo2_docker
+./docker_build.sh
+./docker_run.sh /media/<span class="k">$(</span>USER<span class="k">)</span>/EVIMO
+<span class="nb">cd</span> ~/catkin_ws<span class="p">;</span> catkin_make<span class="p">;</span> pip3 install -e ~/pydvs/lib<span class="p">;</span> <span class="nb">cd</span>
+<span class="nb">source</span> ~/catkin_ws/devel/setup.bash
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">catkin_make</span></code> only needs to be run once because <code class="docutils literal notranslate"><span class="pre">catkin_ws</span></code> is stored on the host and mounted into the container.</p>
+</div>
+<div class="section" id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this headline"></a></h2>
+<div class="section" id="docker-build-sh-does-the-following-things">
+<h3>docker_build.sh does the following things:<a class="headerlink" href="#docker-build-sh-does-the-following-things" title="Permalink to this headline"></a></h3>
+<ul class="simple">
+<li><p>Creates a <code class="docutils literal notranslate"><span class="pre">docker_home</span></code> folder on the host, it is persistent between containers</p></li>
+<li><p>Adds a command to source required ROS environment variables to the containers <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code></p></li>
+<li><p>Creates a <code class="docutils literal notranslate"><span class="pre">catkin_ws</span></code> with ROS dependencies in <code class="docutils literal notranslate"><span class="pre">docker_home</span></code></p></li>
+<li><p>Clones the <code class="docutils literal notranslate"><span class="pre">pydvs</span></code> python package to <code class="docutils literal notranslate"><span class="pre">evimo2_docker</span></code>. It is not cloned to <code class="docutils literal notranslate"><span class="pre">docker_home</span></code> in order to avoid accidental deletion.</p></li>
+</ul>
+<p>Because all source code is in the <code class="docutils literal notranslate"><span class="pre">docker_home</span></code> folder, which is mounted into the running container, code changes and ROS compilation is persistent across containers. This allows easy code editing from the host.</p>
+</div>
+<div class="section" id="docker-run-sh-does-the-following-things">
+<h3>docker_run.sh does the following things:<a class="headerlink" href="#docker-run-sh-does-the-following-things" title="Permalink to this headline"></a></h3>
+<ul class="simple">
+<li><p>Mounts the first argument to <code class="docutils literal notranslate"><span class="pre">/home/$USER/EVIMO</span></code>. This will likely be a 4TB or larger hard drive that will be used storing generated artifacts.</p></li>
+<li><p>Mounts the docker_home folder to <code class="docutils literal notranslate"><span class="pre">/home/$USER</span></code> (allows ROS to have persistence across container instances)</p></li>
+<li><p>Mounts the catkin workspace in that fake home directory</p></li>
+<li><p>Mounts the evimo ROS package into the catkin workspace</p></li>
+<li><p>Mounts the evimo tools into the home folder (for generating the dataset)</p></li>
+<li><p>Mounts pydvs into the home folder (for generating the dataset)</p></li>
+<li><p>Runs as the host user (so permissions and ownership are correct on host machine)</p></li>
+<li><p>Allows using sudo, so you can still modify the container’s files</p></li>
+<li><p>Gives access to hosts X server (GUI apps), as a result it is insecure, only run trusted software in here</p></li>
+</ul>
+</div>
+<div class="section" id="catkin-make">
+<h3><code class="docutils literal notranslate"><span class="pre">catkin_make</span></code><a class="headerlink" href="#catkin-make" title="Permalink to this headline"></a></h3>
+<p>Running <code class="docutils literal notranslate"><span class="pre">catkin_make</span></code> is required only when the C++ codes are changed. It does not need to be re-run if the container is restarted.</p>
+</div>
+<div class="section" id="pydvs">
+<h3><code class="docutils literal notranslate"><span class="pre">pydvs</span></code><a class="headerlink" href="#pydvs" title="Permalink to this headline"></a></h3>
+<p>Pydvs is installed using the “editable” mode. This means python codes can be edited and run without running <code class="docutils literal notranslate"><span class="pre">pip3</span></code> again. However, updating pydvs’s C components will require running <code class="docutils literal notranslate"><span class="pre">pip3</span></code> again.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="evimo2v2-inspect-sequence.html" class="btn btn-neutral float-left" title="Inspecting an EVIMO2 v2 Sequence" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="evimo2v2-generation.html" class="btn btn-neutral float-right" title="Generating EVIMO2 v2" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Anton Mitrokhin, Levi Burner.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

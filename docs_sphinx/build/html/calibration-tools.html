@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calibration Tools &mdash; EVIMO 2022 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/ico.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Adding a new object to the tool" href="adding-a-new-object.html" />
+    <link rel="prev" title="Raw Sequence Inspection" href="raw-sequence-inspection.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> EVIMO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Data</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ground-truth-format.html">Ground Truth Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-inspect-sequence.html">Inspecting an EVIMO2 v2 Sequence</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docker-environment.html">EVIMO Docker Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-generation.html">Generating EVIMO2 v2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="offline-generation-tool.html">Offline Generation Tool</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Recording</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="evimo-pipeline-setup.html">EVIMO Pipeline Setup on Host OS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-structure.html">Raw Sequence Folder Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-inspection.html">Raw Sequence Inspection</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Calibration Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#refine-tool">refine tool</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#input-to-the-tool">Input to the tool:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration-file">Configuration file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinement-pipeline">Refinement pipeline:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#refinement-result">Refinement result:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#collect-tool">collect tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reprojection-error-tool">Reprojection error tool</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding-a-new-object.html">Adding a new object to the tool</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EVIMO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Calibration Tools</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/calibration-tools.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="calibration-tools">
+<h1>Calibration Tools<a class="headerlink" href="#calibration-tools" title="Permalink to this headline"></a></h1>
+<p>The calibration tools are designed to calibrate (intrinsically and extrinsically) a <em>single</em> camera and Vicon. We use two tools to perform calibration: the <em>collect</em> tool, which allows to collect a small amount of frames for a complete (but not always the most accurate) calibration, and <em>refine</em> tool for calibration refinement, given the initial calibration is provided. We run the <em>refine</em> tool before every data collection, while the <em>collect</em> tool has only been used once.</p>
+<div class="section" id="refine-tool">
+<h2>refine tool<a class="headerlink" href="#refine-tool" title="Permalink to this headline"></a></h2>
+<p>The code for the tool is located <a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L1134">here</a>. A typical use-case:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rosrun</span> <span class="n">evimo</span> <span class="n">refine</span> <span class="n">_conf</span><span class="p">:</span><span class="o">=./</span><span class="n">evimo2</span><span class="o">/</span><span class="n">calib_112420</span><span class="o">/</span><span class="n">samsung_mono</span><span class="o">.</span><span class="n">cfg</span>
+</pre></div>
+</div>
+<div class="section" id="input-to-the-tool">
+<h3>Input to the tool:<a class="headerlink" href="#input-to-the-tool" title="Permalink to this headline"></a></h3>
+<p>An input to the tool a folder with one or several <code class="docutils literal notranslate"><span class="pre">.bag</span></code> files, which contain the Vicon calibration wand recording: both camera images (or events) and Vicon pose topics for wand <em>and</em> for the sensor rig. The folder (with multiple sensor configuration files) may look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>calib_112420/
+├── bagname.txt
+├── flea3_7.cfg
+├── left_camera.cfg
+├── right_camera.cfg
+├── samsung_mono.cfg
+├── wand_00_depth_00.bag
+├── wand_00_depth_01.bag
+├── wand_00_depth_02.bag
+├── wand_01_depth_00.bag
+├── wand_01_depth_01.bag
+└── wand_01_depth_02.bag
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuration-file">
+<h3>Configuration file<a class="headerlink" href="#configuration-file" title="Permalink to this headline"></a></h3>
+<p>The configuration file (for example <code class="docutils literal notranslate"><span class="pre">samsung_mono.cfg</span></code>) will contain some sensor-specific settings and configuration for the refinement run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">camera_name</span><span class="p">:</span> <span class="n">samsung_mono</span>
+<span class="n">image_th</span><span class="p">:</span> <span class="mi">240</span> <span class="c1"># only useful for classical cameras</span>
+<span class="n">dilate_blobs</span><span class="p">:</span> <span class="n">false</span> <span class="c1"># only useful for event cameras</span>
+<span class="n">bag_file</span><span class="p">:</span> <span class="n">wand_01_depth_00</span><span class="o">.</span><span class="n">bag</span> <span class="mi">3</span> <span class="mi">20</span>
+<span class="n">bag_file</span><span class="p">:</span> <span class="n">wand_01_depth_01</span><span class="o">.</span><span class="n">bag</span> <span class="mi">2</span> <span class="mi">20</span>
+<span class="n">bag_file</span><span class="p">:</span> <span class="n">wand_01_depth_02</span><span class="o">.</span><span class="n">bag</span> <span class="mi">0</span> <span class="o">-</span><span class="mi">1</span>
+</pre></div>
+</div>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Settings</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">camera_name</span></code></p></td>
+<td><p>Camera in <a class="reference internal" href="raw-sequence-structure.html"><span class="doc std std-doc">sequence folder</span></a> to get initial calibration and ROS topic from</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bag_file</span></code></p></td>
+<td><p>List of <code class="docutils literal notranslate"><span class="pre">.bag</span></code> files to be used<br>The first parameter is relative path to the <code class="docutils literal notranslate"><span class="pre">.bag</span></code> file, then start offset, then length <br> of the recording to process (<code class="docutils literal notranslate"><span class="pre">-1</span></code> means process the entire recording) <br>In the example above, the <code class="docutils literal notranslate"><span class="pre">wand_01_depth_00.bag</span></code> is processed from sec. <em>3</em> to sec. <em>23</em></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">image_th</span></code></p></td>
+<td><p>Optional parameter which is only used for classical cameras (<a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L1052">code</a>) <br> Will threshold an image at a specified value before blob extraction.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dilate_blobs</span></code></p></td>
+<td><p>Optional parameter which is only used for event cameras (<a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L1026">code</a>)<br> Dilates an image with a 5x5 kernel</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline"></a></h3>
+<p>The tool accepts several parameters (we recommend sticking with the defaults).</p>
+<p><strong>Note:</strong> for event cameras the tool performs <em>frequency filtering</em> (<a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L1009">code</a>). We recorded the calibration for <em>evimo</em> with Vicon wand leds flickering at 200Hz. You may wish to disable this feature in case your recording does not use flickering leds.</p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_conf:=&lt;string&gt;</span></code></p></td>
+<td><p>Path to the camera configuration file (e.g. <code class="docutils literal notranslate"><span class="pre">samsung_mono.cfg</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_folder:=&lt;string&gt;</span></code></p></td>
+<td><p>The path to the <a class="reference internal" href="raw-sequence-structure.html"><span class="doc std std-doc">sequence folder</span></a><br>By default <code class="docutils literal notranslate"><span class="pre">evimo/evimo/config/</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_wand_topic:=&lt;string&gt;</span></code></p></td>
+<td><p>A ROS topic of Vicon calibration wand<br>By default <code class="docutils literal notranslate"><span class="pre">/vicon/Wand</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_e_slice_width:=&lt;float&gt;</span></code></p></td>
+<td><p>Width of event slice (in seconds) used to detect the Wand<br> Large values can cause motion blur if the Wand was moved fast<br> Small values will cause detection to be less reliable<br> By default <code class="docutils literal notranslate"><span class="pre">0.02</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_e_fps:=&lt;float&gt;</span></code></p></td>
+<td><p>Frequency at which to generate ‘frames’ for event cameras<br> By default <code class="docutils literal notranslate"><span class="pre">2.0</span> <span class="pre">/</span> <span class="pre">e_slice_width</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">_tracker_max_pps:=&lt;float&gt;</span></code></p></td>
+<td><p>Maximum ‘pixel-per-second’ speed of tracked blob between frames<br> By default <code class="docutils literal notranslate"><span class="pre">1000</span> <span class="pre">*</span> <span class="pre">std::max(res_y,</span> <span class="pre">res_x)</span> <span class="pre">/</span> <span class="pre">640.0</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">_tracker_min_len:=&lt;float&gt;</span></code></p></td>
+<td><p>Smallest length of the path of a tracked blob to be used<br> Default is <code class="docutils literal notranslate"><span class="pre">0.3</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="refinement-pipeline">
+<h3>Refinement pipeline:<a class="headerlink" href="#refinement-pipeline" title="Permalink to this headline"></a></h3>
+<p>The tool extracts the tracks (wand led markers) separately from each <code class="docutils literal notranslate"><span class="pre">.bag</span></code> file, but then uses them all together in the optimization. <strong>Note</strong>: vicon tracks IR markers on the wand, while the detected markers are in visible light, and are offset from IR markers. We used a 3D scan of the wand (<a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/objects/wand/model.ply">link</a>) to extract the offset. The mapping can be found <a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/detect_wand.h#L237">here</a>.</p>
+<ol class="arabic simple">
+<li><p>The data is preprocessed: events are frequency-filtered, and event slices are downprojected to form images. OpenCV’s blob extractor is then used to extract blobs for every individual frame (<a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L1001">code</a>).</p></li>
+<li><p>The Vicon tracks are converted to rig frame (also tracked by Vicon), and visible (red) led locations are computed from IR led poses (<a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L941">code</a>).</p></li>
+<li><p>The blobs are tracked (nearest neighbor match with thresholding) and short tracks are removed (<a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L60">code</a>, <a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L1073">code</a>).</p></li>
+<li><p>The wand is detected <a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/detect_wand.h#L249">here</a>, and the marker labels are propagated along tracks.</p></li>
+<li><p>Cross-correlation between Vicon reprojected markers (using initial calibration estimate) and detected markers is used to align time per each bag file (<a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L532">code</a>).</p></li>
+<li><p>The calibration is <a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L1232">ran twice</a> after the initial calibration the outlier points are removed (the points with error below mean), and the calibration is repeated.</p></li>
+</ol>
+</div>
+<div class="section" id="refinement-result">
+<h3>Refinement result:<a class="headerlink" href="#refinement-result" title="Permalink to this headline"></a></h3>
+<p>The tool will not save the result of the calibration, but will output it to the terminal. It can be directly copied to the <code class="docutils literal notranslate"><span class="pre">camera</span> <span class="pre">folder</span></code> within the <a class="reference external" href="https://github.com/better-flow/evimo/wiki/Dataset-Configuration-Folder">dataset configuration folder</a>.</p>
+<p>In addition, the tool will plot the statistics on the data:</p>
+<p><img alt="calibration_tool_refine" src="_images/calibration_tool_refine.png" /></p>
+<p>Top row: input (estimate <em>after</em> initial calibration / before outlier removal).
+Left: all x points.
+Right: all y points. Middle row: same as top, but after the final refinement step (if you would like to generate a similar plot <em>before</em> the calibration, change <code class="docutils literal notranslate"><span class="pre">false</span></code> to <code class="docutils literal notranslate"><span class="pre">true</span></code> <a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/refine_calibration.cpp#L1232">here</a>).
+Bottom left: distribution of depth across all recordings.
+Bottom right: distribution of x-y points projected on the camera plane.</p>
+</div>
+</div>
+<div class="section" id="collect-tool">
+<h2>collect tool<a class="headerlink" href="#collect-tool" title="Permalink to this headline"></a></h2>
+<p>The code for the tool is located <a class="reference external" href="https://github.com/better-flow/evimo/blob/9acbcc71aeb84bc720d689247dd3f075ac59b465/evimo/calib/collect.cpp#L485">here</a>. A typical use-case:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">roslaunch</span> <span class="n">evimo</span> <span class="n">collect</span><span class="o">.</span><span class="n">launch</span> <span class="n">config</span><span class="p">:</span><span class="o">=~/</span><span class="n">config</span><span class="o">.</span><span class="n">txt</span> <span class="n">output_dir</span><span class="p">:</span><span class="o">=/</span><span class="n">tmp</span><span class="o">/</span><span class="n">collect</span>
+</pre></div>
+</div>
+<p>A visualization like below will be shown:
+<img alt="calibration_tool_collect_1" src="_images/calibration_tool_collect_1.png" /></p>
+</div>
+<div class="section" id="reprojection-error-tool">
+<h2>Reprojection error tool<a class="headerlink" href="#reprojection-error-tool" title="Permalink to this headline"></a></h2>
+<p><strong>TODO</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>evimo/evimo/calib$ ./wand_calib.py /home/ncos/ooo/EVIMO2/recording_day_0/calib/samsung_00/ /home/ncos/ooo/EVIMO2/recording_day_0/calib/samsung_01/ /home/ncos/ooo/EVIMO2/recording_day_0/calib/samsung_02/ /home/ncos/ooo/EVIMO2/recording_day_0/calib/samsung_03/ /home/ncos/ooo/EVIMO2/recording_day_0/calib/samsung_04/ -c cam_3
+</pre></div>
+</div>
+<p><img alt="calibration_tool_reproject" src="_images/calibration_tool_reproject.png" /></p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="raw-sequence-inspection.html" class="btn btn-neutral float-left" title="Raw Sequence Inspection" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="adding-a-new-object.html" class="btn btn-neutral float-right" title="Adding a new object to the tool" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Anton Mitrokhin, Levi Burner.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

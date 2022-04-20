@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raw Sequence Folder Structure &mdash; EVIMO 2022 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/ico.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Raw Sequence Inspection" href="raw-sequence-inspection.html" />
+    <link rel="prev" title="EVIMO Pipeline Setup on Host OS" href="evimo-pipeline-setup.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> EVIMO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Data</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ground-truth-format.html">Ground Truth Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-inspect-sequence.html">Inspecting an EVIMO2 v2 Sequence</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docker-environment.html">EVIMO Docker Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-generation.html">Generating EVIMO2 v2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="offline-generation-tool.html">Offline Generation Tool</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Recording</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="evimo-pipeline-setup.html">EVIMO Pipeline Setup on Host OS</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Raw Sequence Folder Structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#defaults">Defaults</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-inspection.html">Raw Sequence Inspection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calibration-tools.html">Calibration Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding-a-new-object.html">Adding a new object to the tool</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EVIMO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Raw Sequence Folder Structure</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/raw-sequence-structure.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="raw-sequence-folder-structure">
+<h1>Raw Sequence Folder Structure<a class="headerlink" href="#raw-sequence-folder-structure" title="Permalink to this headline"></a></h1>
+<p>Each recorded <code class="docutils literal notranslate"><span class="pre">.bag</span></code> file is placed within its own folder. This folder contains intrinsic and extrinsic parameters for each camera recorded in the <code class="docutils literal notranslate"><span class="pre">.bag</span></code> file, as well as time offsets and a list of recorded objects on the scene.</p>
+<p>The example of the dataset configuration folder (without a .bag file) can be found <a class="reference external" href="https://github.com/better-flow/evimo/tree/master/evimo/config">here</a>. The configuration folder should contain:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">objects.txt</span></code> - a file listing the recorded objects</p></li>
+<li><p>one or several <em>camera configuration folders</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;folder_name&gt;.bag</span></code> - a bag file with the same name as the sequence’s folder</p></li>
+</ul>
+<p>An example of the file tree for a raw sequence’s folder is below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>scene13_dyn_test_00
+├── flea3_7
+│   ├── calib.txt
+│   ├── extrinsics.txt
+│   └── params.txt
+├── left_camera
+│   ├── calib.txt
+│   ├── extrinsics.txt
+│   └── params.txt
+├── objects.txt
+├── right_camera
+│   ├── calib.txt
+│   ├── extrinsics.txt
+│   └── params.txt
+├── samsung_mono
+│   ├── calib.txt
+│   ├── extrinsics.txt
+│   └── params.txt
+└── scene13_dyn_test_00.bag
+</pre></div>
+</div>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'calib.txt'</span></code></p></td>
+<td><p>a single line with camera intrinsic parameters in a format <code class="docutils literal notranslate"><span class="pre">fx</span> <span class="pre">fy</span> <span class="pre">cx</span> <span class="pre">cy</span> <span class="pre">k1</span> <span class="pre">k2</span></code> and <code class="docutils literal notranslate"><span class="pre">k3</span> <span class="pre">k4</span></code> for <em>equidistant</em> distortion model and <code class="docutils literal notranslate"><span class="pre">p1</span> <span class="pre">p2</span></code> for <em>radtan</em> distortion model. See relevant code <a class="reference external" href="https://github.com/better-flow/evimo/blob/02db52855d11907ccd8494b84ef8b753209f98ef/evimo/dataset.h#L441">here</a> and <a class="reference external" href="https://github.com/better-flow/evimo/blob/02db52855d11907ccd8494b84ef8b753209f98ef/evimo/dataset.h#L657">here</a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'extrinsics.txt'</span></code></p></td>
+<td><p>4 lines; first line: 6 parameters <code class="docutils literal notranslate"><span class="pre">tx</span> <span class="pre">ty</span> <span class="pre">tz</span> <span class="pre">roll</span> <span class="pre">pitch</span> <span class="pre">yaw</span></code> - Euler angles for camera-to-Vicon transformation. Third line: a single number, camera-to-Vicon timestamp offset in seconds. See relevant code <a class="reference external" href="https://github.com/better-flow/evimo/blob/02db52855d11907ccd8494b84ef8b753209f98ef/evimo/dataset.h#L499">here</a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'params.txt'</span></code></p></td>
+<td><p>Camera’s resolution, distortion model (<code class="docutils literal notranslate"><span class="pre">radtan</span></code> or <code class="docutils literal notranslate"><span class="pre">equidistant</span></code>), and associated topics</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'objects.txt'</span></code></p></td>
+<td><p>Object’s in the <a class="reference external" href="https://github.com/better-flow/evimo/tree/master/evimo/objects">objects directory</a> that should be in a sequence. <a class="reference external" href="https://github.com/better-flow/evimo/blob/master/evimo/config/objects.txt">(example)</a> The objects that are not listed (or commented out) will not be in the ground truth, even if recorded. If the object is included in <code class="docutils literal notranslate"><span class="pre">objects.txt</span></code> but has no ROS messages, most tools will terminate with an error. To create new objects see <a class="reference internal" href="adding-a-new-object.html"><span class="doc std std-doc">adding a new object</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'.bag'</span></code></p></td>
+<td><p>ROS bagfile containing the raw data for the sequence</p></td>
+</tr>
+</tbody>
+</table>
+<p>The following topics can be specified in <code class="docutils literal notranslate"><span class="pre">params.txt</span></code>:</p>
+<table class="colwidths-auto docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Topic</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ros_image_topic</span></code></p></td>
+<td><p>ROS topic with classical rgb camera frames; can be <code class="docutils literal notranslate"><span class="pre">none</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ros_event_topic</span></code></p></td>
+<td><p>ROS topic with events from DVS cameras; can be <code class="docutils literal notranslate"><span class="pre">none</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ros_pos_topic</span></code></p></td>
+<td><p>ROS topic with <a class="reference external" href="https://github.com/KumarRobotics/vicon/tree/a6143808872ab02e8ebdc9384d4ea4d475e815b8/vicon/msg">Vicon messages</a> for the camera and objects</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="defaults">
+<h2>Defaults<a class="headerlink" href="#defaults" title="Permalink to this headline"></a></h2>
+<p>A folder of default camera configurations are provided <a class="reference external" href="https://github.com/better-flow/evimo/tree/master/evimo/config">here</a>. The defaults are used by the online tool.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="evimo-pipeline-setup.html" class="btn btn-neutral float-left" title="EVIMO Pipeline Setup on Host OS" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="raw-sequence-inspection.html" class="btn btn-neutral float-right" title="Raw Sequence Inspection" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Anton Mitrokhin, Levi Burner.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

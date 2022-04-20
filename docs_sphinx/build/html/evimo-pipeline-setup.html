@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EVIMO Pipeline Setup on Host OS &mdash; EVIMO 2022 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/ico.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Raw Sequence Folder Structure" href="raw-sequence-structure.html" />
+    <link rel="prev" title="Offline Generation Tool" href="offline-generation-tool.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> EVIMO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Data</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ground-truth-format.html">Ground Truth Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-inspect-sequence.html">Inspecting an EVIMO2 v2 Sequence</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docker-environment.html">EVIMO Docker Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-generation.html">Generating EVIMO2 v2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="offline-generation-tool.html">Offline Generation Tool</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Recording</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">EVIMO Pipeline Setup on Host OS</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setup">Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-structure.html">Raw Sequence Folder Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-inspection.html">Raw Sequence Inspection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calibration-tools.html">Calibration Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding-a-new-object.html">Adding a new object to the tool</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EVIMO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>EVIMO Pipeline Setup on Host OS</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/evimo-pipeline-setup.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="evimo-pipeline-setup-on-host-os">
+<h1>EVIMO Pipeline Setup on Host OS<a class="headerlink" href="#evimo-pipeline-setup-on-host-os" title="Permalink to this headline"></a></h1>
+<p>A <a class="reference internal" href="docker-environment.html"><span class="doc std std-doc">Docker container</span></a> is provided which can be used for most tasks with the dataset. However, instructions for setting up a ROS workspace on the host OS are provided below.</p>
+<ol class="arabic simple">
+<li><p>The code was tested on Ubuntu 18.04 and 20.04 and consists of multiple tools for visualization, calibration and ground truth generation.</p></li>
+<li><p>While the released dataset is self-contained, in order to generate ground truth from raw <code class="docutils literal notranslate"><span class="pre">.bag</span></code> recordings you will need ROS installed on your system:</p></li>
+</ol>
+<ul class="simple">
+<li><p><a class="reference external" href="http://wiki.ros.org/noetic/Installation/Ubuntu">ROS Noetic installation</a></p></li>
+<li><p><a class="reference external" href="http://wiki.ros.org/ROS/Tutorials">ROS Tutorials</a></p></li>
+<li><p>Overall setup is similar to our <a class="reference external" href="https://github.com/better-flow/better-flow">better-flow</a> project; you might be able to follow the instructions from the project page.</p></li>
+</ul>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline"></a></h2>
+<ol class="arabic simple">
+<li><p>Make sure ROS is <a class="reference external" href="http://wiki.ros.org/noetic/Installation/Ubuntu">installed</a>; This project also relies on <a class="reference external" href="https://opencv.org/">OpenCV</a> and (to a lesser degree) <a class="reference external" href="https://pointclouds.org/">PCL</a>.</p></li>
+<li><p>If you do not have a catkin workspace set up:</p></li>
+<li><p>Download the <em>cognifli</em> code (see <a class="reference external" href="https://github.com/ncos/cognifli">project page</a> for more details):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> ~/
+git clone https://github.com/ncos/cognifli
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Run the <em>INSTALL.py</em> configuration tool to set up your catkin workspace:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> ~/cognifli/contrib
+./INSTALL.py
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Download packages with DVS/Vicon ROS message descriptions: <a class="reference external" href="https://drive.google.com/file/d/15oSCxfUN8oAskz-hLeDGBZoq5HLyYYxM/view?usp=sharing">link</a></p></li>
+<li><p><strong>OR</strong> Download <a class="reference external" href="https://github.com/uzh-rpg/rpg_dvs_ros">DVS</a> and <a class="reference external" href="https://github.com/KumarRobotics/vicon">Vicon</a> packages from their repositories:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> ~/cognifli/src
+git clone https://github.com/catkin/catkin_simple.git
+git clone https://github.com/uzh-rpg/rpg_dvs_ros.git
+git clone https://github.com/KumarRobotics/vicon
+</pre></div>
+</div>
+<p><strong>Note</strong>: only message description parts of the packages are needed; you can remove the rest of the package in case you get compilation errors.</p>
+<ol class="arabic simple" start="5">
+<li><p>Download Evimo <a class="reference external" href="https://github.com/better-flow/evimo">source code</a>:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> ~/cognifli/src
+git clone https://github.com/better-flow/evimo
+</pre></div>
+</div>
+<ol class="arabic simple" start="6">
+<li><p>Build the project:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> ~/cognifli
+catkin_make
+</pre></div>
+</div>
+<p><strong>Note</strong>: We use <a class="reference external" href="https://github.com/uzh-rpg/rpg_dvs_ros">DVS</a> event message format for both Samsung and Prophesee recordings.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="offline-generation-tool.html" class="btn btn-neutral float-left" title="Offline Generation Tool" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="raw-sequence-structure.html" class="btn btn-neutral float-right" title="Raw Sequence Folder Structure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Anton Mitrokhin, Levi Burner.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -10,4 +10,3 @@ build.ninja
 rules.ninja
 nvvp.cfg
 *.log
-docs_sphinx/build

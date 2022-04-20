@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adding a New Object &mdash; EVIMO 2022 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/ico.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Calibration Tools" href="calibration-tools.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> EVIMO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Data</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ground-truth-format.html">Ground Truth Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-inspect-sequence.html">Inspecting an EVIMO2 v2 Sequence</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docker-environment.html">EVIMO Docker Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-generation.html">Generating EVIMO2 v2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="offline-generation-tool.html">Offline Generation Tool</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Recording</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="evimo-pipeline-setup.html">EVIMO Pipeline Setup on Host OS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-structure.html">Raw Sequence Folder Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-inspection.html">Raw Sequence Inspection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calibration-tools.html">Calibration Tools</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding a New Object</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#scanning-guidelines">Scanning guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-configuration-files">Create configuration files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#config-txt-example">config.txt (example)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#settings-txt-example">settings.txt (example)</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EVIMO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Adding a New Object</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/adding-a-new-object.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="adding-a-new-object">
+<h1>Adding a New Object<a class="headerlink" href="#adding-a-new-object" title="Permalink to this headline"></a></h1>
+<div class="section" id="scanning-guidelines">
+<h2>Scanning guidelines<a class="headerlink" href="#scanning-guidelines" title="Permalink to this headline"></a></h2>
+<ol class="arabic simple">
+<li><p>Make sure the motion capture markers are attached to the object before the scan! At least 3 <strong>spherical</strong> markers have to be attached to the physical object before the scan.</p></li>
+<li><p>We used <a class="reference external" href="https://www.artec3d.com/portable-3d-scanners/artec-spider">Artec Spider</a> scanner for most of our models; this scanners is a good choice for relatively small objects, although larger objects may require a different scanner. <strong>It is very important</strong> to accurately capture the shape and locations of motion capture markers!</p></li>
+<li><p><em>evimo</em> supports both pointcloud and meshed scans. Note that with no meshing there will be visible ‘holes’ during data generation. You can use <a class="reference external" href="https://www.meshlab.net/">meshlab</a> or similar software to mesh pointclouds if the scanning software does not have this feature.</p></li>
+</ol>
+<p>The meshed scan with markers clearly visible:</p>
+<p><img alt="adding_object_scan" src="_images/adding_object_scan.png" /></p>
+<p>Markers cut out of the scan (all 3 separate scans are visualized together):</p>
+<p><img alt="adding_object_markers" src="_images/adding_object_markers.png" /></p>
+</div>
+<div class="section" id="create-configuration-files">
+<h2>Create configuration files<a class="headerlink" href="#create-configuration-files" title="Permalink to this headline"></a></h2>
+<ol class="arabic simple">
+<li><p>In <a class="reference external" href="https://github.com/better-flow/evimo/tree/master/evimo/objects">objects</a> folder create a subfolder with the desired object name; this name will only be needed when running the tool later on, it will not be propagated to ground truth.</p></li>
+<li><p>The coordinates of at least 3 motion capture markers (within the scan) need to be supplied to <em>evimo</em>; we use a very primitive process to do that:</p></li>
+</ol>
+<ul class="simple">
+<li><p>Manually edit the object scan and create <em>separate</em> files which only contain points for each marker; for each file you will need to know marker id associated with that marker when the model was registered with motion capture system.</p></li>
+<li><p>In <a class="reference external" href="https://github.com/better-flow/evimo/tree/master/tools/cloud_converters">tools/cloud_converters</a> run <code class="docutils literal notranslate"><span class="pre">make</span></code> and then <code class="docutils literal notranslate"><span class="pre">./text_scan2cloud</span> <span class="pre">-in</span> <span class="pre">../../evimo/objects/toy_00/1.ply</span> <span class="pre">-r</span> <span class="pre">-mm</span></code> <strong>Note</strong> the last <code class="docutils literal notranslate"><span class="pre">-mm</span></code> flag: use it only in the model points are specified in millimetres (otherwise meters will be used).</p></li>
+</ul>
+<p>Example output: <code class="docutils literal notranslate"><span class="pre">Coefficients:</span> <span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z):15.7866</span> <span class="pre">-10.6652</span> <span class="pre">2.4729</span></code></p>
+<ol class="arabic simple" start="3">
+<li><p>In <a class="reference external" href="https://github.com/better-flow/evimo/tree/master/evimo/objects/toy_00">objects/toy_00</a> (Here we will use ‘toy_00’ as an example object name) create two files: <code class="docutils literal notranslate"><span class="pre">config.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">settings.txt</span></code></p></li>
+</ol>
+</div>
+<div class="section" id="config-txt-example">
+<h2>config.txt (<a class="reference external" href="https://github.com/better-flow/evimo/blob/master/evimo/objects/toy_00/config.txt">example</a>)<a class="headerlink" href="#config-txt-example" title="Permalink to this headline"></a></h2>
+<p>Each line should contain 4 numbers separated by a whitespace: <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">15.7866</span> <span class="pre">-10.6652</span> <span class="pre">2.4729</span></code>; the first number is the marker id <em>registered with the motion capture system</em>. The other 3 are the marker center coordinates acquired during the previous step. There should be at least 3 lines (for 3 markers) but there can be any number - the <em>evimo</em> will compute the least squares fit between the marker coordinates reported by the motion capture system during data recording and the configuration in this file. The marker ids do not have to be in order or sequential.</p>
+</div>
+<div class="section" id="settings-txt-example">
+<h2>settings.txt (<a class="reference external" href="https://github.com/better-flow/evimo/blob/master/evimo/objects/toy_00/settings.txt">example</a>)<a class="headerlink" href="#settings-txt-example" title="Permalink to this headline"></a></h2>
+<p>Should have 5 lines of format <code class="docutils literal notranslate"><span class="pre">key:</span> <span class="pre">value</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">id</span></code>: the numerical object id. The ground truth masks are populated <strong>with this number</strong>, so they should be unique for each object. If two objects have the same id the pixel values in the mask will be the same as well, but no error will be generated.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code>: any string (does not have to match the folder name); used mostly for debugging purposes</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mesh</span></code>: the relative path to the mesh from the location of the configuration file. Can be ‘none’.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unit</span></code>: <code class="docutils literal notranslate"><span class="pre">mm</span></code> or <code class="docutils literal notranslate"><span class="pre">m</span></code> - specify which units should be used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ros_pos_topic</span></code>: the ros topic with <a class="reference external" href="https://github.com/KumarRobotics/vicon/tree/a6143808872ab02e8ebdc9384d4ea4d475e815b8/vicon/msg">Vicon messages</a> to listen to.</p></li>
+</ul>
+<p><strong>Note:</strong> The code responsible for parsing and handling this configuration can be found <a class="reference external" href="https://github.com/better-flow/evimo/blob/02db52855d11907ccd8494b84ef8b753209f98ef/evimo/object.h#L164">here</a></p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="calibration-tools.html" class="btn btn-neutral float-left" title="Calibration Tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Anton Mitrokhin, Levi Burner.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

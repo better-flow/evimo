@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to EVIMO’s documentation! &mdash; EVIMO 2022 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/ico.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Ground Truth Format" href="ground-truth-format.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> EVIMO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Data</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ground-truth-format.html">Ground Truth Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-inspect-sequence.html">Inspecting an EVIMO2 v2 Sequence</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docker-environment.html">EVIMO Docker Environment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-generation.html">Generating EVIMO2 v2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="offline-generation-tool.html">Offline Generation Tool</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Recording</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="evimo-pipeline-setup.html">EVIMO Pipeline Setup on Host OS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-structure.html">Raw Sequence Folder Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-inspection.html">Raw Sequence Inspection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calibration-tools.html">Calibration Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adding-a-new-object.html">Adding a New Object</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">EVIMO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li>Welcome to EVIMO’s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="welcome-to-evimo-s-documentation">
+<h1>Welcome to EVIMO’s documentation!<a class="headerlink" href="#welcome-to-evimo-s-documentation" title="Permalink to this headline"></a></h1>
+<p><strong>evimo</strong> is a toolkit for fusing data streams from multiple cameras (event-based, rgb or potentially any other kind of visual sensor) with a motion capture system in a AR-like fashion to automatically generate ground truth annotations for motion, depth and scene segmentation (both motion or semantic). The toolkit uses static 3D scans of the objects on the scene to achieve this goal - the objects and cameras are fitted with motion capture markers and the simulated ground truth is overlaid on the real data from sensors.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Data</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ground-truth-format.html">Ground Truth Format</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ground-truth-format.html#npz-evimo2v2">NPZ (EVIMO2v2)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ground-truth-format.html#npz-evimo-and-evimo2v1">NPZ (EVIMO and EVIMO2v1)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ground-truth-format.html#txt">TXT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ground-truth-format.html#meta-s-contents">Meta’s Contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ground-truth-format.html#transform-convention">Transform Convention</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ground-truth-format.html#format-comparison">Format Comparison</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-inspect-sequence.html">Inspecting an EVIMO2 v2 Sequence</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Generation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="docker-environment.html">EVIMO Docker Environment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="docker-environment.html#setup">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docker-environment.html#notes">Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="evimo2v2-generation.html">Generating EVIMO2 v2</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="evimo2v2-generation.html#preparation">Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="evimo2v2-generation.html#generate-a-particular-sequence">Generate a particular sequence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="evimo2v2-generation.html#generate-everything">Generate everything</a></li>
+<li class="toctree-l2"><a class="reference internal" href="evimo2v2-generation.html#remove-bad-sequences-from-packaged-output">Remove bad sequences from packaged output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="evimo2v2-generation.html#generation-tools">Generation Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="offline-generation-tool.html">Offline Generation Tool</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="offline-generation-tool.html#parameters">Parameters</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Recording</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="evimo-pipeline-setup.html">EVIMO Pipeline Setup on Host OS</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="evimo-pipeline-setup.html#setup">Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-structure.html">Raw Sequence Folder Structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="raw-sequence-structure.html#defaults">Defaults</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="raw-sequence-inspection.html">Raw Sequence Inspection</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="raw-sequence-inspection.html#visualization-modes">Visualization modes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="raw-sequence-inspection.html#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="calibration-tools.html">Calibration Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="calibration-tools.html#refine-tool">refine tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibration-tools.html#collect-tool">collect tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="calibration-tools.html#reprojection-error-tool">Reprojection error tool</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adding-a-new-object.html">Adding a New Object</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adding-a-new-object.html#scanning-guidelines">Scanning guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding-a-new-object.html#create-configuration-files">Create configuration files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding-a-new-object.html#config-txt-example">config.txt (example)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adding-a-new-object.html#settings-txt-example">settings.txt (example)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="ground-truth-format.html" class="btn btn-neutral float-right" title="Ground Truth Format" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Anton Mitrokhin, Levi Burner.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
