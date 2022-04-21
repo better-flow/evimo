@@ -39,7 +39,7 @@ if [ -d "pydvs" ]
 then
     echo "pydvs already exists, skipping creation to avoid deleting work"
 else
-    git clone https://github.com/aftersomemath/pydvs --branch evimo2_regen
+    git clone https://github.com/better-flow/pydvs.git
 fi
 
 docker build --tag ev_imo:1.0 .
