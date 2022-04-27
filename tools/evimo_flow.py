@@ -64,6 +64,7 @@
 # 01-21-22 - Levi Burner - Created file
 # 01-29-22 - Tobi Delbruck - corrected to match MVSEC NPZ flow output contents for mono camera recordings from MVSEC, added multiple file option
 # 01-30-22 - Levi Burner - Fixed to handle moving objects correctly and fixed bug in radtan model
+# 04-26-22 - Levi Burner - Support EVIMO2v2 format
 #
 ###############################################################################
 

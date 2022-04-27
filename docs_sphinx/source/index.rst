@@ -14,6 +14,7 @@ Welcome to EVIMO's documentation!
 
    ground-truth-format.md
    evimo2v2-inspect-sequence.md
+   evimo-flow.md
 
 .. toctree::
    :maxdepth: 2
