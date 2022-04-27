@@ -211,18 +211,21 @@ def get_all_poses(meta):
     vicon_pose_samples = len(meta['full_trajectory'])
 
     poses = {}
+    key_i = {}
     for key in meta['full_trajectory'][0].keys():
         if key == 'id' or key == 'ts' or key == 'gt_frame':
             continue
         poses[key] = np.zeros((vicon_pose_samples, 1+3+4))
+        key_i[key] = 0
 
     # Convert camera poses to array
-    for i, all_pose in enumerate(meta['full_trajectory']):
+    for all_pose in meta['full_trajectory']:
         for key in poses.keys():
             if key == 'id' or key == 'ts' or key == 'gt_frame':
                 continue
 
             if key in all_pose:
+                i = key_i[key]
                 poses[key][i, 0] = all_pose['ts']
                 poses[key][i, 1] = all_pose[key]['pos']['t']['x']
                 poses[key][i, 2] = all_pose[key]['pos']['t']['y']
@@ -231,6 +234,10 @@ def get_all_poses(meta):
                 poses[key][i, 5] = all_pose[key]['pos']['q']['y']
                 poses[key][i, 6] = all_pose[key]['pos']['q']['z']
                 poses[key][i, 7] = all_pose[key]['pos']['q']['w']
+                key_i[key] += 1
+
+    for key in poses.keys():
+        poses[key] = poses[key][:key_i[key], :]
 
     return poses
 
@@ -332,6 +339,9 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         iterskip = 1
 
     f_processed = 0
+    if format == 'evimo2v2':
+        first_frame_id = meta['frames'][0]['id']
+
     for frame_info in tqdm(meta['frames'][::iterskip]):
         if format == 'evimo2v1':
             depth_frame_mm_key = f_processed
@@ -340,8 +350,8 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             depth_frame_mm = depth[depth_frame_mm_key]
             mask_frame     = mask[mask_frame_key]
         elif format == 'evimo2v2':
-            depth_frame_mm_key = 'depth_' + str(frame_info['id']).rjust(10, '0')
-            mask_frame_key     = 'mask_'  + str(frame_info['id']).rjust(10, '0')
+            depth_frame_mm_key = 'depth_' + str(frame_info['id'] - first_frame_id).rjust(10, '0')
+            mask_frame_key     = 'mask_'  + str(frame_info['id'] - first_frame_id).rjust(10, '0')
 
             if depth_frame_mm_key in depth:
                 depth_frame_mm = depth[depth_frame_mm_key]
