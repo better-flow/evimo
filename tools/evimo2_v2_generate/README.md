@@ -12,7 +12,7 @@ cd evimo/tools/evimo2_docker
 ./docker_run.sh /media/$USER/EVIMO
 cd ~/catkin_ws; catkin_make; pip3 install -e ~/pydvs/lib; cd
 source ~/catkin_ws/devel/setup.bash
-cd ~/tools/evimo2_generate; ./generate.sh ~/EVIMO/raw/imo/eval/scene13_dyn_test_00
+cd ~/tools/evimo2_v2_generate; ./generate.sh ~/EVIMO/raw/imo/eval/scene13_dyn_test_00
 ```
 
 ### Generate everything

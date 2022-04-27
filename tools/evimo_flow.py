@@ -20,6 +20,7 @@
 # --overwrite        Overwrite existing output files
 # --wait             Wait for keypress between visualizations (for debugging)
 # --dframes DFRAMES  Alternative to flow_dt, flow is calculated for time N depth frames ahead
+# --format format    Either "evimo2v1" or "evimo2v2" which are the different input NPZ formats supported
 #
 # Calculates optical flow from EVIMO datasets. Each of the source npz files on the command line is processed to produce the corresponding flow npz files. See source
 # code for details of output.
@@ -67,6 +68,7 @@
 ###############################################################################
 
 import argparse
+import os
 import cv2
 import numpy as np
 import pprint
@@ -77,22 +79,28 @@ from tqdm import tqdm
 from pathlib import Path
 import statistics
 
-
 # Sample a list of translations and rotations
 # with linear interpolation
 def interpolate_pose(t, pose):
     right_i = np.searchsorted(pose[:, 0], t)
     if right_i==pose.shape[0]:
-        print(f'attempted extrapolation past end of cam poses, clipping')
+        print(f'attempted extrapolation past end of poses, clipping')
         right_i=right_i-1 # prevent attempted extrapolation past array end
+
+    if right_i==0:
+        print(f'attempt extrapolation past beginning of poses, clipping')
+        right_i=1 # prevent attempted extrapolation before array start
 
     left_t  = pose[right_i-1, 0]
     right_t = pose[right_i,   0]
 
     alpha = (t - left_t) / (right_t - left_t)
     if alpha>1:
-        print('attempted alpha>1, clipping')
+        print(f'attempted alpha>1, clipping')
         alpha=1
+    elif alpha < 0:
+        print(f'attempted alpha<0, clipping')
+        alpha=0
 
     left_position  = pose[right_i - 1, 1:4]
     right_position = pose[right_i,     1:4]
@@ -213,16 +221,15 @@ def get_all_poses(meta):
             if key == 'id' or key == 'ts' or key == 'gt_frame':
                 continue
 
-            assert key in all_pose
-
-            poses[key][i, 0] = all_pose['ts']
-            poses[key][i, 1] = all_pose[key]['pos']['t']['x']
-            poses[key][i, 2] = all_pose[key]['pos']['t']['y']
-            poses[key][i, 3] = all_pose[key]['pos']['t']['z']
-            poses[key][i, 4] = all_pose[key]['pos']['q']['x']
-            poses[key][i, 5] = all_pose[key]['pos']['q']['y']
-            poses[key][i, 6] = all_pose[key]['pos']['q']['z']
-            poses[key][i, 7] = all_pose[key]['pos']['q']['w']
+            if key in all_pose:
+                poses[key][i, 0] = all_pose['ts']
+                poses[key][i, 1] = all_pose[key]['pos']['t']['x']
+                poses[key][i, 2] = all_pose[key]['pos']['t']['y']
+                poses[key][i, 3] = all_pose[key]['pos']['t']['z']
+                poses[key][i, 4] = all_pose[key]['pos']['q']['x']
+                poses[key][i, 5] = all_pose[key]['pos']['q']['y']
+                poses[key][i, 6] = all_pose[key]['pos']['q']['z']
+                poses[key][i, 7] = all_pose[key]['pos']['q']['w']
 
     return poses
 
@@ -240,9 +247,22 @@ def get_intrinsics(meta):
 
     return K, dist_coeffs
 
+def load_data(file, format='evimo2v2'):
+    if format == 'evimo2v1':
+        data = np.load(file, allow_pickle=True)
+        meta  = data['meta'].item()
+        depth = data['depth']
+        mask  = data['mask']
+    elif format == 'evimo2v2':
+        meta  = np.load(os.path.join(file, 'dataset_info.npz'), allow_pickle=True)['meta'].item()
+        depth = np.load(os.path.join(file, 'dataset_depth.npz'))
+        mask  = np.load(os.path.join(file, 'dataset_mask.npz'))
+    else:
+        raise Exception('Unrecognized data format')
+    return meta, depth, mask
 
 def convert(file, flow_dt, showflow=True, overwrite=False,
-            waitKey=1, dframes=None):
+            waitKey=1, dframes=None, format='evimo2v1'):
     if file.endswith('_flow.npz'):
         print(f'skipping {file} because it appears to be a flow output npz file')
         return
@@ -258,9 +278,15 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
     else:
         print(f'converting {file} with dframes={dframes}; loading source...',end='')
 
-    data = np.load(file, allow_pickle=True, mmap_mode='r')
+    meta, depth, mask = load_data(file, format=format)
     print('done loading')
-    meta = data['meta'].item()
+
+    if format == 'evimo2v1':
+        depth_shape = depth[0].shape
+    elif format == 'evimo2v2':
+        depth_shape = depth[next(iter(depth))].shape
+    else:
+        raise Exception('Unsupport data format')
 
     all_poses      = get_all_poses (meta)
     K, dist_coeffs = get_intrinsics(meta)
@@ -271,25 +297,26 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         dist_coeffs, # Distortion
         np.eye(3), # Rectification
         np.eye(3), # New intrinsics
-        (data['depth'][0].shape[1], data['depth'][0].shape[0]),
+        (depth_shape[1], depth_shape[0]),
         cv2.CV_32FC1)
 
     # Initial positions of every point
-    x = np.arange(0, data['depth'][0].shape[1], 1)
-    y = np.arange(0, data['depth'][0].shape[0], 1)
+    x = np.arange(0, depth_shape[1], 1)
+    y = np.arange(0, depth_shape[0], 1)
     xx, yy = np.meshgrid(x, y)
 
     if showflow:
         # For visualization
-        flow_direction_image_hsv = flow_direction_image((data['depth'][0].shape[0], data['depth'][0].shape[1]))
+        flow_direction_image_hsv = flow_direction_image((depth_shape[0], depth_shape[1]))
         flow_direction_image_bgr = cv2.cvtColor(flow_direction_image_hsv, cv2.COLOR_HSV2BGR)
         cv2.imshow('color direction chart', flow_direction_image_bgr)
 
     # Preallocate arrays for flow as in MSEVC format
-    timestamps      = np.zeros((data['depth'].shape[0],), dtype=np.float64)
-    end_timestamps  = np.zeros((data['depth'].shape[0],), dtype=np.float64)
-    x_flow_dist = np.zeros((data['depth'].shape), dtype=np.float64) # named as in MVSEC monoocular camera flow, double as in MVSEC NPZs
-    y_flow_dist = np.zeros((data['depth'].shape), dtype=np.float64)
+    timestamps      = np.zeros((len(depth),), dtype=np.float64)
+    end_timestamps  = np.zeros((len(depth),), dtype=np.float64)
+    flow_shape = (len(depth), *depth_shape)
+    x_flow_dist = np.zeros(flow_shape, dtype=np.float64) # named as in MVSEC monoocular camera flow, double as in MVSEC NPZs
+    y_flow_dist = np.zeros(flow_shape, dtype=np.float64)
 
     ros_time_offset=meta['meta']['ros_time_offset'] # get offset of start of data in epoch seconds to write the flow timestamps using same timebase as MVSEC
     last_time=float('nan')
@@ -303,11 +330,30 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
     else:
         iterskip = 1
 
-    for i, (depth_frame_mm, mask_frame, frame_info) in (
-            enumerate(tqdm(zip(data['depth'] [::iterskip],
-                               data['mask']  [::iterskip],
-                               meta['frames'][::iterskip]),
-                            total=len(data['depth'][::iterskip])))):
+    f_processed = 0
+    for frame_info in tqdm(meta['frames'][::iterskip]):
+        if format == 'evimo2v1':
+            depth_frame_mm_key = f_processed
+            mask_frame_key     = f_processed
+
+            depth_frame_mm = depth[depth_frame_mm_key]
+            mask_frame     = mask[mask_frame_key]
+        elif format == 'evimo2v2':
+            depth_frame_mm_key = 'depth_' + str(frame_info['id']).rjust(10, '0')
+            mask_frame_key     = 'mask_'  + str(frame_info['id']).rjust(10, '0')
+
+            if depth_frame_mm_key in depth:
+                depth_frame_mm = depth[depth_frame_mm_key]
+            else:
+                continue
+
+            if mask_frame_key in mask:
+                mask_frame = mask [mask_frame_key]
+            else:
+                continue
+        else:
+            raise Exception('Unsupport EVIMO format')
+
         depth_mask = depth_frame_mm > 0 # if depth_frame_mm is zero, it means a missing value from lack of GT model (e.g. of room walls)
         # these x_flow and y_flow values are filled with NaN
         depth_frame_float_m = depth_frame_mm.astype('float') / 1000.0
@@ -399,10 +445,11 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             start_time=relative_time
         last_time=relative_time
 
-        timestamps[i]     = relative_time + ros_time_offset
-        end_timestamps[i] = right_time    + ros_time_offset
-        x_flow_dist[i, :, :] = dx
-        y_flow_dist[i, :, :] = dy
+        timestamps[f_processed]     = relative_time + ros_time_offset
+        end_timestamps[f_processed] = right_time    + ros_time_offset
+        x_flow_dist[f_processed, :, :] = dx
+        y_flow_dist[f_processed, :, :] = dy
+        f_processed += 1
 
         if showflow:
             # Visualize
@@ -415,7 +462,7 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             cv2.imshow('flow_bgr', flow_bgr)
 
             cv2.waitKey(waitKey)
-    del data
+    del meta, depth, mask
     print(f'Relative start time {start_time:.3f}s, last time {last_time:.3f}s, duration is {(last_time-start_time):.3f}s.\n'
           f'There are {large_delta_times} ({(100*(large_delta_times/len(timestamps))):.1f}%) excessive delta times.\n'
           f'Saving {len(timestamps)} frames in NPZ file {npz_name_base}.npz...')
@@ -444,6 +491,7 @@ if __name__ == '__main__':
     parser.add_argument('--dframes', dest='dframes', type=int, default=None, help='Alternative to flow_dt, flow is calculated for time N depth frames ahead. '
                                                                                   'Useful because the resulting displacement arrows point to the new position of points '
                                                                                   'in the scene at the time of a ground truth frame in the future')
+    parser.add_argument('--format', dest='format', type=str, help='"evimo2v1" or "evimo2v2" input data format')
     parser.add_argument('files', nargs='*',help='NPZ files to convert')
 
     args = parser.parse_args()
@@ -463,4 +511,5 @@ if __name__ == '__main__':
                 showflow=not args.quiet,
                 overwrite=args.overwrite,
                 waitKey=int(not args.wait),
-                dframes=args.dframes)
+                dframes=args.dframes,
+                format=args.format)
