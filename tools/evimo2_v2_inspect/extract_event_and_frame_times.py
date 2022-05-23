@@ -89,6 +89,44 @@ def extract_timestamps(folder):
                     depth_shape,
                     depth_timestamps)
 
+def test_polarity(folder):
+    event_polarity = np.load(os.path.join(folder, 'dataset_events_p.npy'), mmap_mode='r')
+
+    print(folder, event_polarity.dtype)
+    assert event_polarity.dtype == np.uint8
+    assert len(event_polarity.shape) == 1
+
+    more_than_1 = event_polarity > 1
+    if np.any(more_than_1):
+        print(more_than_1.shape[0] / event_polarity.shape[0])
+        print(event_polarity[more_than_1])
+
+def test_event_timestamps(folder):
+    event_timestamps = np.load(os.path.join(folder, 'dataset_events_t.npy'), mmap_mode='r')
+
+    if 'left_camera' in folder:
+        camera_name = 'left_camera'
+    elif 'right_camera' in folder:
+        camera_name = 'right_camera'
+    elif 'samsung_mono' in folder:
+        camera_name = 'samsung_mono'
+    elif 'flea3_7' in folder:
+        camera_name = 'flea3_7'
+    else:
+        raise Exception('Camera name not found')
+
+    if event_timestamps.shape[0] > 0:
+        unique_times = np.unique(event_timestamps)
+        dt = np.diff(unique_times)    
+        min_dt = np.min(dt)
+        max_dt = np.max(dt)
+        avg_dt = np.average(dt)
+        std_dt = np.std(dt)
+        med_dt = np.median(dt)
+
+        return camera_name, min_dt, max_dt, avg_dt, std_dt, med_dt
+    return (camera_name,)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('idir',
@@ -106,3 +144,22 @@ if __name__ == '__main__':
 
     with Pool(multiprocessing.cpu_count()) as p:
         list(tqdm(p.imap(extract_timestamps, folders), total=len(folders)))
+
+    with Pool(multiprocessing.cpu_count()) as p:
+        list(tqdm(p.imap(test_polarity, folders), total=len(folders)))
+
+    with Pool(multiprocessing.cpu_count()) as p:
+        list_camera_stats = list(tqdm(p.imap(test_event_timestamps, folders), total=len(folders)))
+
+        stats_lists = {}
+        for camera_name in ['left_camera', 'right_camera', 'samsung_mono']:
+            if camera_name not in stats_lists:
+                stats_lists[camera_name] = []
+
+            for camera_stats in list_camera_stats:
+                if camera_name == camera_stats[0]:
+                    stats_lists[camera_name].append(camera_stats[1:])
+
+        for camera_name in ['left_camera', 'right_camera', 'samsung_mono']:
+            stats = np.array(stats_lists[camera_name])
+            np.save(camera_name + '_stats', stats)
