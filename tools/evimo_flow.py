@@ -319,10 +319,32 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         flow_direction_image_bgr = cv2.cvtColor(flow_direction_image_hsv, cv2.COLOR_HSV2BGR)
         cv2.imshow('color direction chart', flow_direction_image_bgr)
 
+    # Find frames with depth and masks
+    frames_with_depth = []
+    for i, frame_info in enumerate(meta['frames']):
+        if format == 'evimo2v1':
+            frames_with_depth.append(frame_info)
+        elif format == 'evimo2v2':
+            first_frame_id = meta['frames'][0]['id']
+            depth_frame_mm_key = 'depth_' + str(frame_info['id'] - first_frame_id).rjust(10, '0')
+            mask_frame_key     = 'mask_'  + str(frame_info['id'] - first_frame_id).rjust(10, '0')
+            if depth_frame_mm_key in depth and mask_frame_key in mask:
+                frames_with_depth.append(frame_info)
+        else:
+            raise Exception('Unsupport EVIMO format') 
+
+    if dframes is not None:
+        iterskip = dframes
+    else:
+        iterskip = 1
+
+    # calculate number of output frames
+    num_output_frames = int((len(frames_with_depth)-1) / iterskip) + 1
+
     # Preallocate arrays for flow as in MSEVC format
-    timestamps      = np.zeros((len(depth),), dtype=np.float64)
-    end_timestamps  = np.zeros((len(depth),), dtype=np.float64)
-    flow_shape = (len(depth), *depth_shape)
+    timestamps      = np.zeros((num_output_frames,), dtype=np.float64)
+    end_timestamps  = np.zeros((num_output_frames,), dtype=np.float64)
+    flow_shape = (num_output_frames, *depth_shape)
     x_flow_dist = np.zeros(flow_shape, dtype=np.float64) # named as in MVSEC monoocular camera flow, double as in MVSEC NPZs
     y_flow_dist = np.zeros(flow_shape, dtype=np.float64)
 
@@ -333,35 +355,18 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
     start_time=float('nan')
     large_delta_times=0
 
-    if dframes is not None:
-        iterskip = dframes
-    else:
-        iterskip = 1
-
-    f_processed = 0
-    if format == 'evimo2v2':
-        first_frame_id = meta['frames'][0]['id']
-
-    for frame_info in tqdm(meta['frames'][::iterskip]):
+    for i, frame_info in enumerate(tqdm(frames_with_depth[::iterskip])):
         if format == 'evimo2v1':
-            depth_frame_mm_key = f_processed
-            mask_frame_key     = f_processed
-
+            depth_frame_mm_key = iterskip*i
+            mask_frame_key     = iterskip*i
             depth_frame_mm = depth[depth_frame_mm_key]
             mask_frame     = mask[mask_frame_key]
         elif format == 'evimo2v2':
+            first_frame_id = meta['frames'][0]['id']
             depth_frame_mm_key = 'depth_' + str(frame_info['id'] - first_frame_id).rjust(10, '0')
             mask_frame_key     = 'mask_'  + str(frame_info['id'] - first_frame_id).rjust(10, '0')
-
-            if depth_frame_mm_key in depth:
-                depth_frame_mm = depth[depth_frame_mm_key]
-            else:
-                continue
-
-            if mask_frame_key in mask:
-                mask_frame = mask [mask_frame_key]
-            else:
-                continue
+            depth_frame_mm = depth[depth_frame_mm_key]
+            mask_frame = mask [mask_frame_key]
         else:
             raise Exception('Unsupport EVIMO format')
 
@@ -381,12 +386,11 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         if dframes is None:
             right_time = left_time + flow_dt
         else:
-            right_time_index = iterskip*i+iterskip
-            if right_time_index >= len(meta['frames']):
-                right_time_index = len(meta['frames']) - 1
+            right_time_index = i*iterskip + iterskip
+            if right_time_index >= len(frames_with_depth):
+                right_time_index = len(frames_with_depth) - 1
                 print('clipping right_time_index')
-            right_time = meta['frames'][right_time_index]['cam']['ts']
-
+            right_time = frames_with_depth[right_time_index]['cam']['ts']
         left_poses = {}
         right_poses = {}
         for key in all_poses:
@@ -456,11 +460,10 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             start_time=relative_time
         last_time=relative_time
 
-        timestamps[f_processed]     = relative_time + ros_time_offset
-        end_timestamps[f_processed] = right_time    + ros_time_offset
-        x_flow_dist[f_processed, :, :] = dx
-        y_flow_dist[f_processed, :, :] = dy
-        f_processed += 1
+        timestamps[i]        = relative_time + ros_time_offset
+        end_timestamps[i]    = right_time    + ros_time_offset
+        x_flow_dist[i, :, :] = dx
+        y_flow_dist[i, :, :] = dy
 
         if showflow:
             # Visualize
