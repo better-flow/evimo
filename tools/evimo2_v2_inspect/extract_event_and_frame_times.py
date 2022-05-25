@@ -91,15 +91,9 @@ def extract_timestamps(folder):
 
 def test_polarity(folder):
     event_polarity = np.load(os.path.join(folder, 'dataset_events_p.npy'), mmap_mode='r')
-
-    print(folder, event_polarity.dtype)
     assert event_polarity.dtype == np.uint8
     assert len(event_polarity.shape) == 1
-
-    more_than_1 = event_polarity > 1
-    if np.any(more_than_1):
-        print(more_than_1.shape[0] / event_polarity.shape[0])
-        print(event_polarity[more_than_1])
+    assert np.all(event_polarity) < 2
 
 def test_event_timestamps(folder):
     event_timestamps = np.load(os.path.join(folder, 'dataset_events_t.npy'), mmap_mode='r')

@@ -64,9 +64,9 @@ def my_search_sorted(array, t):
 
     return mid
 
-def count_events(events, out_shape):
+def count_events_polarity(events, out_shape):
     event_count = np.zeros((out_shape), dtype=np.float32)
-    event_count[events[:, 1], events[:, 0]] += 1
+    event_count[events[:, 1], events[:, 0]] += (2*events[:, 2].astype(np.float32) - 1)
     return event_count
 
 def get_frame_by_index(frames, index):
@@ -90,11 +90,11 @@ def visualize_event_camera(t, events, depth, depth_timestamps, camera_resolution
 
             events = events[i_left:i_right, 1:].astype(np.uint32)
 
-            event_count = count_events(events, camera_resolution)
+            event_count = count_events_polarity(events, camera_resolution)
             event_count = cv2.resize(event_count, dsize=(out_width, out_height))
 
-            max_count = np.max(event_count)
-            event_count_normalized = (event_count * 255 / max_count).astype(np.uint8)
+            max_count = np.max(np.abs(event_count))
+            event_count_normalized = (event_count * 127 / max_count).astype(np.int8)
 
         # Visualize depth if possible
         if not (t < depth_timestamps[0] or  t > depth_timestamps[-1] + 1/60.0):
@@ -113,14 +113,27 @@ def visualize_event_camera(t, events, depth, depth_timestamps, camera_resolution
             event_bgr = depth_bgr
         elif depth_bgr is None:
             event_bgr = np.zeros((out_height, out_width, 3), dtype=np.uint8)
-            event_bgr[:, :, 1] = event_count_normalized
+            pos = event_count_normalized >= 0
+            event_bgr[pos, 1] = event_count_normalized[pos]
+            neg = ~pos
+            event_bgr[neg, 2] = -event_count_normalized[neg]
         else:
-            event_count_bgr = np.dstack((np.zeros((out_height, out_width), dtype=np.uint8), event_count_normalized, np.zeros((out_height, out_width), dtype=np.uint8)))
+            # event_count_bgr = np.dstack((np.zeros((out_height, out_width), dtype=np.uint8), event_count_normalized, np.zeros((out_height, out_width), dtype=np.uint8)))
+            event_count_bgr = np.zeros((out_height, out_width, 3), dtype=np.uint8)
+            pos = event_count_normalized >= 0
+            event_count_bgr[pos, 1] = event_count_normalized[pos]
+            neg = ~pos
+            event_count_bgr[neg, 2] = -event_count_normalized[neg]
+
             event_bgr_float = depth_bgr.astype(np.float32) + event_count_bgr.astype(np.float32)
             event_bgr = np.clip(event_bgr_float, 0, 255).astype(np.uint8)
     else:
         event_count_normalized = None
         event_bgr = np.zeros((out_height, out_width, 3), dtype=np.uint8)
+
+    # The codes depending on this function expect all elements greater than 0
+    if event_count_normalized is not None:
+        event_count_normalized = np.abs(event_count_normalized)
 
     return event_bgr, event_count_normalized
 
