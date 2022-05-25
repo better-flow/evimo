@@ -127,10 +127,10 @@
 <td><p>Dictionary of <em>(RES_Y, RES_X)</em> arrays with keys <code class="docutils literal notranslate"><span class="pre">depth_&lt;frame</span> <span class="pre">id&gt;</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_mask.npz</span></code></p></td>
-<td><p>Dictionary of <em>(RES_Y, RES_X)</em> arrays with keys <code class="docutils literal notranslate"><span class="pre">mask_&lt;frame</span> <span class="pre">id&gt;</span></code></p></td>
+<td><p>Dictionary of <em>(RES_Y, RES_X)</em> arrays with keys <code class="docutils literal notranslate"><span class="pre">mask_&lt;frame</span> <span class="pre">id&gt;</span></code><br>masks contains object ids multiplied by <code class="docutils literal notranslate"><span class="pre">1000</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_events_p.npy</span></code></p></td>
-<td><p>Array of *(NUM_EVENTS, 1) containing events polarity <br> <strong>Can be memory mapped</strong></p></td>
+<td><p>Array of *(NUM_EVENTS, 1) containing events polarity <br> <strong>Can be memory mapped</strong> <br> <strong>Samsung event polarity is inverted compared to Prophesee</strong></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dataset_events_t.npy</span></code></p></td>
 <td><p>Array of *(NUM_EVENTS, 1) containing events time<br> <strong>Can be memory mapped</strong></p></td>
@@ -167,7 +167,7 @@
 <td><p>Array of shape <em>(NUM_FRAMES, RES_Y, RES_X)</em><br>masks contains object ids multiplied by <code class="docutils literal notranslate"><span class="pre">1000</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">events.npy</span></code></p></td>
-<td><p>Array of shape <em>(NUM_EVENTS, 4)</em><br>Each row contains an events timestamp, x/y pixel coordinate and polarity</p></td>
+<td><p>Array of shape <em>(NUM_EVENTS, 4)</em><br>Each row contains an events timestamp, x/y pixel coordinate and polarity <br> <strong>EVIMO2: Samsung event polarity is inverted compared to Prophesee</strong></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">meta.npy</span></code></p></td>
 <td><p>Python dictionary containing intrinsics, timestamps, poses, and IMU data<br>The full description is <a class="reference internal" href="#meta-s-contents"><span class="std std-doc">here</span></a></p></td>

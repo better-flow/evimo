@@ -19,8 +19,8 @@ Inside a sequences folder are the following files:
 --- | --- |
 |`dataset_classical.npz`| Dictionary of *(RES_Y, RES_X)* arrays with keys `classical_<frame id>`|
 |`dataset_depth.npz`| Dictionary of *(RES_Y, RES_X)* arrays with keys `depth_<frame id>`|
-|`dataset_mask.npz`| Dictionary of *(RES_Y, RES_X)* arrays with keys `mask_<frame id>`|
-|`dataset_events_p.npy`| Array of *(NUM_EVENTS, 1) containing events polarity <br> **Can be memory mapped**|
+|`dataset_mask.npz`| Dictionary of *(RES_Y, RES_X)* arrays with keys `mask_<frame id>`<br>masks contains object ids multiplied by `1000`|
+|`dataset_events_p.npy`| Array of *(NUM_EVENTS, 1) containing events polarity <br> **Can be memory mapped** <br> **Samsung event polarity is inverted compared to Prophesee**|
 |`dataset_events_t.npy`| Array of *(NUM_EVENTS, 1) containing events time<br> **Can be memory mapped**|
 |`dataset_events_xy.npy`| Array of *(NUM_EVENTS, 2) containg events pixel location<br> **Can be memory mapped**|
 |`dataset_info.npz`| Dictionary of arrays `D`, `discretization`, `index`, `K`, `meta`<br> Contents are identical to the EVIMO, EVIMO2v1 NPZ format|
@@ -39,7 +39,7 @@ A sequences `.npz` file contains the following `.npy` files:
 |`classical.npy`| Array with shape *(NUM_FRAMES, RES_Y, RES_X)*<br> Contains classical frames if available|
 |`depth.npy`| Array of shape *(NUM_FRAMES, RES_Y, RES_X)*<br>depth is in *mm*|
 |`mask.npy` | Array of shape *(NUM_FRAMES, RES_Y, RES_X)*<br>masks contains object ids multiplied by `1000`|
-|`events.npy`| Array of shape *(NUM_EVENTS, 4)*<br>Each row contains an events timestamp, x/y pixel coordinate and polarity
+|`events.npy`| Array of shape *(NUM_EVENTS, 4)*<br>Each row contains an events timestamp, x/y pixel coordinate and polarity <br> **EVIMO2: Samsung event polarity is inverted compared to Prophesee**
 |`meta.npy`| Python dictionary containing intrinsics, timestamps, poses, and IMU data<br>The full description is [here](ground-truth-format.md#metas-contents)
 |`K.npy/D.npy`| Intrinsic and distortion parameters, also available in `meta.npy`|
 |`index.npy`| A helper lookup table for fast timestamp-to-event index computation<br>Contains indices of events every `discretization.npy` seconds
