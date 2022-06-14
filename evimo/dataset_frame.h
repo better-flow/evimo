@@ -277,9 +277,10 @@ public:
             //ret += "\t'vel': " + this->get_camera_velocity().as_dict() + ",\n";
 
             // Represent camera poses in the frame of the initial camera pose (p0)
-            auto p0 = this->dataset_handle->cam_tj[0];
+            // auto p0 = this->dataset_handle->cam_tj[0];
             auto cam_pose = this->_get_raw_camera_pose();
-            auto cam_tf = this->dataset_handle->cam_E.inverse() * (cam_pose - p0).pq * this->dataset_handle->cam_E;
+            // auto cam_tf = this->dataset_handle->cam_E.inverse() * (cam_pose - p0).pq * this->dataset_handle->cam_E;
+            auto cam_tf = cam_pose.pq * this->dataset_handle->cam_E;
             ret += "\t'pos': " + Pose(cam_pose.ts, cam_tf).as_dict() + ",\n";
             ret += "\t'ts': " + std::to_string(this->get_true_camera_pose().ts.toSec()) + "},\n";
 

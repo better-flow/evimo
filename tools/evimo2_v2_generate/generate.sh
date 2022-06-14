@@ -95,7 +95,7 @@ for cam in ${CameraArray[@]}; do
     done
 
     # To save disk space
-    rm -rf $1/$cam/ground_truth
+    # rm -rf $1/$cam/ground_truth
 done
 
 # wait for all zip pids
