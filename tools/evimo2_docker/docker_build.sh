@@ -35,6 +35,8 @@ fi
 # Back to evimo2_docker
 cd ..
 
+cp docker_install_mujoco.sh docker_home/docker_install_mujoco.sh
+
 if [ -d "pydvs" ] 
 then
     echo "pydvs already exists, skipping creation to avoid deleting work"
