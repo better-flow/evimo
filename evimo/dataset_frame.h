@@ -281,6 +281,19 @@ public:
             auto cam_pose = this->_get_raw_camera_pose();
             // auto cam_tf = this->dataset_handle->cam_E.inverse() * (cam_pose - p0).pq * this->dataset_handle->cam_E;
             auto cam_tf = cam_pose.pq * this->dataset_handle->cam_E;
+
+            // tf::Vector3 origin = cam_pose.pq.getOrigin();
+            // tf::Vector3 cam_tf_origin = cam_tf.getOrigin();
+            // std::cout << "HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII" << std::endl 
+            //  << origin.getX() << " "  
+            //  << origin.getY() << " "
+            //  << origin.getZ() << "                 "
+            //  << cam_tf_origin.getX() << " "  
+            //  << cam_tf_origin.getY() << " "
+            //  << cam_tf_origin.getZ() << "                 " << std::endl
+            //  << Pose(cam_pose.ts, cam_tf).as_dict()
+            //  << std::endl << "BYYYYYYYYYYYYYYYYYYYYYYYY" << std::endl;
+
             ret += "\t'pos': " + Pose(cam_pose.ts, cam_tf).as_dict() + ",\n";
             ret += "\t'ts': " + std::to_string(this->get_true_camera_pose().ts.toSec()) + "},\n";
 
