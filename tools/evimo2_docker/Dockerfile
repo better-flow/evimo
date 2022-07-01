@@ -21,4 +21,4 @@ RUN apt-get update \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install matplotlib pyquaternion scipy tqdm pandas numpy pyarrow Jinja2 easygui opencv-python open3d --upgrade
+RUN pip3 install matplotlib pyquaternion scipy tqdm pandas numpy pyarrow Jinja2 easygui opencv-python --upgrade
