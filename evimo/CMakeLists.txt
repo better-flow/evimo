@@ -102,7 +102,12 @@ target_link_libraries(topic_sanity
     ${OpenCV_LIBS}
 )
 
-
+add_executable(extract_events extract_events/extract_events.cpp)
+add_dependencies(extract_events ${catkin_EXPORTED_TARGETS})
+target_link_libraries(extract_events
+    ${catkin_LIBRARIES}
+    cnpy
+)
 
 find_package(Python3 COMPONENTS Development NumPy)
 add_executable(refine calib/refine_calibration.cpp
