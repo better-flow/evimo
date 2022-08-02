@@ -19,6 +19,7 @@ RUN apt-get update \
     zip \
     pigz \
     python3-venv \
+    zipmerge \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 

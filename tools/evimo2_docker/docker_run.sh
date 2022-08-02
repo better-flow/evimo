@@ -8,6 +8,8 @@
 docker run -it \
     --user=$(id -u $USER):$(id -g $USER) \
     --env="DISPLAY" \
+    --gpus 'all,"capabilities=compute,utility,graphics"' \
+    --ipc=host \
     --workdir="/home/$USER" \
     --volume=$(pwd)"/docker_home:/home/$USER" \
     --volume=$(pwd)"/../../evimo:/home/$USER/catkin_ws/src/evimo" \
