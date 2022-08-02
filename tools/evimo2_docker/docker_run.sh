@@ -16,6 +16,7 @@ docker run -it \
     --volume=$(pwd)"/../../tools:/home/$USER/tools" \
     --volume=$(pwd)"/pydvs:/home/$USER/pydvs" \
     --volume=$1":/home/$USER/EVIMO" \
+    --volume=$2":/home/$USER/evimo3_generation" \
     --volume="/etc/group:/etc/group:ro" \
     --volume="/etc/passwd:/etc/passwd:ro" \
     --volume="/etc/shadow:/etc/shadow:ro" \
