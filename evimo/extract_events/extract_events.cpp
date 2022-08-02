@@ -44,7 +44,7 @@ int main (int argc, char** argv) {
 
     rosbag::Bag bag;
     bag.open(bag_file, rosbag::bagmode::Read);
-    rosbag::View view(bag, rosbag::TopicQuery(topics));
+    rosbag::View view(bag, rosbag::TopicQuery(topics), t_0, t_0 + ros::Duration(duration));
 
     auto t_file  = output_folder / "dataset_events_t.npy";
     auto xy_file = output_folder / "dataset_events_xy.npy";
@@ -57,9 +57,6 @@ int main (int argc, char** argv) {
     uint64_t n_events = 0;
     for (auto &m : view) {
         auto msg = m.instantiate<dvs_msgs::EventArray>();
-
-        if (msg->header.stamp < t_0) continue;
-        if (duration >= 0 && msg->header.stamp > t_0 + ros::Duration(duration)) break;
 
         auto msize = msg->events.size();
         n_events += msize;
