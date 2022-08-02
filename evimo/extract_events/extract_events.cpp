@@ -25,8 +25,8 @@ void delete_if_exists(std::string name) {
 }
 
 int main (int argc, char** argv) {
-    if (argc < 5+1) {
-        throw std::invalid_argument("Need 5 arguments");
+    if (argc < 6+1) {
+        throw std::invalid_argument("Need 6 arguments");
     }
 
     std::string bag_file(argv[1]); // Example: "/home/levi/EVIMO/imo/train/scene10_dyn_train_00/scene10_dyn_train_00.bag"
@@ -36,6 +36,8 @@ int main (int argc, char** argv) {
     uint32_t sec  = std::stoi(argv[4]); // Example: "1234123412"
     uint32_t nsec = std::stoi(argv[5]); // Example: "1234123412"
     ros::Time t_0(sec, nsec); // t_0 is subtracted from the events time
+
+    double duration = std::stod(argv[6]); // 1.2345
 
     std::vector<std::string> topics;
     topics.push_back(topic);
@@ -56,7 +58,8 @@ int main (int argc, char** argv) {
     for (auto &m : view) {
         auto msg = m.instantiate<dvs_msgs::EventArray>();
 
-        auto timestamp = msg->header.stamp;
+        if (msg->header.stamp < t_0) continue;
+        if (duration >= 0 && msg->header.stamp > t_0 + ros::Duration(duration)) break;
 
         auto msize = msg->events.size();
         n_events += msize;
