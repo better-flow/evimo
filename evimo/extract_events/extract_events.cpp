@@ -72,10 +72,13 @@ int main (int argc, char** argv) {
 
         for (uint64_t i = 0; i < msize; ++i) {
             auto &e = msg->events[i];
-            events_t.push_back((e.ts - t_0).toSec());
-            events_xy.push_back(e.x);
-            events_xy.push_back(e.y);
-            events_p.push_back(e.polarity ? 1 : 0);
+            auto t = (e.ts - t_0).toSec();
+            if (t >= 0 && t <= duration) {
+                events_t.push_back(t);
+                events_xy.push_back(e.x);
+                events_xy.push_back(e.y);
+                events_p.push_back(e.polarity ? 1 : 0);
+            }
         }
 
         cnpy::npy_save(t_file,  &events_t [0], {events_t .size()},  "a");
