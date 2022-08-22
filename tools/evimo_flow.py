@@ -65,11 +65,16 @@
 # 01-29-22 - Tobi Delbruck - corrected to match MVSEC NPZ flow output contents for mono camera recordings from MVSEC, added multiple file option
 # 01-30-22 - Levi Burner - Fixed to handle moving objects correctly and fixed bug in radtan model
 # 04-26-22 - Levi Burner - Support EVIMO2v2 format
+# 08-23-22 - Levi Burner - Add classical camera reprojection for EVIMO2v2 format
 #
 ###############################################################################
 
 import argparse
 import os
+os.environ['OPENBLAS_NUM_THREADS'] = '1' # Attempt to disable OpenBLAS multithreading used by NumPy, it makes the script 17% slower
+import multiprocessing
+from multiprocessing import Pool
+import zipfile
 import cv2
 import numpy as np
 import pprint
@@ -80,16 +85,51 @@ from tqdm import tqdm
 from pathlib import Path
 import statistics
 
+# See NumPy source code to see how these functions are normally used to create NPZ files
+def create_compressed_npz(file, compresslevel=None):
+    npz = np.lib.npyio.zipfile_factory(file, mode='w', compression=zipfile.ZIP_DEFLATED, compresslevel=compresslevel)
+    return npz
+
+def add_to_npz(npz, name, array):
+    with npz.open(name + '.npy', 'w', force_zip64=True) as f:
+        np.lib.format.write_array(f, array, allow_pickle=False, pickle_kwargs=None)
+
+def close_npz(npz): npz.close()
+
+# https://stackoverflow.com/a/57364423
+# istarmap.py for Python 3.8+
+import multiprocessing.pool as mpp
+def istarmap(self, func, iterable, chunksize=1):
+    """starmap-version of imap
+    """
+    self._check_running()
+    if chunksize < 1:
+        raise ValueError(
+            "Chunksize must be 1+, not {0:n}".format(
+                chunksize))
+
+    task_batches = mpp.Pool._get_tasks(func, iterable, chunksize)
+    result = mpp.IMapIterator(self)
+    self._taskqueue.put(
+        (
+            self._guarded_task_generation(result._job,
+                                          mpp.starmapstar,
+                                          task_batches),
+            result._set_length
+        ))
+    return (item for chunk in result for item in chunk)
+mpp.Pool.istarmap = istarmap
+
 # Sample a list of translations and rotations
 # with linear interpolation
 def interpolate_pose(t, pose):
     right_i = np.searchsorted(pose[:, 0], t)
     if right_i==pose.shape[0]:
-        print(f'attempted extrapolation past end of poses, clipping')
+        # print(f'attempted extrapolation past end of poses, clipping')
         right_i=right_i-1 # prevent attempted extrapolation past array end
 
     if right_i==0:
-        print(f'attempt extrapolation past beginning of poses, clipping')
+        # print(f'attempt extrapolation past beginning of poses, clipping')
         right_i=1 # prevent attempted extrapolation before array start
 
     left_t  = pose[right_i-1, 0]
@@ -97,10 +137,10 @@ def interpolate_pose(t, pose):
 
     alpha = (t - left_t) / (right_t - left_t)
     if alpha>1:
-        print(f'attempted alpha>1, clipping')
+        # print(f'attempted alpha>1, clipping')
         alpha=1
     elif alpha < 0:
-        print(f'attempted alpha<0, clipping')
+        # print(f'attempted alpha<0, clipping')
         alpha=0
 
     left_position  = pose[right_i - 1, 1:4]
@@ -147,8 +187,8 @@ def inv_transform(T_ba):
 def project_points_radtan(points,
                           fx, fy, cx, cy,
                           k1, k2, p1, p2):
-    x_ = points[:, :, 0] / points[:, :, 2]
-    y_ = points[:, :, 1] / points[:, :, 2]
+    x_ = np.divide(points[:, :, 0], points[:, :, 2], out=np.zeros_like(points[:, :, 0]), where=points[:, :, 2]!=0)
+    y_ = np.divide(points[:, :, 1], points[:, :, 2], out=np.zeros_like(points[:, :, 1]), where=points[:, :, 2]!=0)
 
     r2 = np.square(x_) + np.square(y_)
     r4 = np.square(r2)
@@ -269,35 +309,77 @@ def load_data(file, format='evimo2v2'):
         raise Exception('Unrecognized data format')
     return meta, depth, mask
 
-def convert(file, flow_dt, showflow=True, overwrite=False,
-            waitKey=1, dframes=None, format='evimo2v1'):
+def load_data_bgr(file, format='evimo2v2'):
+    assert format == 'evimo2v2'
+    meta  = np.load(os.path.join(file, 'dataset_info.npz'), allow_pickle=True)['meta'].item()
+    depth = np.load(os.path.join(file, 'dataset_depth.npz'))
+    bgr = np.load(os.path.join(file, 'dataset_classical.npz'))    
+    return meta, depth, bgr
+
+# Only for evimo2v2
+def load_extrinsics(file):
+    ext = np.load(os.path.join(file, 'dataset_extrinsics.npz'), allow_pickle=True)
+    q = ext['q_rigcamera'].item()
+    q_rc = np.array([q['x'], q['y'], q['z'], q['w']])
+    t = ext['t_rigcamera'].item()
+    t_rc = np.array([t['x'], t['y'], t['z']])
+    T_rc = np.array([0, *t_rc, *q_rc])
+    return T_rc
+
+def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
+            waitKey=1, dframes=None, format='evimo2v1', bgr_file=None):
+    cv2.setNumThreads(1) # OpenCV is wasteful and so we run this with one process per sequence
+
+    if format != 'evimo2v2' and bgr_file is not None:
+        raise ValueError('reproject_bgr option only supported for evimo2v2 format due to high computational overhead of older formats')
+
     if file.endswith('_flow.npz'):
-        print(f'skipping {file} because it appears to be a flow output npz file')
+        if not quiet: print(f'skipping {file} because it appears to be a flow output npz file')
         return
 
-    npz_name_base=file[:-4] + '_flow'
-    p=Path(npz_name_base+'.npz')
-    if not overwrite and p.exists():
-        print(f'skipping {file} because {p} exists; use --overwrite option to overwrite existing output file')
+    if format == 'evimo2v1':
+        npz_name_base=file[:-4] + '_flow'
+        npz_flow_file_name = npz_name_base+'.npz'
+    elif format == 'evimo2v2':
+        npz_name_base = file
+        npz_flow_file_name = os.path.join(file, 'dataset_flow.npz')
+        npz_bgr_file_name = os.path.join(file, 'dataset_reprojected_classical.npz')
+    else:
+        raise Exception('Unsupported EVIMO format')
+
+    if not overwrite and os.path.exists(npz_flow_file_name):
+        print(f'skipping {file} because {npz_flow_file_name} exists; use --overwrite option to overwrite existing output file')
         return
 
     if dframes is None:
-        print(f'converting {file} with dt={flow_dt}s; loading source...',end='')
+        if not quiet: print(f'converting {file} with dt={flow_dt}s; loading source...',end='')
     else:
-        print(f'converting {file} with dframes={dframes}; loading source...',end='')
+        if not quiet: print(f'converting {file} with dframes={dframes}; loading source...',end='')
 
     meta, depth, mask = load_data(file, format=format)
-    print('done loading')
+
+    if bgr_file is not None:
+        bgr_meta, bgr_depth, bgr_bgr = load_data_bgr(bgr_file, format=format)
+
+    if not quiet: print('done loading')
 
     if format == 'evimo2v1':
-        depth_shape = depth[0].shape
+        depth_shape     = depth[0]    .shape
+        bgr_depth_shape = bgr_depth[0].shape
     elif format == 'evimo2v2':
-        depth_shape = depth[next(iter(depth))].shape
+        depth_shape     = depth[next(iter(depth))]    .shape
+        if bgr_file is not None: bgr_depth_shape = bgr_depth[next(iter(bgr_depth))].shape
     else:
         raise Exception('Unsupport data format')
 
     all_poses      = get_all_poses (meta)
     K, dist_coeffs = get_intrinsics(meta)
+
+    if bgr_file is not None:
+        bgr_K, bgr_dist_coeffs = get_intrinsics(bgr_meta)
+        T_gr = load_extrinsics(bgr_file)
+        T_gc = load_extrinsics(file)
+        T_cr = apply_transform(inv_transform(T_gc), T_gr)
 
     # Get the map from pixels to direction vectors with Z = 1
     map1, map2 = cv2.initInverseRectificationMap(
@@ -312,6 +394,8 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
     x = np.arange(0, depth_shape[1], 1)
     y = np.arange(0, depth_shape[0], 1)
     xx, yy = np.meshgrid(x, y)
+    xx = xx.astype(np.float32)
+    yy = yy.astype(np.float32)
 
     if showflow:
         # For visualization
@@ -320,7 +404,12 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         cv2.imshow('color direction chart', flow_direction_image_bgr)
 
     # Find frames with depth and masks
+    # Getting the list of names in one go is a big speedup because it avoids
+    # looking into the NPZ file over and over
+    depth_names = list(depth.keys())
+    mask_names  = list(mask .keys())
     frames_with_depth = []
+    frames_with_depth_t = []
     for i, frame_info in enumerate(meta['frames']):
         if format == 'evimo2v1':
             frames_with_depth.append(frame_info)
@@ -328,10 +417,40 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             first_frame_id = meta['frames'][0]['id']
             depth_frame_mm_key = 'depth_' + str(frame_info['id'] - first_frame_id).rjust(10, '0')
             mask_frame_key     = 'mask_'  + str(frame_info['id'] - first_frame_id).rjust(10, '0')
-            if depth_frame_mm_key in depth and mask_frame_key in mask:
+            if depth_frame_mm_key in depth_names and mask_frame_key in mask_names:
                 frames_with_depth.append(frame_info)
+                frames_with_depth_t.append(frame_info['ts'])
         else:
-            raise Exception('Unsupport EVIMO format') 
+            raise Exception('Unsupport EVIMO format')
+    frames_with_depth_t = np.array(frames_with_depth_t)
+
+    if bgr_file is not None:
+        bgr_depth_names = list(bgr_depth.keys())
+        bgr_bgr_names   = list(bgr_bgr  .keys())
+        bgr_frames_with_depth = []
+        bgr_frames_with_depth_t = []
+        for frame_info in bgr_meta['frames']:
+            first_frame_id = bgr_meta['frames'][0]['id']
+            depth_frame_mm_key = 'depth_'    + str(frame_info['id'] - first_frame_id).rjust(10, '0')
+            bgr_frame_key      = 'classical_'+ str(frame_info['id'] - first_frame_id).rjust(10, '0')
+            if depth_frame_mm_key in bgr_depth_names and bgr_frame_key in bgr_bgr_names:
+                bgr_frames_with_depth.append(frame_info)
+                bgr_frames_with_depth_t.append(frame_info['ts'])
+        bgr_frames_with_depth_t = np.array(bgr_frames_with_depth_t)
+
+        # Select bgr frames just after the event camera depth frames
+        bgr_frames_indices = np.searchsorted(bgr_frames_with_depth_t, frames_with_depth_t)
+
+        # Could also filter if dt is too large here
+        bgr_frames_for_event_frames_with_depth = []
+        for i in bgr_frames_indices:
+            if i == len(bgr_frames_with_depth):
+                i = len(bgr_frames_with_depth) - 1
+            if i < 0:
+                i = 0
+            bgr_frames_for_event_frames_with_depth.append(bgr_frames_with_depth[i])
+    else:
+        bgr_frames_for_event_frames_with_depth = [None]*len(frames_with_depth)
 
     if dframes is not None:
         iterskip = dframes
@@ -342,11 +461,20 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
     num_output_frames = int((len(frames_with_depth)-1) / iterskip) + 1
 
     # Preallocate arrays for flow as in MSEVC format
-    timestamps      = np.zeros((num_output_frames,), dtype=np.float64)
-    end_timestamps  = np.zeros((num_output_frames,), dtype=np.float64)
-    flow_shape = (num_output_frames, *depth_shape)
-    x_flow_dist = np.zeros(flow_shape, dtype=np.float64) # named as in MVSEC monoocular camera flow, double as in MVSEC NPZs
-    y_flow_dist = np.zeros(flow_shape, dtype=np.float64)
+    if format == 'evimo2v1':
+        timestamps      = np.zeros((num_output_frames,), dtype=np.float64)
+        end_timestamps  = np.zeros((num_output_frames,), dtype=np.float64)
+        flow_shape = (num_output_frames, *depth_shape)
+        x_flow_dist = np.zeros(flow_shape, dtype=np.float64) # named as in MVSEC monoocular camera flow, double as in MVSEC NPZs
+        y_flow_dist = np.zeros(flow_shape, dtype=np.float64)
+    elif format == 'evimo2v2':
+        timestamps      = np.zeros((num_output_frames,), dtype=np.float64)
+        end_timestamps  = np.zeros((num_output_frames,), dtype=np.float64)
+        npz_flow_file = create_compressed_npz(npz_flow_file_name)
+        if bgr_file is not None:
+            npz_bgr_file = create_compressed_npz(npz_bgr_file_name)
+    else:
+        raise Exception('Unsupported EVIMO format')
 
     ros_time_offset=meta['meta']['ros_time_offset'] # get offset of start of data in epoch seconds to write the flow timestamps using same timebase as MVSEC
     last_time=float('nan')
@@ -355,7 +483,10 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
     start_time=float('nan')
     large_delta_times=0
 
-    for i, frame_info in enumerate(tqdm(frames_with_depth[::iterskip])):
+    for i, (frame_info, bgr_frame_info) in enumerate(
+        tqdm(list(zip(frames_with_depth[::iterskip],
+                      bgr_frames_for_event_frames_with_depth[::iterskip])),
+             position=1, desc='{}'.format(os.path.split(file)[1]))):
         if format == 'evimo2v1':
             depth_frame_mm_key = iterskip*i
             mask_frame_key     = iterskip*i
@@ -370,9 +501,18 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         else:
             raise Exception('Unsupport EVIMO format')
 
+        if bgr_file is not None:
+            bgr_first_frame_id = bgr_meta['frames'][0]['id']
+            bgr_depth_frame_mm_key = 'depth_'      + str(bgr_frame_info['id'] - bgr_first_frame_id).rjust(10, '0')
+            bgr_bgr_frame_key      = 'classical_'  + str(bgr_frame_info['id'] - bgr_first_frame_id).rjust(10, '0')
+            bgr_depth_frame_mm = bgr_depth[bgr_depth_frame_mm_key]
+            bgr_bgr_frame      = bgr_bgr  [bgr_bgr_frame_key]
+
+            bgr_depth_frame_float_m = bgr_depth_frame_mm.astype(np.float32) / 1000.0
+
         depth_mask = depth_frame_mm > 0 # if depth_frame_mm is zero, it means a missing value from lack of GT model (e.g. of room walls)
         # these x_flow and y_flow values are filled with NaN
-        depth_frame_float_m = depth_frame_mm.astype('float') / 1000.0
+        depth_frame_float_m = depth_frame_mm.astype(np.float32) / 1000.0
 
         # Initial point cloud
         Z_m = depth_frame_float_m
@@ -389,7 +529,7 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             right_time_index = i*iterskip + iterskip
             if right_time_index >= len(frames_with_depth):
                 right_time_index = len(frames_with_depth) - 1
-                print('clipping right_time_index')
+                if not quiet: print('clipping right_time_index')
             right_time = frames_with_depth[right_time_index]['cam']['ts']
         left_poses = {}
         right_poses = {}
@@ -400,25 +540,35 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         # Get the poses of objects in camera frame
         # at the left and right times
         left_to_right_pose = {}
+        left_to_bgr_pose = {}
         for key in all_poses.keys():
             if key == 'cam':
                 continue
 
-            T_c1o1 = left_poses[key]
-            T_c2o2 = right_poses[key]
+            T_c1o = left_poses[key]
+            T_c2o = right_poses[key]
 
-            T_c2c1 = apply_transform(T_c2o2, inv_transform(T_c1o1))
+            T_c2c1 = apply_transform(T_c2o, inv_transform(T_c1o))
 
             left_to_right_pose[key] = T_c2c1
 
+            if bgr_file is not None:
+                T_c2o = interpolate_pose(bgr_frame_info['ts'], all_poses[key])
+                T_c2c1 = apply_transform(T_c2o, inv_transform(T_c1o))
+                T_r2c1 = apply_transform(inv_transform(T_cr), T_c2c1)
+                left_to_bgr_pose[key] = T_r2c1
+
         # Flatten for transformation
         left_XYZ_flat_cols  = left_XYZ.reshape(X_m.shape[0]*X_m.shape[1], 3).transpose()
-        right_XYZ_flat_rows = np.zeros(left_XYZ_flat_cols.shape).transpose()
+        right_XYZ_flat_rows = np.zeros(left_XYZ_flat_cols.shape, dtype=np.float32).transpose()
+
+        if bgr_file is not None:
+            bgr_right_XYZ_flat_rows = np.zeros(left_XYZ_flat_cols.shape, dtype=np.float32).transpose()
 
         # Transform the points for each object
         for key in left_to_right_pose.keys():
-            R_rl = R.from_quat(left_to_right_pose[key][4:8]).as_matrix()
-            t_rl = left_to_right_pose[key][1:4]
+            R_rl = R.from_quat(left_to_right_pose[key][4:8]).as_matrix().astype(np.float32)
+            t_rl = left_to_right_pose[key][1:4].astype(np.float32)
 
             # If this conversion does not work, there is a problem with the data
             object_id = int(key)
@@ -432,8 +582,21 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
 
             right_XYZ_flat_rows[object_points, :] = p_r
 
+            if bgr_file is not None:
+                T_r2c1 = left_to_bgr_pose[key]
+                R_r2c1 = R.from_quat(T_r2c1[4:8]).as_matrix().astype(np.float32)
+                t_r2c1 = T_r2c1[1:4].astype(np.float32)
+
+                p_c1 = left_XYZ_flat_cols[:, object_points]
+                p_r2 = (R_r2c1 @ p_c1).transpose() + t_r2c1
+
+                bgr_right_XYZ_flat_rows[object_points, :] = p_r2
+
         # Reshape into 3 channel image
         right_XYZ = right_XYZ_flat_rows.reshape(X_m.shape[0], X_m.shape[1], 3)
+
+        if bgr_file is not None:
+            bgr_XYZ = bgr_right_XYZ_flat_rows.reshape(X_m.shape[0], X_m.shape[1], 3)
 
         # Project right_XYZ back to the distorted camera frame
         W_x, W_y = project_points_radtan(right_XYZ,
@@ -446,6 +609,26 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
         dx[depth_mask==0]=float("nan")
         dy[depth_mask==0]=float("nan")
 
+        if bgr_file is not None:
+            p_x, p_y = project_points_radtan(bgr_XYZ,
+                                             bgr_K[0, 0], bgr_K[1, 1], bgr_K[0, 2], bgr_K[1, 2],
+                                             *bgr_dist_coeffs)
+            bgr_in_c_0 = cv2.remap(bgr_bgr_frame, p_x, p_y, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
+
+            # Only reproject if we had depth at the event cameras pixel
+            # and the 3D world point is not occluded in the bgr camera's view
+            bgr_depth_in_c_0 = cv2.remap(bgr_depth_frame_float_m, p_x.astype(np.float32), p_y.astype(np.float32), cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, 0)
+
+            # Use 3 mm threshold since the depth maps are saved with  a resolution of 1mm
+            # thus the error could be +/- 2 mm and a slight tolerance is needed on top of that
+            # without this there is visible depth aliasing
+            valid_reprojections = bgr_XYZ[:, :, 2] < bgr_depth_in_c_0 + 0.003
+            bgr_in_c_0_valid = depth_mask * valid_reprojections
+
+            bgr_in_c = np.zeros(bgr_in_c_0.shape, dtype=bgr_in_c_0.dtype)
+            bgr_in_c[bgr_in_c_0_valid, :] = bgr_in_c_0[bgr_in_c_0_valid, :]
+
+        # Watch for time gaps in data
         relative_time=left_time
         if not np.isnan(last_time):
             this_delta_time=relative_time-last_time
@@ -453,17 +636,30 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             median_delta_time=statistics.median(delta_times)
             if this_delta_time > 2*median_delta_time :
                 factor=this_delta_time/median_delta_time
-                print(f'Warning: This delta time {this_delta_time:.3f}s at relative time {relative_time:.3f}s is {factor:.1f}X more than the median delta time {median_delta_time:.3f}s')
+                if not quiet: print(f'Warning: This delta time {this_delta_time:.3f}s at relative time {relative_time:.3f}s is {factor:.1f}X more than the median delta time {median_delta_time:.3f}s')
                 large_delta_times+=1
             last_delta_time=this_delta_time
         else:
             start_time=relative_time
         last_time=relative_time
 
+        # Save results
         timestamps[i]        = relative_time + ros_time_offset
         end_timestamps[i]    = right_time    + ros_time_offset
-        x_flow_dist[i, :, :] = dx
-        y_flow_dist[i, :, :] = dy
+        if format == 'evimo2v1':
+            x_flow_dist[i, :, :] = dx
+            y_flow_dist[i, :, :] = dy
+        elif format == 'evimo2v2':
+            flow_dist = np.stack((dx, dy), axis=-1).astype(np.float32) # float32 is more than accurate enough and saves a lot of memory/compression time
+            flow_key = 'flow_' + str(frame_info['id'] - first_frame_id).rjust(10, '0')
+            add_to_npz(npz_flow_file, flow_key, flow_dist)
+            if bgr_file is not None:
+                bgr_key      = 'reprojected_classical_'     + str(frame_info['id'] - first_frame_id).rjust(10, '0')
+                bgr_mask_key = 'reprojected_classical_mask' + str(frame_info['id'] - first_frame_id).rjust(10, '0')
+                add_to_npz(npz_bgr_file, bgr_key,      bgr_in_c)
+                add_to_npz(npz_bgr_file, bgr_mask_key, bgr_in_c_0_valid)
+        else:
+            raise Exception('Unsupported EVIMO format')
 
         if showflow:
             # Visualize
@@ -475,20 +671,36 @@ def convert(file, flow_dt, showflow=True, overwrite=False,
             draw_flow_arrows(flow_bgr, xx, yy, dx, dy)
             cv2.imshow('flow_bgr', flow_bgr)
 
+            if bgr_file is not None:
+                cv2.imshow('bgr', cv2.resize(bgr_bgr_frame, (int(bgr_bgr_frame.shape[1] / 4), int(bgr_bgr_frame.shape[0] / 4))))
+                vis_bgr = (0.8*bgr_in_c + 0.2*flow_bgr).astype(np.uint8)
+                vis_bgr[~bgr_in_c_0_valid, :] = [255, 255, 255]
+                cv2.imshow('reprojected bgr + flow', vis_bgr)
+                cv2.imshow('reprojected bgr', bgr_in_c)
+
             cv2.waitKey(waitKey)
+
     del meta, depth, mask
-    print(f'Relative start time {start_time:.3f}s, last time {last_time:.3f}s, duration is {(last_time-start_time):.3f}s.\n'
-          f'There are {large_delta_times} ({(100*(large_delta_times/len(timestamps))):.1f}%) excessive delta times.\n'
-          f'Saving {len(timestamps)} frames in NPZ file {npz_name_base}.npz...')
-    np.savez_compressed(
-        npz_name_base,
-        x_flow_dist=x_flow_dist,
-        y_flow_dist=y_flow_dist,
-        timestamps=timestamps,
-        end_timestamps=end_timestamps)
+    if not quiet:print(f'Relative start time {start_time:.3f}s, last time {last_time:.3f}s, duration is {(last_time-start_time):.3f}s.\n'
+                       f'There are {large_delta_times} ({(100*(large_delta_times/len(timestamps))):.1f}%) excessive delta times.\n')
 
-
-
+    if format == 'evimo2v1':
+        if not quiet: print(f'Saving {len(timestamps)} frames in NPZ file {npz_name_base}.npz...')
+        np.savez_compressed(
+            npz_name_base,
+            x_flow_dist=x_flow_dist,
+            y_flow_dist=y_flow_dist,
+            timestamps=timestamps,
+            end_timestamps=end_timestamps)
+    elif format == 'evimo2v2':
+        add_to_npz(npz_flow_file, 't',     timestamps)
+        add_to_npz(npz_flow_file, 't_end', end_timestamps)
+        close_npz(npz_flow_file)
+        if bgr_file is not None:
+            add_to_npz(npz_bgr_file, 't', timestamps)
+            close_npz(npz_bgr_file)
+    else:
+        raise Exception('Unsupported EVIMO format')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(epilog='Calculates optical flow from EVIMO datasets. '
@@ -499,13 +711,15 @@ if __name__ == '__main__':
                     'when approximating flow through finite difference. Smaller values are'
                     ' more accurate, but noiser approximations of optical flow. '
                     'The flow velocity is obtained from dx,dy/dt, where dx,dy are written to the flow output files', type=float,  default=0.01)
-    parser.add_argument('--quiet', help='turns off OpenCV graphical output windows', default=False, action='store_true')
+    parser.add_argument('--quiet', help='turns off prints from convert function', default=False, action='store_true')
+    parser.add_argument('--visualize', help='Visualize and display results in OpenCV window', default=False, action='store_true')
     parser.add_argument('--overwrite', dest='overwrite', action='store_true', help='Overwrite existing output files')
     parser.add_argument('--wait', dest='wait', action='store_true', help='Wait for keypress between visualizations (for debugging)')
     parser.add_argument('--dframes', dest='dframes', type=int, default=None, help='Alternative to flow_dt, flow is calculated for time N depth frames ahead. '
                                                                                   'Useful because the resulting displacement arrows point to the new position of points '
                                                                                   'in the scene at the time of a ground truth frame in the future')
     parser.add_argument('--format', dest='format', type=str, help='"evimo2v1" or "evimo2v2" input data format')
+    parser.add_argument('--reprojectbgr', dest='reproject_bgr', action='store_true', help='Reproject a classical camera measurement into the flow frame')
     parser.add_argument('files', nargs='*',help='NPZ files to convert')
 
     args = parser.parse_args()
@@ -519,11 +733,24 @@ if __name__ == '__main__':
             quit(0)
 
 
+    p_args_list = []
     for f in files:
-        convert(f,
-                flow_dt=args.dt,
-                showflow=not args.quiet,
-                overwrite=args.overwrite,
-                waitKey=int(not args.wait),
-                dframes=args.dframes,
-                format=args.format)
+        # Assume files are in the standard structure
+        bgr_file = None
+        if args.reproject_bgr:
+            for c in ['left_camera', 'right_camera', 'samsung_mono']:
+                if c in f: bgr_file = f.replace(c, 'flea3_7')
+        p_args_list.append([
+            f,
+            args.dt,
+            args.quiet,
+            args.visualize,
+            args.overwrite,
+            int(not(args.wait)),
+            args.dframes,
+            args.format,
+            bgr_file
+        ])
+
+    with Pool(multiprocessing.cpu_count()) as p:
+       list(tqdm(p.istarmap(convert, p_args_list), total=len(p_args_list), position=0, desc='Sequences'))
