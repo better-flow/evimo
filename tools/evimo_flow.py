@@ -655,7 +655,7 @@ def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
             add_to_npz(npz_flow_file, flow_key, flow_dist)
             if bgr_file is not None:
                 bgr_key      = 'reprojected_classical_'     + str(frame_info['id'] - first_frame_id).rjust(10, '0')
-                bgr_mask_key = 'reprojected_classical_mask' + str(frame_info['id'] - first_frame_id).rjust(10, '0')
+                bgr_mask_key = 'reprojected_classical_mask_' + str(frame_info['id'] - first_frame_id).rjust(10, '0')
                 add_to_npz(npz_bgr_file, bgr_key,      bgr_in_c)
                 add_to_npz(npz_bgr_file, bgr_mask_key, bgr_in_c_0_valid)
         else:
