@@ -6,6 +6,7 @@ import glob
 import pickle
 import os
 import argparse
+import tqdm
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -17,14 +18,6 @@ from extract_event_and_frame_times import (get_sequence_name,
                                            get_category,
                                            get_purpose,
                                            make_dir_if_needed)
-
-IMG_HEIGHT = int(240*1.25)
-IMG_WIDTH = int(320*1.25)
-
-MAX_VIS_DEPTH = 1.5
-EVENT_COUNT_DT = 0.005
-EVENTS_IN_EVENT_COUNT = 5000
-
 
 # From pydvs evimo-gen.py
 def mask_to_color(mask):
@@ -154,7 +147,26 @@ def visualize_event_camera_mask(t, timestamps, masks, out_width, out_height, eve
 
     return col_mask
 
+def visualize_event_camera_reproject(t, timestamps, reprojected_frames, out_width, out_height, event_count_normalized=None):
+    if reprojected_frames is not None:
+        i = np.searchsorted(timestamps, t, side='right') - 1
+        bgr = get_frame_by_index(reprojected_frames, i)
+        bgr = cv2.resize(bgr, dsize=(out_width, out_height), interpolation=cv2.INTER_NEAREST).astype(np.float32)
+    else:
+        bgr = np.zeros((out_height, out_width, 3), dtype=np.uint8)
+
+    event_count_bgr = np.dstack((event_count_normalized, event_count_normalized, event_count_normalized))
+
+    bgr = bgr.astype(np.float32) + event_count_bgr.astype(np.float32)
+    bgr = np.clip(bgr, 0, 255).astype(np.uint8)
+
+    return bgr
+
 def on_trackbar(t_ms):
+    total_image = generate_frame(t_ms)
+    cv2.imshow(title_window, total_image)
+
+def generate_frame(t_ms):
     t = (t_ms / 1000.0) + t_start
 
     # Make images for flea3_7 if in sequence else black
@@ -197,18 +209,21 @@ def on_trackbar(t_ms):
     right_camera_mask_bgr = visualize_event_camera_mask(t, right_camera_timestamps, right_camera_mask, IMG_WIDTH, IMG_HEIGHT, right_camera_event_count)
     samsung_mono_mask_bgr = visualize_event_camera_mask(t, samsung_mono_timestamps, samsung_mono_mask, IMG_WIDTH, IMG_HEIGHT, samsung_mono_event_count)
 
+    left_camera_reproject_bgr  = visualize_event_camera_reproject(t, left_camera_timestamps, left_camera_reprojected, IMG_WIDTH, IMG_HEIGHT, left_camera_event_count)
+    right_camera_reproject_bgr = visualize_event_camera_reproject(t, right_camera_timestamps, right_camera_reprojected, IMG_WIDTH, IMG_HEIGHT, right_camera_event_count)
+    samsung_mono_reproject_bgr = visualize_event_camera_reproject(t, samsung_mono_timestamps, samsung_mono_reprojected, IMG_WIDTH, IMG_HEIGHT, samsung_mono_event_count)
+
     red_line_loc = (t - t_start) * pixels_per_second + first_tick
     plot_bgr_line = cv2.line(np.copy(plot_bgr), (int(red_line_loc), 0),(int(red_line_loc), plot_bgr.shape[0]), (0, 0, 255), 1)
 
     top_row = np.hstack((cv2.flip(flea3_7_depth_bgr, -1), samsung_mono_event_bgr, cv2.flip(left_camera_event_bgr, -1), right_camera_event_bgr))
     mid_row = np.hstack((cv2.flip(flea3_7_img_bgr, -1), samsung_mono_mask_bgr, cv2.flip(left_camera_mask_bgr, -1), right_camera_mask_bgr))
     zeros = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
-    bottom_row = np.hstack((plot_bgr_line, zeros, zeros, zeros))
+    bottom_row = np.hstack((plot_bgr_line, samsung_mono_reproject_bgr, cv2.flip(left_camera_reproject_bgr, -1), right_camera_reproject_bgr))
 
 
     total_image = np.vstack((top_row, mid_row, bottom_row))
-    cv2.imshow(title_window, total_image)
-
+    return total_image
 
 def snap_to_time(event,x,y,flags,param):
     if event == cv2.EVENT_LBUTTONDOWN:
@@ -325,6 +340,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--idir', type=str, help='Directory containing npz file tree')
     parser.add_argument('--seq', default='scene13_dyn_test_00', help='Sequence name')
+    parser.add_argument('--video', default=None, help='generate video to file')
+
     args = parser.parse_args()
 
     data_base_folder = args.idir
@@ -372,11 +389,18 @@ if __name__ == '__main__':
             if 'gt_frame' in frame:
                 left_camera_timestamps.append(frame['ts'])
         left_camera_timestamps = np.array(left_camera_timestamps)
+
+        reproject_bgr_file = os.path.join(folders['left_camera'], 'dataset_reprojected_classical.npz')
+        if os.path.exists(reproject_bgr_file):
+            left_camera_reprojected = np.load(reproject_bgr_file)
+        else:
+            left_camera_reprojected = None
     else:
         left_camera_events = None
         left_camera_mask = None
         left_camera_depth = None
         left_camera_timestamps = None
+        left_camera_reprojected = None
 
     if 'right_camera' in folders:
         print('right_camera frames')
@@ -391,11 +415,17 @@ if __name__ == '__main__':
             if 'gt_frame' in frame:
                 right_camera_timestamps.append(frame['ts'])
         right_camera_timestamps = np.array(right_camera_timestamps)
+        reproject_bgr_file = os.path.join(folders['right_camera'], 'dataset_reprojected_classical.npz')
+        if os.path.exists(reproject_bgr_file):
+            right_camera_reprojected = np.load(reproject_bgr_file)
+        else:
+            right_camera_reprojected = None
     else:
         right_camera_events = None
         right_camera_mask = None
         right_camera_depth = None
         right_camera_timestamps = None
+        right_camera_reproject_bgr = None
 
     if 'samsung_mono' in folders:
         print('samsung_mono frames')
@@ -410,11 +440,17 @@ if __name__ == '__main__':
             if 'gt_frame' in frame:
                 samsung_mono_timestamps.append(frame['ts'])
         samsung_mono_timestamps = np.array(samsung_mono_timestamps)
+        reproject_bgr_file = os.path.join(folders['samsung_mono'], 'dataset_reprojected_classical.npz')
+        if os.path.exists(reproject_bgr_file):
+            samsung_mono_reprojected = np.load(reproject_bgr_file)
+        else:
+            samsung_mono_reprojected = None
     else:
         samsung_mono_events = None
         samsung_mono_mask = None
         samsung_mono_depth = None
         samsung_mono_timestamps = None
+        samsung_mono_reproject_bgr = None
 
     flea3_7_resolution = (1552, 2080)
     left_camera_resolution  = (480, 640)
@@ -442,21 +478,46 @@ if __name__ == '__main__':
 
     cv2.setNumThreads(4) # OpenCV threading is very wasteful, limit it
 
+    if not args.video:
+        IMG_HEIGHT = int(240*1.25)
+        IMG_WIDTH = int(320*1.25)
+    else:
+        IMG_HEIGHT = 480
+        IMG_WIDTH = 640
+
     print('Making plot')
     plot_bgr_orig, first_tick_orig, pixels_per_second_orig = make_timestamp_plot(flea3_7_depth_timestamps, left_camera_timestamps, right_camera_timestamps, samsung_mono_timestamps)
     plot_bgr = cv2.resize(plot_bgr_orig, dsize=(IMG_WIDTH, IMG_HEIGHT))
     first_tick = first_tick_orig * (IMG_HEIGHT / plot_bgr_orig.shape[0])
     pixels_per_second = pixels_per_second_orig  * (IMG_HEIGHT / plot_bgr_orig.shape[0])
 
-    title_window = args.seq
-    cv2.namedWindow(title_window)
+    MAX_VIS_DEPTH = 1.5
+    EVENT_COUNT_DT = 0.005
+    EVENTS_IN_EVENT_COUNT = 5000
+    if not args.video:
 
-    trackbar_name = 't - t_start (ms)'
-    slider_max = int(1000 * (t_end - t_start))
-    cv2.createTrackbar(trackbar_name, title_window , int(slider_max/2), slider_max, on_trackbar)
-    cv2.setMouseCallback(title_window, snap_to_time)
 
-    print('Visualizing first slider position')
-    on_trackbar(int(slider_max/2))
+        title_window = args.seq
+        cv2.namedWindow(title_window)
 
-    cv2.waitKey()
+        trackbar_name = 't - t_start (ms)'
+        slider_max = int(1000 * (t_end - t_start))
+        cv2.createTrackbar(trackbar_name, title_window , int(slider_max/2), slider_max, on_trackbar)
+        cv2.setMouseCallback(title_window, snap_to_time)
+
+        print('Visualizing first slider position')
+        on_trackbar(int(slider_max/2))
+
+        cv2.waitKey()
+
+    else:
+        frame_temp = generate_frame(t_start * 1000)
+
+        out = cv2.VideoWriter(args.seq+'.avi', cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_temp.shape[1], frame_temp.shape[0]))
+        for t in tqdm.tqdm(range(int(1000*t_start), int(1000*t_end), 16)):
+            frame = generate_frame(t)
+            #cv2.imshow(args.seq, frame)
+            #cv2.waitKey(1)
+
+            out.write(frame)
+        out.release()
