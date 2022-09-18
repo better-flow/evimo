@@ -19,6 +19,36 @@ from extract_event_and_frame_times import (get_sequence_name,
                                            get_purpose,
                                            make_dir_if_needed)
 
+# Generate an HSV image using color to represent the gradient direction in a optical flow field
+def visualize_optical_flow(flowin):
+    flow=np.ma.array(flowin, mask=np.isnan(flowin))
+    theta = np.mod(np.arctan2(flow[:, :, 0], flow[:, :, 1]) + 2*np.pi, 2*np.pi)
+
+    flow_norms = np.linalg.norm(flow, axis=2)
+    flow_norms_normalized = flow_norms / np.max(np.ma.array(flow_norms, mask=np.isnan(flow_norms)))
+
+    flow_hsv = np.zeros((flow.shape[0], flow.shape[1], 3), dtype=np.uint8)
+    flow_hsv[:, :, 0] = 179 * theta / (2*np.pi)
+    flow_hsv[:, :, 1] = 255 * flow_norms_normalized
+    flow_hsv[:, :, 2] = 255 * (flow_norms_normalized > 0)
+
+    return flow_hsv
+
+def draw_flow_arrows(img, xx, yy, dx, dy, p_skip=15, mag_scale=1.0):
+    xx     = xx[::p_skip, ::p_skip].flatten()
+    yy     = yy[::p_skip, ::p_skip].flatten()
+    flow_x = dx[::p_skip, ::p_skip].flatten()
+    flow_y = dy[::p_skip, ::p_skip].flatten()
+
+    for x, y, u, v in zip(xx, yy, flow_x, flow_y):
+        if np.isnan(u) or np.isnan(v):
+            continue
+        cv2.arrowedLine(img,
+                        (int(x), int(y)),
+                        (int(x+mag_scale*u), int(y+mag_scale*v)),
+                        (0, 0, 0),
+                        tipLength=0.2)
+
 # From pydvs evimo-gen.py
 def mask_to_color(mask):
     colors = [[84, 71, 140],   [44, 105, 154],  [4, 139, 168],
@@ -162,6 +192,34 @@ def visualize_event_camera_reproject(t, timestamps, reprojected_frames, out_widt
 
     return bgr
 
+def visualize_event_camera_flow(t, timestamps, flow_frames, out_width, out_height, event_count_normalized=None):
+    if flow_frames is not None:
+        i = np.searchsorted(timestamps, t, side='right') - 1
+        flow = get_frame_by_index(flow_frames, i)
+
+        flow_hsv = visualize_optical_flow(flow)
+        flow_bgr = cv2.cvtColor(flow_hsv, cv2.COLOR_HSV2BGR)
+
+        x = np.arange(0, flow.shape[1], 1)
+        y = np.arange(0, flow.shape[0], 1)
+        xx, yy = np.meshgrid(x, y)
+        xx = xx.astype(np.float32)
+        yy = yy.astype(np.float32)
+
+        draw_flow_arrows(flow_bgr, xx, yy, flow[:, :, 0], flow[:, :, 1])
+
+        flow_bgr = cv2.resize(flow_bgr, dsize=(out_width, out_height), interpolation=cv2.INTER_NEAREST).astype(np.float32)
+    else:
+        flow = np.zeros((out_height, out_width, 3), dtype=np.uint8)
+
+    event_count_bgr = np.dstack((event_count_normalized, event_count_normalized, event_count_normalized))
+
+    flow_bgr = flow_bgr.astype(np.float32) + event_count_bgr.astype(np.float32)
+    flow_bgr = np.clip(flow_bgr, 0, 255).astype(np.uint8)
+
+    return flow_bgr
+
+
 def on_trackbar(t_ms):
     total_image = generate_frame(t_ms)
     cv2.imshow(title_window, total_image)
@@ -213,6 +271,10 @@ def generate_frame(t_ms):
     right_camera_reproject_bgr = visualize_event_camera_reproject(t, right_camera_timestamps, right_camera_reprojected, IMG_WIDTH, IMG_HEIGHT, right_camera_event_count)
     samsung_mono_reproject_bgr = visualize_event_camera_reproject(t, samsung_mono_timestamps, samsung_mono_reprojected, IMG_WIDTH, IMG_HEIGHT, samsung_mono_event_count)
 
+    left_camera_flow_bgr = visualize_event_camera_flow(t, left_camera_timestamps, left_camera_flow, IMG_WIDTH, IMG_HEIGHT, left_camera_event_count)
+    right_camera_flow_bgr = visualize_event_camera_flow(t, right_camera_timestamps, right_camera_flow, IMG_WIDTH, IMG_HEIGHT, right_camera_event_count)
+    samsung_mono_flow_bgr = visualize_event_camera_flow(t, samsung_mono_timestamps, samsung_mono_flow, IMG_WIDTH, IMG_HEIGHT, samsung_mono_event_count)
+
     red_line_loc = (t - t_start) * pixels_per_second + first_tick
     plot_bgr_line = cv2.line(np.copy(plot_bgr), (int(red_line_loc), 0),(int(red_line_loc), plot_bgr.shape[0]), (0, 0, 255), 1)
 
@@ -221,8 +283,9 @@ def generate_frame(t_ms):
     zeros = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
     bottom_row = np.hstack((plot_bgr_line, samsung_mono_reproject_bgr, cv2.flip(left_camera_reproject_bgr, -1), right_camera_reproject_bgr))
 
+    flow_row = np.hstack((zeros, samsung_mono_flow_bgr, cv2.flip(left_camera_flow_bgr, -1), right_camera_flow_bgr))
 
-    total_image = np.vstack((top_row, mid_row, bottom_row))
+    total_image = np.vstack((top_row, mid_row, bottom_row, flow_row))
     return total_image
 
 def snap_to_time(event,x,y,flags,param):
@@ -395,12 +458,18 @@ if __name__ == '__main__':
             left_camera_reprojected = np.load(reproject_bgr_file)
         else:
             left_camera_reprojected = None
+        flow_file = os.path.join(folders['left_camera'], 'dataset_flow.npz')
+        if os.path.exists(flow_file):
+            left_camera_flow = np.load(flow_file)
+        else:
+            left_camera_flow = None
     else:
         left_camera_events = None
         left_camera_mask = None
         left_camera_depth = None
         left_camera_timestamps = None
         left_camera_reprojected = None
+        left_camera_flow = None
 
     if 'right_camera' in folders:
         print('right_camera frames')
@@ -420,12 +489,18 @@ if __name__ == '__main__':
             right_camera_reprojected = np.load(reproject_bgr_file)
         else:
             right_camera_reprojected = None
+        flow_file = os.path.join(folders['right_camera'], 'dataset_flow.npz')
+        if os.path.exists(flow_file):
+            right_camera_flow = np.load(flow_file)
+        else:
+            right_camera_flow = None
     else:
         right_camera_events = None
         right_camera_mask = None
         right_camera_depth = None
         right_camera_timestamps = None
         right_camera_reproject_bgr = None
+        right_camera_flow = None
 
     if 'samsung_mono' in folders:
         print('samsung_mono frames')
@@ -445,12 +520,18 @@ if __name__ == '__main__':
             samsung_mono_reprojected = np.load(reproject_bgr_file)
         else:
             samsung_mono_reprojected = None
+        flow_file = os.path.join(folders['samsung_mono'], 'dataset_flow.npz')
+        if os.path.exists(flow_file):
+            samsung_mono_flow = np.load(flow_file)
+        else:
+            samsung_mono_flow = None
     else:
         samsung_mono_events = None
         samsung_mono_mask = None
         samsung_mono_depth = None
         samsung_mono_timestamps = None
         samsung_mono_reproject_bgr = None
+        samsung_mono_flow = None
 
     flea3_7_resolution = (1552, 2080)
     left_camera_resolution  = (480, 640)
@@ -479,8 +560,8 @@ if __name__ == '__main__':
     cv2.setNumThreads(4) # OpenCV threading is very wasteful, limit it
 
     if not args.video:
-        IMG_HEIGHT = int(240*1.25)
-        IMG_WIDTH = int(320*1.25)
+        IMG_HEIGHT = 240
+        IMG_WIDTH = 320
     else:
         IMG_HEIGHT = 480
         IMG_WIDTH = 640
