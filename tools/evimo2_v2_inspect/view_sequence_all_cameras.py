@@ -210,7 +210,7 @@ def visualize_event_camera_flow(t, timestamps, flow_frames, out_width, out_heigh
 
         flow_bgr = cv2.resize(flow_bgr, dsize=(out_width, out_height), interpolation=cv2.INTER_NEAREST).astype(np.float32)
     else:
-        flow = np.zeros((out_height, out_width, 3), dtype=np.uint8)
+        flow_bgr = np.zeros((out_height, out_width, 3), dtype=np.uint8)
 
     event_count_bgr = np.dstack((event_count_normalized, event_count_normalized, event_count_normalized))
 
