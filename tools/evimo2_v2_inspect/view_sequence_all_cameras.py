@@ -499,7 +499,7 @@ if __name__ == '__main__':
         right_camera_mask = None
         right_camera_depth = None
         right_camera_timestamps = None
-        right_camera_reproject_bgr = None
+        right_camera_reprojected = None
         right_camera_flow = None
 
     if 'samsung_mono' in folders:
