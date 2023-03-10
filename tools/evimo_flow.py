@@ -327,7 +327,8 @@ def load_extrinsics(file):
     return T_rc
 
 def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
-            waitKey=1, dframes=None, format='evimo2v1', bgr_file=None):
+            waitKey=1, dframes=None, format='evimo2v1', bgr_file=None,
+            use_ros_time_offset=False):
     cv2.setNumThreads(1) # OpenCV is wasteful and so we run this with one process per sequence
 
     if format != 'evimo2v2' and bgr_file is not None:
@@ -476,7 +477,8 @@ def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
     else:
         raise Exception('Unsupported EVIMO format')
 
-    ros_time_offset=meta['meta']['ros_time_offset'] # get offset of start of data in epoch seconds to write the flow timestamps using same timebase as MVSEC
+    if use_ros_time_offset:
+        ros_time_offset=meta['meta']['ros_time_offset'] # get offset of start of data in epoch seconds to write the flow timestamps using same timebase as MVSEC
     last_time=float('nan')
     last_delta_time=float('nan')
     delta_times=[]
@@ -644,8 +646,12 @@ def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
         last_time=relative_time
 
         # Save results
-        timestamps[i]        = relative_time + ros_time_offset
-        end_timestamps[i]    = right_time    + ros_time_offset
+        timestamps[i]     = relative_time
+        end_timestamps[i] = right_time
+        if use_ros_time_offset:
+            timestamps[i]  += ros_time_offset
+            end_timestamps += ros_time_offset
+
         if format == 'evimo2v1':
             x_flow_dist[i, :, :] = dx
             y_flow_dist[i, :, :] = dy
@@ -720,6 +726,7 @@ if __name__ == '__main__':
                                                                                   'in the scene at the time of a ground truth frame in the future')
     parser.add_argument('--format', dest='format', type=str, help='"evimo2v1" or "evimo2v2" input data format')
     parser.add_argument('--reprojectbgr', dest='reproject_bgr', action='store_true', help='Reproject a classical camera measurement into the flow frame')
+    parser.add_argument('--use_ros_time', dest='use_ros_time', action='store_true', help='Save flow timestamps corresponding to the raw ROS bag files')
     parser.add_argument('files', nargs='*',help='NPZ files to convert')
 
     args = parser.parse_args()
@@ -749,7 +756,8 @@ if __name__ == '__main__':
             int(not(args.wait)),
             args.dframes,
             args.format,
-            bgr_file
+            bgr_file,
+            args.use_ros_time,
         ])
 
     with Pool(multiprocessing.cpu_count()) as p:
