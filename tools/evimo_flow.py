@@ -78,6 +78,7 @@ import zipfile
 import cv2
 import numpy as np
 import pprint
+from scipy.linalg import logm
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp
 import easygui
@@ -125,23 +126,18 @@ mpp.Pool.istarmap = istarmap
 def interpolate_pose(t, pose):
     right_i = np.searchsorted(pose[:, 0], t)
     if right_i==pose.shape[0]:
-        # print(f'attempted extrapolation past end of poses, clipping')
-        right_i=right_i-1 # prevent attempted extrapolation past array end
-
+        return None
     if right_i==0:
-        # print(f'attempt extrapolation past beginning of poses, clipping')
-        right_i=1 # prevent attempted extrapolation before array start
+        return None
 
     left_t  = pose[right_i-1, 0]
     right_t = pose[right_i,   0]
 
     alpha = (t - left_t) / (right_t - left_t)
     if alpha>1:
-        # print(f'attempted alpha>1, clipping')
-        alpha=1
+        return None
     elif alpha < 0:
-        # print(f'attempted alpha<0, clipping')
-        alpha=0
+        return None
 
     left_position  = pose[right_i - 1, 1:4]
     right_position = pose[right_i,     1:4]
@@ -216,6 +212,8 @@ def visualize_optical_flow(flowin):
     flow_hsv[:, :, 0] = 179 * theta / (2*np.pi)
     flow_hsv[:, :, 1] = 255 * flow_norms_normalized
     flow_hsv[:, :, 2] = 255 * (flow_norms_normalized > 0)
+
+    flow_hsv[np.logical_and(np.isnan(theta), np.isnan(flow_norms_normalized)), :] = 0
 
     return flow_hsv
 
@@ -328,7 +326,8 @@ def load_extrinsics(file):
 
 def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
             waitKey=1, dframes=None, format='evimo2v1', bgr_file=None,
-            use_ros_time_offset=False):
+            use_ros_time_offset=False,
+            reproject_z_tol=0.003, max_m_per_s=9.0, max_norm_deg_per_s=6.25*360):
     cv2.setNumThreads(1) # OpenCV is wasteful and so we run this with one process per sequence
 
     if format != 'evimo2v2' and bgr_file is not None:
@@ -550,9 +549,21 @@ def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
             T_c1o = left_poses[key]
             T_c2o = right_poses[key]
 
+            if T_c1o is None or T_c2o is None:
+                continue
+
             T_c2c1 = apply_transform(T_c2o, inv_transform(T_c1o))
 
-            left_to_right_pose[key] = T_c2c1
+            # Make sure Vicon did not lose track of object resulting in a sharp
+            # jump in angular and linear velocity (which then results in extremely large flow)
+            v = (T_c1o[1:4]-T_c2o[1:4]) / (right_time - left_time)
+
+            R_ba = R.from_quat(T_c2c1[4:8]).as_matrix()
+            w_matrix = logm(R_ba)
+            w = np.array([-w_matrix[1,2], w_matrix[0, 2], -w_matrix[0, 1]]) / (right_time - left_time)
+
+            if np.linalg.norm(v) < max_m_per_s and np.linalg.norm(w) < max_norm_deg_per_s * np.pi / 180:
+                left_to_right_pose[key] = T_c2c1
 
             if bgr_file is not None:
                 T_c2o = interpolate_pose(bgr_frame_info['ts'], all_poses[key])
@@ -562,7 +573,7 @@ def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
 
         # Flatten for transformation
         left_XYZ_flat_cols  = left_XYZ.reshape(X_m.shape[0]*X_m.shape[1], 3).transpose()
-        right_XYZ_flat_rows = np.zeros(left_XYZ_flat_cols.shape, dtype=np.float32).transpose()
+        right_XYZ_flat_rows = np.full(left_XYZ_flat_cols.shape, np.nan, dtype=np.float32).transpose()
 
         if bgr_file is not None:
             bgr_right_XYZ_flat_rows = np.zeros(left_XYZ_flat_cols.shape, dtype=np.float32).transpose()
@@ -605,11 +616,10 @@ def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
                                          K[0, 0], K[1,1], K[0, 2], K[1, 2],
                                          *dist_coeffs)
 
-        # Calculate flow, mask out points where depth is unknown
+        # Calculate flow
+        # Points where depth or flow transform is unknown will be NaN
         dx = W_x - xx
         dy = W_y - yy
-        dx[depth_mask==0]=float("nan")
-        dy[depth_mask==0]=float("nan")
 
         if bgr_file is not None:
             p_x, p_y = project_points_radtan(bgr_XYZ,
@@ -624,7 +634,7 @@ def convert(file, flow_dt, quiet=False, showflow=True, overwrite=False,
             # Use 3 mm threshold since the depth maps are saved with  a resolution of 1mm
             # thus the error could be +/- 2 mm and a slight tolerance is needed on top of that
             # without this there is visible depth aliasing
-            valid_reprojections = bgr_XYZ[:, :, 2] < bgr_depth_in_c_0 + 0.003
+            valid_reprojections = (bgr_XYZ[:, :, 2] > 0) * (bgr_XYZ[:, :, 2] < bgr_depth_in_c_0 + reproject_z_tol)
             bgr_in_c_0_valid = depth_mask * valid_reprojections
 
             bgr_in_c = np.zeros(bgr_in_c_0.shape, dtype=bgr_in_c_0.dtype)
@@ -727,6 +737,9 @@ if __name__ == '__main__':
     parser.add_argument('--format', dest='format', type=str, help='"evimo2v1" or "evimo2v2" input data format')
     parser.add_argument('--reprojectbgr', dest='reproject_bgr', action='store_true', help='Reproject a classical camera measurement into the flow frame')
     parser.add_argument('--use_ros_time', dest='use_ros_time', action='store_true', help='Save flow timestamps corresponding to the raw ROS bag files')
+    parser.add_argument('--reproject_z_tol', dest='reproject_z_tol', type=float, default=0.003, help='Z buffer tolerance when reprojecting BGR data')
+    parser.add_argument('--max_m_per_s', dest='max_m_per_s', type=float, default=9.0, help='Maximum meters per second of linear velocity before it is assumed that Vicon lost track')
+    parser.add_argument('--max_norm_deg_per_s', dest='max_norm_deg_per_s', type=float, default=6.25*360, help='Maximum normed degrees per second of angular velocity before it assumed that Vicon lost track')
     parser.add_argument('files', nargs='*',help='NPZ files to convert')
 
     args = parser.parse_args()
@@ -758,6 +771,9 @@ if __name__ == '__main__':
             args.format,
             bgr_file,
             args.use_ros_time,
+            args.reproject_z_tol,
+            args.max_m_per_s,
+            args.max_norm_deg_per_s,
         ])
 
     with Pool(multiprocessing.cpu_count()) as p:
