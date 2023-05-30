@@ -23,7 +23,7 @@ RUN apt-get update \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install matplotlib pyquaternion scipy tqdm pandas numpy pyarrow Jinja2 easygui opencv-python scipy numba matplotlib pyzmq --upgrade
+RUN pip3 install matplotlib pyquaternion scipy tqdm pandas numpy pyarrow Jinja2 easygui opencv-python scipy numba matplotlib pyzmq mujoco --upgrade
 
 RUN apt-get update \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y \

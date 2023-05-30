@@ -15,3 +15,9 @@ Once inside compile the evimo C++ and python tools by running:
 cd ~/catkin_ws; catkin_make; pip3 install -e ~/pydvs/lib; cd
 source ~/catkin_ws/devel/setup.bash
 ```
+
+
+# Run evimo3 generation
+./docker_run.sh /home/levi/Documents/evimo/evimo2_raw /home/levi/Documents/evimo/evimo3_generation/
+python3 evimo3_ros.py --sequence ~/EVIMO/imo/eval/scene15_dyn_test_05
+python3 evimo3_ros.py --sequence ~/EVIMO/imo/eval/scene15_dyn_test_05 --show

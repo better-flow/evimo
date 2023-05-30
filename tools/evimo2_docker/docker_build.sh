@@ -35,7 +35,8 @@ fi
 # Back to evimo2_docker
 cd ..
 
-cp docker_install_mujoco.sh docker_home/docker_install_mujoco.sh
+# Only needed if installing from source
+# cp docker_install_mujoco.sh docker_home/docker_install_mujoco.sh
 
 if [ -d "pydvs" ] 
 then

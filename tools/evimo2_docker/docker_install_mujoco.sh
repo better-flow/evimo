@@ -1,3 +1,5 @@
+# Only needed if installing from source
+
 python3 -m venv mujoco_venv
 source mujoco_venv/bin/activate
 pip install wheel glfw opencv-python
