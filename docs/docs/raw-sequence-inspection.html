@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Raw Sequence Inspection &mdash; EVIMO 2022 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -11,10 +12,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=001ecc8c"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -27,11 +29,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> EVIMO
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            EVIMO
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -79,8 +85,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Raw Sequence Inspection</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Raw Sequence Inspection</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/raw-sequence-inspection.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -90,32 +96,32 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="raw-sequence-inspection">
-<h1>Raw Sequence Inspection<a class="headerlink" href="#raw-sequence-inspection" title="Permalink to this headline"></a></h1>
-<p>This page describes how to use the <strong>offline tool</strong> for visualization of a raw recording’s <a class="reference internal" href="raw-sequence-structure.html"><span class="doc std std-doc">sequence folder</span></a>. How to launch, and what parameters the offline tool accepts, is described in the <a class="reference internal" href="offline-generation-tool.html"><span class="doc std std-doc">offline generation tool page</span></a>.</p>
-<div class="section" id="visualization-modes">
-<h2>Visualization modes<a class="headerlink" href="#visualization-modes" title="Permalink to this headline"></a></h2>
+  <section id="raw-sequence-inspection">
+<h1>Raw Sequence Inspection<a class="headerlink" href="#raw-sequence-inspection" title="Link to this heading"></a></h1>
+<p>This page describes how to use the <strong>offline tool</strong> for visualization of a raw recording’s <a class="reference internal" href="raw-sequence-structure.html"><span class="std std-doc">sequence folder</span></a>. How to launch, and what parameters the offline tool accepts, is described in the <a class="reference internal" href="offline-generation-tool.html"><span class="std std-doc">offline generation tool page</span></a>.</p>
+<section id="visualization-modes">
+<h2>Visualization modes<a class="headerlink" href="#visualization-modes" title="Link to this heading"></a></h2>
 <p>Two kinds of visualization are currently supported:</p>
-<div class="section" id="show-2">
-<h3><code class="docutils literal notranslate"><span class="pre">_show:=-2</span></code><a class="headerlink" href="#show-2" title="Permalink to this headline"></a></h3>
+<section id="show-2">
+<h3><code class="docutils literal notranslate"><span class="pre">_show:=-2</span></code><a class="headerlink" href="#show-2" title="Link to this heading"></a></h3>
 <p>A frame-by-frame visualization (with a scroll bar to go through the dataset frames). Rendering modes can be changed by pressing keys 1-4.</p>
 <p>The visualization code is <a class="reference external" href="https://github.com/better-flow/evimo/blob/67bc579e0588f8acd9d2cb37eb85cd5ddac8b6ef/evimo/offline.cpp#L126">here</a>.</p>
 <p><img alt="raw_sequence_visualization_1" src="_images/raw_sequence_visualization_1.png" />
 From left to right (keys 1-4): mask with events overlaid, mask, depth with events overlaid, events color-coded by their timestamp.</p>
-</div>
-<div class="section" id="show-any-positive-integer">
-<h3><code class="docutils literal notranslate"><span class="pre">_show:=&lt;any</span> <span class="pre">positive</span> <span class="pre">integer&gt;</span></code><a class="headerlink" href="#show-any-positive-integer" title="Permalink to this headline"></a></h3>
+</section>
+<section id="show-any-positive-integer">
+<h3><code class="docutils literal notranslate"><span class="pre">_show:=&lt;any</span> <span class="pre">positive</span> <span class="pre">integer&gt;</span></code><a class="headerlink" href="#show-any-positive-integer" title="Link to this heading"></a></h3>
 <p>A multi-frame visualization. The sequence cannot be scrolled through, however multiple frames can be seen at once, the trajectory plots are shown, and the manual calibration window is made available.</p>
 <p><strong>Note:</strong> the rotation component in trajectories is plotted in Euler angles, and angles can ‘roll over’ from <em>-pi</em> to <em>pi</em> during the full turn.</p>
 <p>The visualization code is <a class="reference external" href="https://github.com/better-flow/evimo/blob/67bc579e0588f8acd9d2cb37eb85cd5ddac8b6ef/evimo/dataset_frame.h#L82">here</a>.</p>
 <p><img alt="raw_sequence_visualization_2" src="_images/raw_sequence_visualization_2.png" />
 From left to right: Trajectory plot with red vertical lines at the timestamps of rendered frames. Visualized frames at the times of the red vertical lines. Manual calibration window.</p>
-</div>
-</div>
-<div class="section" id="keyboard-shortcuts">
-<h2>Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Permalink to this headline"></a></h2>
+</section>
+</section>
+<section id="keyboard-shortcuts">
+<h2>Keyboard Shortcuts<a class="headerlink" href="#keyboard-shortcuts" title="Link to this heading"></a></h2>
 <p>Relevant (<a class="reference external" href="https://github.com/better-flow/evimo/blob/67bc579e0588f8acd9d2cb37eb85cd5ddac8b6ef/evimo/dataset.h#L196">code</a>)</p>
-<table class="colwidths-auto docutils align-default">
+<table class="docutils align-default">
 <thead>
 <tr class="row-odd"><th class="head"><p>Key</p></th>
 <th class="head"><p>Description</p></th>
@@ -156,7 +162,7 @@ From left to right: Trajectory plot with red vertical lines at the timestamps of
 <td><p>Reset extrinsic calibration sliders to mid value (sliders only available in multi-frame mode)</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">'s'</span></code></p></td>
-<td><p>Write the calibration (extrinsic or time offset) to the <a class="reference internal" href="raw-sequence-structure.html"><span class="doc std std-doc">sequence’s camera folder</span></a></p></td>
+<td><p>Write the calibration (extrinsic or time offset) to the <a class="reference internal" href="raw-sequence-structure.html"><span class="std std-doc">sequence’s camera folder</span></a></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">'''</span></code></p></td>
 <td><p>(frame-by-frame mode only) Move one frame forward</p></td>
@@ -169,8 +175,8 @@ From left to right: Trajectory plot with red vertical lines at the timestamps of
 </tr>
 </tbody>
 </table>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

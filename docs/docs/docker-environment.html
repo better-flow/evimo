@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EVIMO Docker Environment &mdash; EVIMO 2022 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -11,10 +12,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=001ecc8c"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -27,11 +29,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> EVIMO
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            EVIMO
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -81,8 +87,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>EVIMO Docker Environment</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">EVIMO Docker Environment</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/docker-environment.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -92,28 +98,28 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="evimo-docker-environment">
-<h1>EVIMO Docker Environment<a class="headerlink" href="#evimo-docker-environment" title="Permalink to this headline"></a></h1>
+  <section id="evimo-docker-environment">
+<h1>EVIMO Docker Environment<a class="headerlink" href="#evimo-docker-environment" title="Link to this heading"></a></h1>
 <p>A docker environment is provided to simplify generating the dataset from raw recordings. The source is <a class="reference external" href="https://github.com/better-flow/evimo/tree/master/tools/evimo2_docker">here</a>.</p>
 <p>It is assumed below that the raw recordings are available in a directory <code class="docutils literal notranslate"><span class="pre">/media/$(USER)/EVIMO</span></code>. A full generation requires 4TB of disk space.</p>
-<p>Refer to <a class="reference internal" href="evimo2v2-generation.html"><span class="doc std std-doc">this page</span></a> for instructions on using this container to generate EVIMO2v2 from the raw recordings.</p>
-<div class="section" id="setup">
-<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline"></a></h2>
+<p>Refer to <a class="reference internal" href="evimo2v2-generation.html"><span class="std std-doc">this page</span></a> for instructions on using this container to generate EVIMO2v2 from the raw recordings.</p>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading"></a></h2>
 <p>Download the repository, enter the docker directory, build the container, run the container, compile and install tools mounted from the host filesystem.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/better-flow/evimo.git
-<span class="nb">cd</span> evimo/tools/evimo2_docker
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/better-flow/evimo.git
+<span class="nb">cd</span><span class="w"> </span>evimo/tools/evimo2_docker
 ./docker_build.sh
-./docker_run.sh /media/<span class="k">$(</span>USER<span class="k">)</span>/EVIMO
-<span class="nb">cd</span> ~/catkin_ws<span class="p">;</span> catkin_make<span class="p">;</span> pip3 install -e ~/pydvs/lib<span class="p">;</span> <span class="nb">cd</span>
-<span class="nb">source</span> ~/catkin_ws/devel/setup.bash
+./docker_run.sh<span class="w"> </span>/media/<span class="k">$(</span>USER<span class="k">)</span>/EVIMO
+<span class="nb">cd</span><span class="w"> </span>~/catkin_ws<span class="p">;</span><span class="w"> </span>catkin_make<span class="p">;</span><span class="w"> </span>pip3<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>~/pydvs/lib<span class="p">;</span><span class="w"> </span><span class="nb">cd</span>
+<span class="nb">source</span><span class="w"> </span>~/catkin_ws/devel/setup.bash
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">catkin_make</span></code> only needs to be run once because <code class="docutils literal notranslate"><span class="pre">catkin_ws</span></code> is stored on the host and mounted into the container.</p>
-</div>
-<div class="section" id="notes">
-<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this headline"></a></h2>
-<div class="section" id="docker-build-sh-does-the-following-things">
-<h3>docker_build.sh does the following things:<a class="headerlink" href="#docker-build-sh-does-the-following-things" title="Permalink to this headline"></a></h3>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading"></a></h2>
+<section id="docker-build-sh-does-the-following-things">
+<h3>docker_build.sh does the following things:<a class="headerlink" href="#docker-build-sh-does-the-following-things" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>Creates a <code class="docutils literal notranslate"><span class="pre">docker_home</span></code> folder on the host, it is persistent between containers</p></li>
 <li><p>Adds a command to source required ROS environment variables to the containers <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code></p></li>
@@ -121,9 +127,9 @@
 <li><p>Clones the <code class="docutils literal notranslate"><span class="pre">pydvs</span></code> python package to <code class="docutils literal notranslate"><span class="pre">evimo2_docker</span></code>. It is not cloned to <code class="docutils literal notranslate"><span class="pre">docker_home</span></code> in order to avoid accidental deletion.</p></li>
 </ul>
 <p>Because all source code is in the <code class="docutils literal notranslate"><span class="pre">docker_home</span></code> folder, which is mounted into the running container, code changes and ROS compilation is persistent across containers. This allows easy code editing from the host.</p>
-</div>
-<div class="section" id="docker-run-sh-does-the-following-things">
-<h3>docker_run.sh does the following things:<a class="headerlink" href="#docker-run-sh-does-the-following-things" title="Permalink to this headline"></a></h3>
+</section>
+<section id="docker-run-sh-does-the-following-things">
+<h3>docker_run.sh does the following things:<a class="headerlink" href="#docker-run-sh-does-the-following-things" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>Mounts the first argument to <code class="docutils literal notranslate"><span class="pre">/home/$USER/EVIMO</span></code>. This will likely be a 4TB or larger hard drive that will be used storing generated artifacts.</p></li>
 <li><p>Mounts the docker_home folder to <code class="docutils literal notranslate"><span class="pre">/home/$USER</span></code> (allows ROS to have persistence across container instances)</p></li>
@@ -135,17 +141,17 @@
 <li><p>Allows using sudo, so you can still modify the container’s files</p></li>
 <li><p>Gives access to hosts X server (GUI apps), as a result it is insecure, only run trusted software in here</p></li>
 </ul>
-</div>
-<div class="section" id="catkin-make">
-<h3><code class="docutils literal notranslate"><span class="pre">catkin_make</span></code><a class="headerlink" href="#catkin-make" title="Permalink to this headline"></a></h3>
+</section>
+<section id="catkin-make">
+<h3><code class="docutils literal notranslate"><span class="pre">catkin_make</span></code><a class="headerlink" href="#catkin-make" title="Link to this heading"></a></h3>
 <p>Running <code class="docutils literal notranslate"><span class="pre">catkin_make</span></code> is required only when the C++ codes are changed. It does not need to be re-run if the container is restarted.</p>
-</div>
-<div class="section" id="pydvs">
-<h3><code class="docutils literal notranslate"><span class="pre">pydvs</span></code><a class="headerlink" href="#pydvs" title="Permalink to this headline"></a></h3>
+</section>
+<section id="pydvs">
+<h3><code class="docutils literal notranslate"><span class="pre">pydvs</span></code><a class="headerlink" href="#pydvs" title="Link to this heading"></a></h3>
 <p>Pydvs is installed using the “editable” mode. This means python codes can be edited and run without running <code class="docutils literal notranslate"><span class="pre">pip3</span></code> again. However, updating pydvs’s C components will require running <code class="docutils literal notranslate"><span class="pre">pip3</span></code> again.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>

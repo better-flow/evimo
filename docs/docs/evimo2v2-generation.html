@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Generating EVIMO2 v2 &mdash; EVIMO 2022 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -11,10 +12,11 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=001ecc8c"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -27,11 +29,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> EVIMO
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            EVIMO
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -89,8 +95,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Generating EVIMO2 v2</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Generating EVIMO2 v2</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/evimo2v2-generation.md.txt" rel="nofollow"> View page source</a>
       </li>
@@ -100,16 +106,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="generating-evimo2-v2">
-<h1>Generating EVIMO2 v2<a class="headerlink" href="#generating-evimo2-v2" title="Permalink to this headline"></a></h1>
-<div class="section" id="preparation">
-<h2>Preparation<a class="headerlink" href="#preparation" title="Permalink to this headline"></a></h2>
-<div class="section" id="setup-docker-container">
-<h3>Setup Docker container<a class="headerlink" href="#setup-docker-container" title="Permalink to this headline"></a></h3>
-<p>Use the instructions <a class="reference internal" href="docker-environment.html"><span class="doc std std-doc">here</span></a>.</p>
-</div>
-<div class="section" id="download">
-<h3>Download<a class="headerlink" href="#download" title="Permalink to this headline"></a></h3>
+  <section id="generating-evimo2-v2">
+<h1>Generating EVIMO2 v2<a class="headerlink" href="#generating-evimo2-v2" title="Link to this heading"></a></h1>
+<section id="preparation">
+<h2>Preparation<a class="headerlink" href="#preparation" title="Link to this heading"></a></h2>
+<section id="setup-docker-container">
+<h3>Setup Docker container<a class="headerlink" href="#setup-docker-container" title="Link to this heading"></a></h3>
+<p>Use the instructions <a class="reference internal" href="docker-environment.html"><span class="std std-doc">here</span></a>.</p>
+</section>
+<section id="download">
+<h3>Download<a class="headerlink" href="#download" title="Link to this heading"></a></h3>
 <p>Download and extract the raw recordings from the <a class="reference external" href="https://better-flow.github.io/evimo/download_evimo_2.html">downloads page</a></p>
 <p>The drive should have at least 4TB of free space if the entire dataset is to be generated with default settings.</p>
 <p>The result should look like this:</p>
@@ -128,41 +134,41 @@ sfm/
 sfm_ll/
 </pre></div>
 </div>
-</div>
-<div class="section" id="swapfile-if-necessary">
-<h3>Swapfile (if necessary)<a class="headerlink" href="#swapfile-if-necessary" title="Permalink to this headline"></a></h3>
+</section>
+<section id="swapfile-if-necessary">
+<h3>Swapfile (if necessary)<a class="headerlink" href="#swapfile-if-necessary" title="Link to this heading"></a></h3>
 <p>Generation currently requires about 80GB of memory (RAM). A large swapfile on an SSD will work.</p>
 <p><a class="reference external" href="https://askubuntu.com/a/1075516">These instructions</a> may help with creating swapfile.</p>
-</div>
-</div>
-<div class="section" id="generate-a-particular-sequence">
-<h2>Generate a particular sequence<a class="headerlink" href="#generate-a-particular-sequence" title="Permalink to this headline"></a></h2>
+</section>
+</section>
+<section id="generate-a-particular-sequence">
+<h2>Generate a particular sequence<a class="headerlink" href="#generate-a-particular-sequence" title="Link to this heading"></a></h2>
 <p>Generating a single sequence can take a few minutes to an hour depending on the seqeuence. More cores will make it faster.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> evimo/tools/evimo2_docker
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>evimo/tools/evimo2_docker
 ./docker_build.sh
-./docker_run.sh /media/<span class="nv">$USER</span>/EVIMO
-<span class="nb">cd</span> ~/catkin_ws<span class="p">;</span> catkin_make<span class="p">;</span> pip3 install -e ~/pydvs/lib<span class="p">;</span> <span class="nb">cd</span>
-<span class="nb">source</span> ~/catkin_ws/devel/setup.bash
-<span class="nb">cd</span> ~/tools/evimo2_generate<span class="p">;</span> ./generate.sh ~/EVIMO/raw/imo/eval/scene13_dyn_test_00
+./docker_run.sh<span class="w"> </span>/media/<span class="nv">$USER</span>/EVIMO
+<span class="nb">cd</span><span class="w"> </span>~/catkin_ws<span class="p">;</span><span class="w"> </span>catkin_make<span class="p">;</span><span class="w"> </span>pip3<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>~/pydvs/lib<span class="p">;</span><span class="w"> </span><span class="nb">cd</span>
+<span class="nb">source</span><span class="w"> </span>~/catkin_ws/devel/setup.bash
+<span class="nb">cd</span><span class="w"> </span>~/tools/evimo2_generate<span class="p">;</span><span class="w"> </span>./generate.sh<span class="w"> </span>~/EVIMO/raw/imo/eval/scene13_dyn_test_00
 </pre></div>
 </div>
-</div>
-<div class="section" id="generate-everything">
-<h2>Generate everything<a class="headerlink" href="#generate-everything" title="Permalink to this headline"></a></h2>
+</section>
+<section id="generate-everything">
+<h2>Generate everything<a class="headerlink" href="#generate-everything" title="Link to this heading"></a></h2>
 <p>Generating the entire dataset can take over 24 hours.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> evimo/tools/evimo2_docker
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>evimo/tools/evimo2_docker
 ./docker_build.sh
-./docker_run.sh /media/<span class="nv">$USER</span>/EVIMO
-<span class="nb">cd</span> ~/tools/evimo2_generate
-./generate_all.sh ~/EVIMO/raw
-./package_all.py ~/EVIMO/raw ~/EVIMO/packaged move
-./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed compress
+./docker_run.sh<span class="w"> </span>/media/<span class="nv">$USER</span>/EVIMO
+<span class="nb">cd</span><span class="w"> </span>~/tools/evimo2_generate
+./generate_all.sh<span class="w"> </span>~/EVIMO/raw
+./package_all.py<span class="w"> </span>~/EVIMO/raw<span class="w"> </span>~/EVIMO/packaged<span class="w"> </span>move
+./compress_packaged.py<span class="w"> </span>~/EVIMO/packaged<span class="w"> </span>~/EVIMO/compressed<span class="w"> </span>compress
 </pre></div>
 </div>
 <p>See the detailed tools descriptions below for more information.</p>
-</div>
-<div class="section" id="remove-bad-sequences-from-packaged-output">
-<h2>Remove bad sequences from packaged output<a class="headerlink" href="#remove-bad-sequences-from-packaged-output" title="Permalink to this headline"></a></h2>
+</section>
+<section id="remove-bad-sequences-from-packaged-output">
+<h2>Remove bad sequences from packaged output<a class="headerlink" href="#remove-bad-sequences-from-packaged-output" title="Link to this heading"></a></h2>
 <p>After manual evaluation, the following sequences were found to contain no usable data and so were removed from the packaged output before compressing.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">txt</span><span class="o">/</span><span class="n">flea3_7</span><span class="o">/</span><span class="n">imo</span><span class="o">/</span><span class="n">train</span><span class="o">/</span><span class="n">scene6_dyn_train_00_000000</span>
 <span class="n">txt</span><span class="o">/</span><span class="n">left_camera</span><span class="o">/</span><span class="n">imo</span><span class="o">/</span><span class="n">train</span><span class="o">/</span><span class="n">scene6_dyn_train_00_000000</span>
@@ -234,24 +240,24 @@ sfm_ll/
 <span class="n">video</span><span class="o">/</span><span class="n">right_camera</span><span class="o">/</span><span class="n">sfm</span><span class="o">/</span><span class="n">train</span><span class="o">/</span><span class="n">seq_1_5_right_camera_ground_truth_000001</span><span class="o">.</span><span class="n">mp4</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="generation-tools">
-<h2>Generation Tools<a class="headerlink" href="#generation-tools" title="Permalink to this headline"></a></h2>
+</section>
+<section id="generation-tools">
+<h2>Generation Tools<a class="headerlink" href="#generation-tools" title="Link to this heading"></a></h2>
 <p>All generation tools are located in <code class="docutils literal notranslate"><span class="pre">evimo/tools/evimo2_generation</span></code>.</p>
-<div class="section" id="clear">
-<h3>Clear<a class="headerlink" href="#clear" title="Permalink to this headline"></a></h3>
+<section id="clear">
+<h3>Clear<a class="headerlink" href="#clear" title="Link to this heading"></a></h3>
 <p>Deletes all generated files but leaves the raw recordings</p>
 <p>Clear all:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./clear_all.sh ~/EVIMO/raw
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./clear_all.sh<span class="w"> </span>~/EVIMO/raw
 </pre></div>
 </div>
 <p>Clear a specific recording:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./clear.sh ~/EVIMO/raw/imo/eva/scene13_dyn_test_00
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./clear.sh<span class="w"> </span>~/EVIMO/raw/imo/eva/scene13_dyn_test_00
 </pre></div>
 </div>
-</div>
-<div class="section" id="generate">
-<h3>Generate<a class="headerlink" href="#generate" title="Permalink to this headline"></a></h3>
+</section>
+<section id="generate">
+<h3>Generate<a class="headerlink" href="#generate" title="Link to this heading"></a></h3>
 <p>Runs for each camera in a sequence folder</p>
 <ul class="simple">
 <li><p>the offline tool to generate txt format</p></li>
@@ -261,41 +267,41 @@ sfm_ll/
 <li><p>all final artifacts are left in each sequences folder, they will be moved into the final dataset file/folder structure later</p></li>
 </ul>
 <p>Generate all:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./generate_all.sh ~/raw
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./generate_all.sh<span class="w"> </span>~/raw
 </pre></div>
 </div>
 <p>Generate a specific recording:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">generate</span><span class="o">.</span><span class="n">sh</span> <span class="o">~/</span><span class="n">EVIMO</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">imo</span><span class="o">/</span><span class="n">eva</span><span class="o">/</span><span class="n">scene13_dyn_test_00</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="package">
-<h3>Package<a class="headerlink" href="#package" title="Permalink to this headline"></a></h3>
+</section>
+<section id="package">
+<h3>Package<a class="headerlink" href="#package" title="Link to this heading"></a></h3>
 <p>Checks that files that should have been made by <code class="docutils literal notranslate"><span class="pre">generate.sh</span></code> are present and copies or moves files into the released file/folder structure.</p>
 <p>To do a dry run (check for missing generated files)</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./package_all.py ~/EVIMO/raw ~/EVIMO/packaged dry
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./package_all.py<span class="w"> </span>~/EVIMO/raw<span class="w"> </span>~/EVIMO/packaged<span class="w"> </span>dry
 </pre></div>
 </div>
 <p>To do a real run (moves files and copies those that can’t be moved):</p>
 <p>Moving instead of copying saves over a 1 TB of drive space and makes the process fit on a 4TB drive.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./package_all.py ~/EVIMO/raw ~/EVIMO/packaged move
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./package_all.py<span class="w"> </span>~/EVIMO/raw<span class="w"> </span>~/EVIMO/packaged<span class="w"> </span>move
 </pre></div>
 </div>
-</div>
-<div class="section" id="compress">
-<h3>Compress<a class="headerlink" href="#compress" title="Permalink to this headline"></a></h3>
+</section>
+<section id="compress">
+<h3>Compress<a class="headerlink" href="#compress" title="Link to this heading"></a></h3>
 <p>Checks that files that should have been made by <code class="docutils literal notranslate"><span class="pre">generate.sh</span></code> are present and copies or moves files into the released file/folder structure.</p>
 <p>To do a dry run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed dry
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./compress_packaged.py<span class="w"> </span>~/EVIMO/packaged<span class="w"> </span>~/EVIMO/compressed<span class="w"> </span>dry
 </pre></div>
 </div>
 <p>To do a real run (moves files and copies those that can’t be moved):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./compress_packaged.py ~/EVIMO/packaged ~/EVIMO/compressed compress
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./compress_packaged.py<span class="w"> </span>~/EVIMO/packaged<span class="w"> </span>~/EVIMO/compressed<span class="w"> </span>compress
 </pre></div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>
