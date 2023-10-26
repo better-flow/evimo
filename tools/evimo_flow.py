@@ -7,55 +7,52 @@
 # Calculate optical flow from EVIMO datasets
 # so far this is tested on EVIMO2 for VGA DVS reocrdings
 #
-# usage: evimo_flow.py [-h] [--dt DT] [--quiet] [--overwrite] [--wait] [--dframes DFRAMES] [files ...]
+# evimo_flow.py [-h] [--dt DT] [--quiet] [--visualize] [--overwrite] [--wait] [--dframes DFRAMES]
+#               [--format FORMAT] [--reprojectbgr] [--use_ros_time] [--reproject_z_tol REPROJECT_Z_TOL]
+#               [--max_m_per_s MAX_M_PER_S] [--max_norm_deg_per_s MAX_NORM_DEG_PER_S]
+#               [sequence_folders ...]
 #
 # positional arguments:
-# files              NPZ files to convert
+# sequence_folders   EVIMO2v2 sequence folders to generate flow for
 #
-# optional arguments:
-# -h, --help         show this help message and exit
-# --dt DT            dt for flow approximation"dt" is how far ahead of the camera trajectory to sample in secondswhen approximating flow through finite
-# difference. Smaller values are more accurate, but noiser approximations of optical flow.
-# --quiet            turns off OpenCV graphical output windows
-# --overwrite        Overwrite existing output files
-# --wait             Wait for keypress between visualizations (for debugging)
-# --dframes DFRAMES  Alternative to flow_dt, flow is calculated for time N depth frames ahead
-# --format format    Either "evimo2v1" or "evimo2v2" which are the different input NPZ formats supported
+# optional arguments
+# -h, --help            show this help message and exit
+# --dt DT               dt for flow approximation "dt" is how far ahead of the camera trajectory to sample in
+#                       seconds when approximating flow through finite difference. Smaller values are more accurate,
+#                       but noiser approximations of optical flow. The flow velocity is obtained from dx,dy/dt, where
+#                       dx,dy are written to the flow output files
+# --quiet               turns off prints from convert function
+# --visualize           Visualize and display results in OpenCV window
+# --overwrite           Overwrite existing output files
+# --wait                Wait for keypress between visualizations (for debugging)
+# --dframes DFRAMES     Alternative to flow_dt, flow is calculated for time N depth frames ahead. Useful because the
+#                       resulting displacement arrows point to the new position of points in the scene at the time of
+#                       a ground truth frame in the future
+# --format FORMAT       "evimo2v1" or "evimo2v2" input data format
+# --reprojectbgr        Reproject a classical camera measurement into the flow frame
+# --use_ros_time        Save flow timestamps corresponding to the raw ROS bag files
+# --reproject_z_tol REPROJECT_Z_TOL
+#                       Z buffer tolerance when reprojecting BGR data
+# --max_m_per_s MAX_M_PER_S
+#                       Maximum meters per second of linear velocity before it is assumed that Vicon lost track
+# --max_norm_deg_per_s MAX_NORM_DEG_PER_S
+#                       Maximum normed degrees per second of angular velocity before it assumed that Vicon lost track
 #
-# Calculates optical flow from EVIMO datasets. Each of the source npz files on the command line is processed to produce the corresponding flow npz files. See source
-# code for details of output.
-# The source evimo_file.npz file(s) are one of the EV-IMO NPZ files that combine all the sensor and GT static pose data, e.g.
-# samsung_mono/imo/train/scene9_dyn_train_02.npz
-# The source NPZ file contents are documented in https://github.com/better-flow/evimo/wiki/Ground-Truth-Format
+# Calculates optical flow from EVIMO datasets. Each of the sequence folder on the command line is processed to produce the corresponding flow npz files.
+# See source code for details of output and documentation: https://better-flow.github.io/evimo/docs/evimo-flow.html
 #
-# "DT" is how far ahead of the camera trajectory to sample in seconds
-# when approximating flow through finite difference. Smaller values are
-# more accurate, but noiser approximations of optical flow.
-#
-# "DFRAMES" is  useful because the resulting displacement arrows point to the new position of points in the scene at the time of a ground truth frame in the future.
-# The displacements are correct for even for insane values, like 10, or 20 frames ahead from the current gt_frame. Combined with the --wait flag, we use dframes to make sure everything is working correctly.
-# Here is a convincing example:
-#      python3 evimo_flow.py --overwrite ../../recordings/samsung_mono/imo/eval/scene15_dyn_test_05.npz --dframe 3 --wait
-#
-# Press the a button until the board starts to flip the toys, then use your mouse to verify the toys move where the arrows say they will, even though the arrows are computed "far" into the future.
-#
-# Writes out flow files to the NPZ file folder location as:
-# evimo_file_flow.npz
-# which contains:
-# timestamps.npy
-# end_timestamps.npy
-# x_flow_dist.npy
-# y_flow_dist.npy
-#
-# timestamps are relative to epoch time in double seconds
-# end_timestamps are relative to epoch_time in double seconds, they correspond to
-# the end of the interval x_flow and y_flow were computed from (e.g with default settings, 0.01 seconds ahead of timestamps)
 # x_flow and y_flow are displacements in pixels over the time period timestamp to end_timestamp.
 # To obtain flow speed in px/s, divide displacement dx,dy by the time difference (end_timestamp-timestamp).
 #
 # Missing depth values (walls of room) are filled with NaN
 # The timestamps can skip values when the VICON has lost lock on one or more objects from occulusion or too rapid motion.
 #
+# "DFRAMES" is  useful because the resulting displacement arrows point to the new position of points in the scene at the time of a ground truth frame in the future.
+# The displacements are correct for even for insane values, like 10, or 20 frames ahead from the current gt_frame. Combined with the --wait flag, we use dframes to make sure everything is working correctly.
+# Here is a convincing example:
+# evimo_flow.py --overwrite --visualize --wait --reprojectbgr --format=evimo2v2 --dframes 3 /media/levi/EVIMO3_1/npz/samsung_mono/imo/eval/scene15_dyn_test_05_000000
+#
+# Press the a button until the board starts to flip the toys, then use your mouse to verify the toys move where the arrows say they will, even though the arrows are computed "far" into the future.
 #
 # To use this converter standalone, make a python 3 environment and in it
 # pip install argparse numpy scipy opencv-python easygui tqdm
@@ -66,6 +63,7 @@
 # 01-30-22 - Levi Burner - Fixed to handle moving objects correctly and fixed bug in radtan model
 # 04-26-22 - Levi Burner - Support EVIMO2v2 format
 # 08-23-22 - Levi Burner - Add classical camera reprojection for EVIMO2v2 format
+# 10-26-23 - Levi Burner - Updated documentation for reproject bgr and new output format
 #
 ###############################################################################
 
